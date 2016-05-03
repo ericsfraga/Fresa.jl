@@ -17,10 +17,10 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.05.03 19:38:00";
+      strawberry_version = "2016.05.03 19:38:53";
       mosd_initialise
       moga_initialise
-      printf ("STRAWBERRY %s, main function\n", strawberry_version)
+      printf (": STRAWBERRY %s, main function\n", strawberry_version)
       printf (": using MOSD %s, multi-objective steepest descent method.\n", mosd_version)
       printf (": and MOGA %s, multi-objective genetic algorithm fitness function.\n", moga_version)
     endif
