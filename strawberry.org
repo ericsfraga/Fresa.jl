@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.04.21 16:17:19";
+      strawberry_version = "2016.05.03 19:38:00";
       mosd_initialise
       moga_initialise
       printf ("STRAWBERRY %s, main function\n", strawberry_version)
@@ -221,7 +221,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
         pop = parcellfun (NPROC, @(x) [x; f(x); 0], xcell, "VerboseLevel", 0);
       endif 
     else
-      x = xcell{i};
+      x = xcell{1};
       if constrained
         y = [x; f(x); g(x)];
       else
