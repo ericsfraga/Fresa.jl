@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.06.24 10:18:54";
+      strawberry_version = "2016.06.30 16:56:54";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -370,6 +370,10 @@ A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is o
 
 All of the following ~src~ blocks will be tangled to the same [[file:strawberry.m][strawberry.m]] file.
 ** function definition
+#+begin_src octave :noweb yes :tangle strawberry.m
+  function [x z nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
+#+end_src
+*** Arguments
 The function has the following arguments:
 - x0 :: initial member of the population of solutions
 - a :: lower bounds on all variables
@@ -392,17 +396,21 @@ The function has the following arguments:
 In all of the above, vectors (solutions and objective function values for multi-objective optimisation) are column vectors.
 
 Only the first four arguments, ~x0~, ~a~, ~b~ and ~f~, are required.  The rest are optional and default to the following values:
-|---------------------+------|
-| ngen                | 1000 |
-| npop                |  100 |
-| nrmax               |    5 |
-| ns                  |  100 |
-| population_strategy |    4 |
-|---------------------+------|
-THere is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  The code does assume that a value of the objective function(s) of 10^{20} is an infeasible solution.
-#+begin_src octave :noweb yes :tangle strawberry.m
-  function [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-#+end_src
+|---------------------+---------|
+| ngen                |    1000 |
+| npop                |     100 |
+| nrmax               |       5 |
+| ns                  |     100 |
+| population_strategy |       4 |
+| output              | ngen/50 |
+|---------------------+---------|
+There is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  The code does assume that a value of the objective function(s) of 10^{20} is an infeasible solution.
+*** Return values
+The function returns the best point found, ~x~, with associated objective function values, ~z~.  It also returns information on the search:
+- ~nf~ :: number of objective function evaluations.
+- ~ninf~ :: number of infeasible function evaluations.
+- ~bestgen~ :: the generation in which the best solution, ~<x,z>~, was obtained.
+For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associated objective function values.
 ** initialisation
 #+begin_src octave :noweb yes :tangle strawberry.m
   global esfdebug
@@ -416,6 +424,7 @@ THere is no default for ~g~.  If present, it is used; if not, the problem is ass
   nsimilar = 0;
   warning ("error", "Octave:broadcast");
   ## process arguments
+  constrained = nargin > 10;    # has a constraint function been passed?
   if nargin<9, population_strategy = 4; end # population selection strategy
   if nargin<8, ns = 100; end    # number of stable generations
   if nargin<7, nrmax = 5; end   # number of runners
@@ -438,19 +447,17 @@ THere is no default for ~g~.  If present, it is used; if not, the problem is ass
   ## variable has not been set, we use the system function to determine
   ## how many processors there are
   global NPROC
-                                # NPROC = 1
-  if isempty(NPROC)
-    NPROC = nproc();
-  endif
-  if NPROC > 1
-    printf (": using %d processors for parallel processing.\n", NPROC);
-    starttime = time;           # use wall clock time instead of CPU time
-  else
-    printf (": not using any parallel processing on a single processor system.\n");
-    starttime = cputime;
-  endif
-
-  constrained = nargin > 10;    # has a constraint function been passed?
+                                  # NPROC = 1
+     if isempty(NPROC)
+       NPROC = nproc();
+     endif
+     if NPROC > 1
+       printf (": using %d processors for parallel processing.\n", NPROC);
+       starttime = time;           # use wall clock time instead of CPU time
+     else
+       printf (": not using any parallel processing on a single processor system.\n");
+       starttime = cputime;
+     endif
 #+end_src
 ** initial population
 #+begin_src octave :noweb yes :tangle strawberry.m
@@ -491,17 +498,16 @@ THere is no default for ~g~.  If present, it is used; if not, the problem is ass
 #+end_src
 *** calculate fitness and prune
 #+begin_src octave :noweb yes :tangle strawberry.m
-      if ny > 1
-        ## remove infeasible solutions from the population
-        fitindices = pop(nx+1,:) < 1e19;
-        if sum(fitindices) < size(pop,2)
-          fprintf(stderr, "Removing %d solutions from population of %d.  \n", size(pop,2)-sum(fitindices), size(pop,2))
-          pop = pop(:,fitindices);
-        endif
-      endif
-      ## prune the solution, removing duplicate members as they contribute nothing
-      pop = strawberry_prune (pop, nx, ny);
-
+  if ny > 1
+    ## remove infeasible solutions from the population
+    fitindices = pop(nx+1,:) < 1e19;
+    if sum(fitindices) < size(pop,2)
+      fprintf(stderr, "Removing %d solutions from population of %d.  \n", size(pop,2)-sum(fitindices), size(pop,2))
+      pop = pop(:,fitindices);
+    endif
+  endif
+  ## prune the solution, removing duplicate members as they contribute nothing
+  pop = strawberry_prune (pop, nx, ny);
 #+end_src
 *** rank solutions
 The fitness method is used to find the best members of the population and assign each one a ranking N \in (0,1) with higher values better than lower values.  
@@ -624,18 +630,30 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ##phi = parcellfun (NPROC, parf, newpop)';
 
   if NPROC > 1
-    phi = parcellfun (NPROC, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
+    if constrained
+      phi = parcellfun (NPROC, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
+    else
+      phi = parcellfun (NPROC, @(x) [x; f(x); 0], newpop, "VerboseLevel", 0);
+    endif
   else
     n = length(newpop);
     x = newpop{1};
     y = f(x);
     phi = zeros(length(x)+length(y)+1,n);
-    phi(:,1) = [x;y;g(x)];
+    if constrained
+      phi(:,1) = [x;y;g(x)];
+    else
+      phi(:,1) = [x;y;0];
+    endif
     for i=2:n
       x = newpop{i};
-      phi(:,i) = [x;f(x);g(x)];
-    end
-  end
+      if constrained
+        phi(:,i) = [x;f(x);g(x)];
+      else
+        phi(:,i) = [x;f(x);0];
+      endif
+    endfor
+  endif
   nfunctionevaluations += length(phi);
   debugprint (1, ": phi before removal of infeasible solutions", phi)
   phi = phi(:,phi(nx+1,:)<1e19);
@@ -703,7 +721,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## ensure the best solution is returned
   pop = [best, pop];
   x = pop(1:nx,:);
-  y = pop(nx+1:end,:);
+  z = pop(nx+1:end,:);
   if NPROC > 1
     endtime = time;            # wall clock time
   else
@@ -1024,12 +1042,14 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
          endtime-starttime, nfunctionevaluations, npruned, nsimilar)
   printf("MOSD improvements: %d\n", mosd_numberimproved);
 #+end_src
-* test
+* tests
 ** general test
 #+begin_src octave :tangle strawberry_test.m
-  function [x y pareto fitness] = strawberry_test
+  function [x z pareto fitness] = strawberry_test
     global esfdebug
-    esfdebug = 4
+    esfdebug = 0
+    global NPROC
+    NPROC = 1;
     f = @(x) [ sum((x-0.5).^2+1)
                sum(cos(x))];
     x0 = [0 0 0 0 0]';
@@ -1039,11 +1059,11 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf('starting with initial point '), x0
     printf('which has objective function values %f %f\n', f(x0))
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-    [x y nf ninf bestgen] = strawberry(x0, a, b, f, 20, 10);
-    paretoset = y(1:2, findpareto(y(1:2,:)));
+    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 20, 10);
+    paretoset = z(1:2, findpareto(z(1:2,:)));
     [zz indices] = sort(paretoset(1,:));
     paretoset = paretoset(:,indices)
-    plot(paretoset(1,:),paretoset(2,:),'- r',y(1,:),y(2,:),' *g')
+    plot(paretoset(1,:),paretoset(2,:),'- r',z(1,:),z(2,:),' *g')
 #+end_src
 ** testing the use of a mapping for mixed integer problems
 The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]].
