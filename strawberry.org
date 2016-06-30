@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.05.03 19:38:53";
+      strawberry_version = "2016.06.24 10:18:54";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -367,26 +367,354 @@ Especially for multi-objective problems, we have a problem with diversity in tha
 The algorithm is evolutionary, iterating over a number of generations.  In each generation, the solutions are ranked.  The best ones (number defined by population size) are selected for reproduction.  Each solution can propagate itself a number of times and a certain distance.  The best solutions propagate more but for shorter distances to exploit the quality of the solution; the not so good solutions propagate less but further to explore the domain.
 
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
+
+All of the following ~src~ blocks will be tangled to the same [[file:strawberry.m][strawberry.m]] file.
+** function definition
+The function has the following arguments:
+- x0 :: initial member of the population of solutions
+- a :: lower bounds on all variables
+- b :: upper bounds for all variables
+- f :: handle for the objective function which has signature ~z = f(x)~.
+- ngen :: one of the stopping criteria: maximum number of generations of plant propagation to allow
+- npop :: the base number in the population.  The actual number will be larger, depending on the value of ~nrmax~.  ~npop~ decides how many plants actually propagate but the number of new solutions depends on the fitness of those chosen to propagate and the maximum number of runners allowed, ~nrmax~.
+- nrmax :: the maximum number of runners to create for any solution if chosen to propagate.
+- ns :: a stopping criterion based on the number of consecutive generations for which no new /best/ solution is found.
+- population_strategy :: The strategy to use for creating a new population after the propagation of chosen solutions:
+     The strategy to use for creating a new population after the propagation of chosen solutions:
+  1. newly created solutions (propagated) alone
+  2. newly created solutions along with those selected for propagation
+  3. the /best/ from the current population, where /best/ will be a single solution for single objective optimisation and a set of /non-dominated/ solutions for multi-objective optimisation.
+  4. union of the /best/, the /selected/ and the /new/ solutions.
+- output :: An integer indicating how often to output statistics about the search.
+- g :: The function handle for the constraints, if any.  This function, with signature ~p = g(x)~, is expected to return a 0 value if the point ~x~ is feasible and a positive value otherwise.  The positive value could be a measure of the infeasibility and could be used in fitness evaluation (e.g. for identifying non-dominated solutions if all are unfeasible).
+
+
+In all of the above, vectors (solutions and objective function values for multi-objective optimisation) are column vectors.
+
+Only the first four arguments, ~x0~, ~a~, ~b~ and ~f~, are required.  The rest are optional and default to the following values:
+|---------------------+------|
+| ngen                | 1000 |
+| npop                |  100 |
+| nrmax               |    5 |
+| ns                  |  100 |
+| population_strategy |    4 |
+|---------------------+------|
+THere is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  The code does assume that a value of the objective function(s) of 10^{20} is an infeasible solution.
 #+begin_src octave :noweb yes :tangle strawberry.m
   function [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-    <<initialise>>
-    while gen++ < ngen && (ny > 1 || gen < bestgen+ns)
-      <<prune>>
+#+end_src
+** initialisation
+#+begin_src octave :noweb yes :tangle strawberry.m
+  global esfdebug
+  global mosd_numberimproved
+  global npruned
+  global nsimilar
+  global strawberry_fitness_method
+  global strawberry_diversity_tolerance
+  mosd_numberimproved = 0;
+  npruned = 0;
+  nsimilar = 0;
+  warning ("error", "Octave:broadcast");
+  ## process arguments
+  if nargin<9, population_strategy = 4; end # population selection strategy
+  if nargin<8, ns = 100; end    # number of stable generations
+  if nargin<7, nrmax = 5; end   # number of runners
+  if nargin<6, npop = 100; end  # population size
+  if nargin<5, ngen = 1000; end # number of generations
+  if nargin<4
+    disp("Error: need at least 4 arguments to Strawberry method: x0, a, b & f.")
+    return
+  end
+  if nargin<10, 
+    output = ngen/50;
+  end             # how often to output status of population
+  if isempty (strawberry_fitness_method)
+    strawberry_fitness_method = 1;  #choose MOGA fitness for now
+  end
+  strawberry_diversity_tolerance = norm(b-a) / 1000;
+  printf(": ngen=%d npop=%d nrmax=%d ns=%d population strategy=%d and tolerance=%f fitness method=%d\n", ngen, npop, nrmax, ns, population_strategy, strawberry_diversity_tolerance, strawberry_fitness_method)
 
-      <<findbest>>
+  ## determine the number of processors to use in parallel.  If the
+  ## variable has not been set, we use the system function to determine
+  ## how many processors there are
+  global NPROC
+                                # NPROC = 1
+  if isempty(NPROC)
+    NPROC = nproc();
+  endif
+  if NPROC > 1
+    printf (": using %d processors for parallel processing.\n", NPROC);
+    starttime = time;           # use wall clock time instead of CPU time
+  else
+    printf (": not using any parallel processing on a single processor system.\n");
+    starttime = cputime;
+  endif
 
-      <<iterationoutput>>
+  constrained = nargin > 10;    # has a constraint function been passed?
+#+end_src
+** initial population
+#+begin_src octave :noweb yes :tangle strawberry.m
+  if constrained
+    [phi, nx, ny, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained,g);
+  else
+    [phi, nx, ny, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained);
+  endif
+  pop = strawberry_sort (phi,nx,ny);
+  gen = 0;
 
-      <<selectandevaluate>>
+  if ny < 2
+    best = pop(:,1);
+  else
+    best = [];
+  endif
+  bestgen = gen;
+  nfunctionevaluations = npop; # initial population size
 
-      # <<localmosd>>
-      
-      <<newpopulation>>
-    endwhile
-    <<finish>>
+  if output
+    printf("| %9s |", "gen")
+    if ny > 1
+      for i=1:ny, printf(" %6sy%02d |", "", i); endfor
+      for i=1:ny, printf(" %6sy%02d |", "", i); endfor
+    else
+      for i=1:nx; printf(" %6sx%02d |", "", i); endfor
+      for i=1:ny; printf(" %6sy%02d |", "", i); endfor
+      if constrained; printf(" %9s |", "c"); endif
+    endif
+    printf(" %9s | %9s | %9s |", "$n_f$", "CPU (s)", "Best found")
+    printf("\n");
+    printf("|-\n");
+  endif
+#+end_src
+** iterate
+#+begin_src octave :noweb yes :tangle strawberry.m
+  while gen++ < ngen && (ny > 1 || gen < bestgen+ns)
+#+end_src
+*** calculate fitness and prune
+#+begin_src octave :noweb yes :tangle strawberry.m
+      if ny > 1
+        ## remove infeasible solutions from the population
+        fitindices = pop(nx+1,:) < 1e19;
+        if sum(fitindices) < size(pop,2)
+          fprintf(stderr, "Removing %d solutions from population of %d.  \n", size(pop,2)-sum(fitindices), size(pop,2))
+          pop = pop(:,fitindices);
+        endif
+      endif
+      ## prune the solution, removing duplicate members as they contribute nothing
+      pop = strawberry_prune (pop, nx, ny);
+
+#+end_src
+*** rank solutions
+The fitness method is used to find the best members of the population and assign each one a ranking N \in (0,1) with higher values better than lower values.  
+
+In the multi-objective case, the pareto front is combined with the elite set, a new pareto front is identified and duplicates are removed.  The elite set does not get involved in the selection and propagation.
+#+begin_src octave :noweb yes :tangle strawberry.m
+  ## evaluate the fitness of the population.  For multi-objective problems,
+  ## this has the side effect of returning the pareto front 
+  [N pareto] = strawberry_fitness (pop,nx,ny,size(pop,2));
+  ## keep track of best.  For multi-objective problems, this means keeping the pareto set
+  debugprint(1, "best", best)
+  debugprint(1, "pareto", pareto)
+  debugprint(1, "pop(1)", pop(:,1))
+  debugprint(1, "nx, ny", [nx, ny])
+  if ny < 2 && pareto(nx+1) < best(nx+1) && norm(abs(best(1:nx)-pareto(1:nx))) > 1e-6
+    best = pareto;
+    bestgen = gen;
+    ## zzz = zfit (best (1:nx))
+    if !output
+      printf("\n... new best solution at generation %d, z(1)=%g x=", gen, best(nx+1));
+      printf("%g ", best(1:nx));
+      printf("\n");
+    endif
+  elseif ny>1
+    ## the set of points returned by the fitness function is not really
+    ## a pareto set.  it is one point for each criterion.  we compare
+    ## these points to the existing ones and update if necessary.
+    if isempty(best)
+      best = pareto;
+    else
+      if size(pareto,2) > 1 && size(best,2) > 1
+        for i = 1:2
+          if pareto(nx+i,i) < best(nx+i,i)
+            best(:,i) = pareto(:,i);
+            bestgen = gen;
+          endif
+        endfor
+      else
+        if pareto(nx+1,1) < best(nx+1,1)
+          best(:,1) = pareto(:,1);
+          bestgen = gen;
+        endif
+      endif
+    endif
+    debugprint (1, "size of pareto: ", length(best))
+  endif
+#+end_src
+*** output statistics if desired
+#+begin_src octave :noweb yes :tangle strawberry.m
+  if 0 == mod(gen,output)
+    if NPROC > 1
+      dtime = time-starttime;
+    else
+      dtime = cputime-starttime;
+    endif
+    fprintf(stderr, "\r");
+    printf("| %9d |", gen);
+    if ny > 1
+      printf (" %9.3g |", best(nx+1:nx+ny,1), best(nx+1:nx+ny,end))
+      printf(" %9d | %9.1f | %9d |", nfunctionevaluations, dtime, bestgen);
+    else
+      printf (" %9.3g |", best(1:nx+ny))
+      if constrained; printf(" %9.3g |", best(nx+ny+1)); endif
+      printf(" %8d | %8.1f | %8d |", nfunctionevaluations, dtime, bestgen);
+    endif
+    printf("\n");
+  else
+    if ny > 1
+      ## [fitness pareto] = moga_fitness (pop(1:nx,:), pop(nx+1:nx+ny,:));
+      fprintf(stderr, "\r%30s %7d %3d/%4d %9.3g %9.3g %9.3g %9.3g", "", gen, size(best,2), length(pop), best(nx+1:nx+ny,1), best(nx+1:nx+ny,end))
+    else
+      if constrained
+        fprintf(stderr, "\r%30s %9d [%9d] %5d %13.6e %13.6e ", "", gen, bestgen, length(pop), best(nx+ny), best(nx+ny+1));
+      else
+        fprintf(stderr, "\r%30s %9d [%9d] %5d %8d %13.6e ", "", "", gen, bestgen, length(pop), nfunctionevaluations, best(nx+ny));
+      endif
+    endif
+  endif
+
+  debugprint (1,"strawberry: fitness", N);
+  actualnpop = size(pop,2);
+  if actualnpop < size (pop,2)
+    printf("Ummmm size of population %d is less than expected (%d)\n", size(1,pop), npop);
+  endif
+#+end_src
+*** select and propagate
+#+begin_src octave :noweb yes :tangle strawberry.m
+  ## generate all the new points and then evaluate them in parallel
+  n = 1;
+  newpop = [];
+  selected = [];
+  for p=1:npop                # we pick up to NPOP members to propagate
+    s = strawberry_select (N);
+    debugprint(2,"selected index", s)
+    if s > 0
+      selected(:,p) = pop(:,s);   # selected members remain for next generation; others die off
+      debugprint(3, "selected fitness and point: ", [N(s), pop(:,s)']);
+      nr = strawberry_runners (N(s),nrmax); # number of runners
+      debugprint(2,": number of runners", nr)
+      for r=1:nr
+        dx = (b-a)/2 .* strawberry_distance (N(s),nx); # how far to run
+        ## fprintf(stderr, "Selected %d with fitness %g to move %g\n", s, N(s), norm(dx))
+        debugprint(3, ": r and dx", [r; dx(1:nx)])
+        x = pop(1:nx,s)+dx;
+        x(x<a) = a(x<a);        # reset boundary
+        x(x>b) = b(x>b);        # reset boundary
+        ## if strawberry_isdiverse(newpop,x)
+        newpop{n++} = x;
+        debugprint(2, ": added new member to population: ", x)
+        ## endif
+      endfor
+      ## set fitness so this member is not selected again
+      N(s) = -1;
+    endif
+  endfor
+  debugprint(1,"Size of selected set: ", size(selected))
+  debugprint(1,"Size of newpop: ", size(newpop))
+  ## evaluate these in parallel using an appropriate number of processors
+  ##parf = @(x) if length(x)>nx, x', else [x, f(x), 0]', endif
+  ##phi = parcellfun (NPROC, parf, newpop)';
+
+  if NPROC > 1
+    phi = parcellfun (NPROC, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
+  else
+    n = length(newpop);
+    x = newpop{1};
+    y = f(x);
+    phi = zeros(length(x)+length(y)+1,n);
+    phi(:,1) = [x;y;g(x)];
+    for i=2:n
+      x = newpop{i};
+      phi(:,i) = [x;f(x);g(x)];
+    end
+  end
+  nfunctionevaluations += length(phi);
+  debugprint (1, ": phi before removal of infeasible solutions", phi)
+  phi = phi(:,phi(nx+1,:)<1e19);
+  debugprint (1, ": phi after removal of infeasible solutions", phi)
+#+end_src
+*** COMMENT apply local search
+#+begin_src octave :noweb yes :tangle strawberry.m
+  ## try to improve each of the new solutions using a local search
+  ## procedure, or maybe only a single step or so of that procedure.
+  ## for i=1:length(phi)
+  ##   sdpop{i} = phi(1:nx,i);
+  ## endfor
+  ## function point = mosderrorhandler (s, f, x, a, b)
+  ##   printf("Error %d: index %d message=%s\n: ", s.identifier, s.index, s.message)
+  ## endfunction
+  ## improvedset = parcellfun (NPROC, @(x) [mosd(f,x,a,b)], sdpop, "ErrorHandler", @mosderrorhandler);
+
+  ## as we cannot figure out how to get parcellfun to do what we want, we use sequential processing here for the time being
+  sdphi = zeros(size(phi));
+  for i=1:size(phi,2)
+    sdphi(:,i) = mosd (f, phi(1:nx,i), a, b);
+  endfor
+  ## combine the two and hope diversity check removes duplicates
+  phi = [phi, sdphi];
+#+end_src
+*** create new population
+#+begin_src octave :noweb yes :tangle strawberry.m
+  ## sort the population, which is composed of the original NPOP
+  ## best plus those created in this loop, using the fitness for
+  ## sorting.
+  ## we have three sets of solutions that we can combine to create a
+  ## new population:
+  ## 1. the best overall so far
+  ## 2. the members selected from the previous generation for propagation
+  ## 3. and the new propagated solutions
+  ## there are therefore 3! combinations although we always should
+  ## include the new solutions so really have 4 different options:
+  ## new alone, new with best, new with selected and new with
+  ## selected and best.
+
+  ## fprintf(stderr, "size best=%d selected=%d phi=%d\n", size(best,2), size(selected,2), size(phi,2));
+  switch (population_strategy)
+    case 1               # new members alone
+      pop = phi;
+    case 2               # new with selected
+      pop = [selected, phi];
+    case 3               # new with best
+      pop = [best, phi];
+    case 4               # new with best and selected
+      pop = [best, selected, phi];
+    otherwise
+      printf("Error: population strategy %d not recognised.", population_strategy)
+  endswitch
+#+end_src
+** end loop and finish function
+#+begin_src octave :noweb yes :tangle strawberry.m
+  endwhile
+  if gen < ngen
+    printf("Strawberry: terminating condition satisfied due to lack of improvement at gen=%d\n", gen);
+  endif
+  if output
+    printf("Strawberry: at end, nf=%d ninf=%d best solution:", nf, ninf)
+    disp(best);
+  endif
+  ## ensure the best solution is returned
+  pop = [best, pop];
+  x = pop(1:nx,:);
+  y = pop(nx+1:end,:);
+  if NPROC > 1
+    endtime = time;            # wall clock time
+  else
+    endtime = cputime;
+  endif
+  printf("\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n", 
+         endtime-starttime, nfunctionevaluations, npruned, nsimilar)
+  printf("MOSD improvements: %d\n", mosd_numberimproved);
   endfunction
 #+end_src
-** initialise: initialisation of arrays, processing arguments
+** COMMENT initialise: initialisation of arrays, processing arguments
 #+name: initialise
 #+begin_src octave :noweb yes
   strawberry_initialise
@@ -467,7 +795,7 @@ A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is o
     printf("|-\n");
   endif
 #+end_src
-** prune population, removing infeasible solutions and multiple copies
+** COMMENT prune population, removing infeasible solutions and multiple copies
 #+name: prune
 #+begin_src octave :noweb yes
   if ny > 1
@@ -481,7 +809,7 @@ A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is o
   ## prune the solution, removing duplicate members as they contribute nothing
   pop = strawberry_prune (pop, nx, ny);
 #+end_src
-** find best members of the population
+** COMMENT find best members of the population
 The fitness method is used to find the best members of the population and assign each one a ranking N \in (0,1) with higher values better than lower values.  
 
 In the multi-objective case, the pareto front is combined with the elite set, a new pareto front is identified and duplicates are removed.  The elite set does not get involved in the selection and propagation.
@@ -528,7 +856,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     debugprint (1, "size of pareto: ", length(best))
   endif
 #+end_src
-** output results during iteration
+** COMMENT output results during iteration
 #+name: iterationoutput
 #+begin_src octave :noweb yes
   if 0 == mod(gen,output)
@@ -567,7 +895,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf("Ummmm size of population %d is less than expected (%d)\n", size(1,pop), npop);
   endif
 #+end_src
-** select and evaluate
+** COMMENT select and evaluate
 #+name: selectandevaluate
 #+begin_src octave :noweb yes
   ## generate all the new points and then evaluate them in parallel
@@ -622,7 +950,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   phi = phi(:,phi(nx+1,:)<1e19);
   debugprint (1, ": phi after removal of infeasible solutions", phi)
 #+end_src
-** improve with local search
+** COMMENT improve with local search
 #+name: localmosd
 #+begin_src octave :noweb yes
   ## try to improve each of the new solutions using a local search
@@ -643,7 +971,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## combine the two and hope diversity check removes duplicates
   phi = [phi, sdphi];
 #+end_src
-** create new population
+** COMMENT create new population
 #+name: newpopulation
 #+begin_src octave :noweb yes
   ## sort the population, which is composed of the original NPOP
@@ -673,7 +1001,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       printf("Error: population strategy %d not recognised.", population_strategy)
   endswitch
 #+end_src
-** finish up
+** COMMENT finish up
 #+name: finish
 #+begin_src octave :noweb yes
   if gen < ngen
@@ -707,8 +1035,10 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     x0 = [0 0 0 0 0]';
     a = zeros(5,1);
     b = ones(5,1);
-    f(x0)
-  # [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
+    printf('Testing bicriteria problem with %d decision variables\n', length(x0))
+    printf('starting with initial point '), x0
+    printf('which has objective function values %f %f\n', f(x0))
+    ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
     [x y nf ninf bestgen] = strawberry(x0, a, b, f, 20, 10);
     paretoset = y(1:2, findpareto(y(1:2,:)));
     [zz indices] = sort(paretoset(1,:));
