@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.06.30 16:59:04";
+      strawberry_version = "2016.06.30 17:07:01";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -715,7 +715,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf("Strawberry: terminating condition satisfied due to lack of improvement at gen=%d\n", gen);
   endif
   if output
-    printf("Strawberry: at end, nf=%d ninf=%d best solution:", nf, ninf)
+    printf("Strawberry: at end, nf=%d ninf=%d best solution:\n", nf, ninf)
     disp(best);
   endif
   ## ensure the best solution is returned
@@ -1026,7 +1026,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf("Strawberry: terminating condition satisfied due to lack of improvement at gen=%d\n", gen);
   endif
   if output
-    printf("Strawberry: at end, nf=%d ninf=%d best solution:", nf, ninf)
+    printf("Strawberry: at end, nf=%d ninf=%d best solution:\n", nf, ninf)
     disp(best);
   endif
   ## ensure the best solution is returned
@@ -1059,7 +1059,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf('starting with initial point '), x0
     printf('which has objective function values %f %f\n', f(x0))
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 20, 10);
+    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 200, 50);
     paretoset = z(1:2, findpareto(z(1:2,:)));
     [zz indices] = sort(paretoset(1,:));
     paretoset = paretoset(:,indices)
