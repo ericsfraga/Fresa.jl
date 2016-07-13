@@ -1,0 +1,15 @@
+.*~
+.*.aux$
+.*.bbl$
+.*.blg$
+.*.data$
+.*.gms$
+.*.log$
+.*.lst$
+.*.m$
+.*.out$
+.*.pdf$
+.*.tex$
+.*.toc$
+.*.zip$
+octave-workspace
