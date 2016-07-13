@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.06.30 17:07:01";
+      strawberry_version = "2016.07.13 14:31:33";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -123,29 +123,25 @@ To accomplish the latter, we consider a ranking that takes into account how good
       debugprint(4, "fitness: nx nz", [nx, nz])
 
       if strawberry_fitness_method == 0
-        ## rank based fitness using ranking of both objectives
-        if nz == 2
-          z = p(nx+1:nx+nz,:);    #extract out the objective function values
-          [zz ind1] = sort(z(1,:));
-          [zz ind2] = sort(z(2,:));
-          rank1(ind1) = 1:m;
-          rank2(ind2) = 1:m;
-          fitness = rank1 .* rank2;
-          fit = 1 - fitness / max(fitness); #normalise and reverse meaning (1=best, 0=worst)
-          debugprint(5, "fitness.rank1: ", rank1)
-          debugprint(5, "fitness.rank2: ", rank2)
-          debugprint(5, "fitness.fit  : ", fit)
-          ## extract the best member for each criterion
-          best(:,1) = p(:,ind1(1));
-          best(:,2) = p(:,ind2(1));
-          ## ## we also need to extract the set of non-dominated points
-          ## bestindices = findpareto (z);
-          ## bestunsorted = p(:,bestindices);
-          ## [xx bestsortedindices] = sort(bestunsorted(nx+1,:));
-          ## best = bestunsorted(:,bestsortedindices);
-        else
-          disp('Error: Strawberry rank based fitness only available for bi-criteria problems');
-        endif
+        ## rank based fitness using ranking of all objectives
+        z = p(nx+1:nx+nz,:);    #extract out the objective function values
+        rank = ones(nz,m);      #for collating the rank of each solution for each objective function 
+        for i=1:nz
+          [zz ind] = sort(z(i,:))
+          rank(i,ind) = 1:m
+          best(:,i) = p(:,ind(1))
+        endfor
+        fitness = prod(rank,1)   #Hadamard product of rankings
+        fit = 1 - fitness / max(fitness) #normalise and reverse meaning (1=best, 0=worst)
+        debugprint(-1, "fitness.rank: ", rank)
+        debugprint(-1, "fitness.fit  : ", fit)
+        debugprint(-1, "best solutions: ", best)
+        ## extract the best member for each criterion
+        ## ## we also need to extract the set of non-dominated points
+        ## bestindices = findpareto (z);
+        ## bestunsorted = p(:,bestindices);
+        ## [xx bestsortedindices] = sort(bestunsorted(nx+1,:));
+        ## best = bestunsorted(:,bestsortedindices);
 
       elseif strawberry_fitness_method == 1 #MOGA fitness
 
@@ -169,6 +165,8 @@ To accomplish the latter, we consider a ranking that takes into account how good
           fit = 1 - fitness/maxfit;
           debugprint(3,": rescaled fitness", fit)
         endif
+      else
+        error('Strawberry fitness strategy %d not recognised.\n', strawberry_fitness_method)
       endif                       #end of which fitness method to use
     endif                         #end of single versus multi-objective
     ## finally, at the end, transform the fitness values calculated
@@ -1043,7 +1041,10 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   printf("MOSD improvements: %d\n", mosd_numberimproved);
 #+end_src
 * tests
-** general test
+** general bicriteria test
+#+begin_src octave :tangle no
+strawberry_test
+#+end_src 
 #+begin_src octave :tangle strawberry_test.m
   function [x z pareto fitness] = strawberry_test
     global esfdebug
@@ -1057,9 +1058,38 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     b = ones(5,1);
     printf('Testing bicriteria problem with %d decision variables\n', length(x0))
     printf('starting with initial point '), x0
-    printf('which has objective function values %f %f\n', f(x0))
+    z0 = f(x0)
+    printf('which has objective %d function values ', length(z0))
+    for i=1:length(z0), printf("%f ", z0(i)), endfor; printf("\n")
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
     [x z nf ninf bestgen] = strawberry(x0, a, b, f, 200, 50);
+    paretoset = z(1:2, findpareto(z(1:2,:)));
+    [zz indices] = sort(paretoset(1,:));
+    paretoset = paretoset(:,indices)
+    plot(paretoset(1,:),paretoset(2,:),'- r',z(1,:),z(2,:),' *g')
+#+end_src
+** three criteria test
+#+begin_src octave :tangle strawberry_test3.m
+  function [x z pareto fitness] = strawberry_test3
+    global esfdebug
+    esfdebug = 0
+    global NPROC
+    NPROC = 1;
+    global strawberry_fitness_method
+    strawberry_fitness_method = 0
+    f = @(x) [ sum((x-0.5).^2+1)
+               sum(cos(x))
+               sum(sin(x))];
+    x0 = [0 0 0 0 0]';
+    a = zeros(5,1);
+    b = ones(5,1);
+    printf('Testing three criteria problem with %d decision variables\n', length(x0))
+    printf('starting with initial point '), x0
+    z0 = f(x0);
+    printf('which has objective %d function values ', length(z0))
+    for i=1:length(z0), printf("%f ", z0(i)), endfor; printf("\n")
+    ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
+    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 10, 5);
     paretoset = z(1:2, findpareto(z(1:2,:)));
     [zz indices] = sort(paretoset(1,:));
     paretoset = paretoset(:,indices)
