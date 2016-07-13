@@ -17,7 +17,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.13 14:31:33";
+      strawberry_version = "2016.07.13 15:11:47";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -127,15 +127,15 @@ To accomplish the latter, we consider a ranking that takes into account how good
         z = p(nx+1:nx+nz,:);    #extract out the objective function values
         rank = ones(nz,m);      #for collating the rank of each solution for each objective function 
         for i=1:nz
-          [zz ind] = sort(z(i,:))
-          rank(i,ind) = 1:m
-          best(:,i) = p(:,ind(1))
+          [zz ind] = sort(z(i,:));
+          rank(i,ind) = 1:m;
+          best(:,i) = p(:,ind(1));
         endfor
-        fitness = prod(rank,1)   #Hadamard product of rankings
-        fit = 1 - fitness / max(fitness) #normalise and reverse meaning (1=best, 0=worst)
-        debugprint(-1, "fitness.rank: ", rank)
-        debugprint(-1, "fitness.fit  : ", fit)
-        debugprint(-1, "best solutions: ", best)
+        fitness = prod(rank,1);   #Hadamard product of rankings
+        fit = 1 - fitness / max(fitness); #normalise and reverse meaning (1=best, 0=worst)
+        debugprint(5, "fitness.rank: ", rank)
+        debugprint(5, "fitness.fit  : ", fit)
+        debugprint(5, "best solutions: ", best)
         ## extract the best member for each criterion
         ## ## we also need to extract the set of non-dominated points
         ## bestindices = findpareto (z);
@@ -1070,7 +1070,7 @@ strawberry_test
 #+end_src
 ** three criteria test
 #+begin_src octave :tangle strawberry_test3.m
-  function [x z pareto fitness] = strawberry_test3
+  function [x z paretoset] = strawberry_test3
     global esfdebug
     esfdebug = 0
     global NPROC
@@ -1089,11 +1089,11 @@ strawberry_test
     printf('which has objective %d function values ', length(z0))
     for i=1:length(z0), printf("%f ", z0(i)), endfor; printf("\n")
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 10, 5);
-    paretoset = z(1:2, findpareto(z(1:2,:)));
+    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 100, 20)
+    paretoset = z(1:3, findpareto(z(1:3,:)));
     [zz indices] = sort(paretoset(1,:));
     paretoset = paretoset(:,indices)
-    plot(paretoset(1,:),paretoset(2,:),'- r',z(1,:),z(2,:),' *g')
+    plot3(paretoset(1,:),paretoset(2,:), paretoset(3,:),'- r',z(1,:),z(2,:), z(3,:),' *g')
 #+end_src
 ** testing the use of a mapping for mixed integer problems
 The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]].
