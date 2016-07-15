@@ -14,17 +14,21 @@ Major version log:
 #+begin_src octave :tangle strawberry_initialise.m
   function strawberry_initialise
     global strawberry_version
+    global strawberry_octave
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.13 15:11:47";
+      strawberry_version = "2016.07.15 09:42:53";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
       printf (": using MOSD %s, multi-objective steepest descent method.\n", mosd_version)
       printf (": and MOGA %s, multi-objective genetic algorithm fitness function.\n", moga_version)
+      strawberry_octave = exist ("OCTAVE_VERSION", "builtin") > 0
+      if strawberry_octave
+        pkg load parallel             #need parcellfun in particular
+      endif
     endif
-    pkg load parallel             #need parcellfun in particular
 #+end_src
 * TODO [0/9] improvements or bugs
 - [ ] handling /uncertainty/ in strawberry with either probability distribution functions (*pdf*) or intervals.  The latter should be easier and possibly sufficient.
