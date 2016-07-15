@@ -18,7 +18,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.15 09:42:53";
+      strawberry_version = "2016.07.15 09:46:36";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -203,7 +203,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+begin_src octave :tangle strawberry_newpopulation.m
   function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained,g)
-    global NPROC
+    global strawberry_numberofprocessors
     nx = length(x0)
     nf = 0;
     ninf = 0;
@@ -216,11 +216,11 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
       r = rand(nx,1);
       xcell{i} = a + r.*(b-a);
     endfor
-    if NPROC > 1
+    if strawberry_numberofprocessors > 1
       if constrained 
-        pop = parcellfun (NPROC, @(x) [x; f(x); g(x)], xcell, "VerboseLevel", 0);
+        pop = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); g(x)], xcell, "VerboseLevel", 0);
       else 
-        pop = parcellfun (NPROC, @(x) [x; f(x); 0], xcell, "VerboseLevel", 0);
+        pop = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); 0], xcell, "VerboseLevel", 0);
       endif 
     else
       x = xcell{1};
@@ -448,18 +448,17 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   ## determine the number of processors to use in parallel.  If the
   ## variable has not been set, we use the system function to determine
   ## how many processors there are
-  global NPROC
-                                  # NPROC = 1
-     if isempty(NPROC)
-       NPROC = nproc();
-     endif
-     if NPROC > 1
-       printf (": using %d processors for parallel processing.\n", NPROC);
-       starttime = time;           # use wall clock time instead of CPU time
-     else
-       printf (": not using any parallel processing on a single processor system.\n");
-       starttime = cputime;
-     endif
+  global strawberry_numberofprocessors
+  if isempty(strawberry_numberofprocessors)
+    strawberry_numberofprocessors = nproc();
+  endif
+  if strawberry_numberofprocessors > 1
+    printf (": using %d processors for parallel processing.\n", strawberry_numberofprocessors);
+    starttime = time;           # use wall clock time instead of CPU time
+  else
+    printf (": not using any parallel processing on a single processor system.\n");
+    starttime = cputime;
+  endif
 #+end_src
 ** initial population
 #+begin_src octave :noweb yes :tangle strawberry.m
@@ -560,7 +559,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
 *** output statistics if desired
 #+begin_src octave :noweb yes :tangle strawberry.m
   if 0 == mod(gen,output)
-    if NPROC > 1
+    if strawberry_numberofprocessors > 1
       dtime = time-starttime;
     else
       dtime = cputime-starttime;
@@ -629,13 +628,13 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   debugprint(1,"Size of newpop: ", size(newpop))
   ## evaluate these in parallel using an appropriate number of processors
   ##parf = @(x) if length(x)>nx, x', else [x, f(x), 0]', endif
-  ##phi = parcellfun (NPROC, parf, newpop)';
+  ##phi = parcellfun (strawberry_numberofprocessors, parf, newpop)';
 
-  if NPROC > 1
+  if strawberry_numberofprocessors > 1
     if constrained
-      phi = parcellfun (NPROC, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
+      phi = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
     else
-      phi = parcellfun (NPROC, @(x) [x; f(x); 0], newpop, "VerboseLevel", 0);
+      phi = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); 0], newpop, "VerboseLevel", 0);
     endif
   else
     n = length(newpop);
@@ -671,7 +670,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## function point = mosderrorhandler (s, f, x, a, b)
   ##   printf("Error %d: index %d message=%s\n: ", s.identifier, s.index, s.message)
   ## endfunction
-  ## improvedset = parcellfun (NPROC, @(x) [mosd(f,x,a,b)], sdpop, "ErrorHandler", @mosderrorhandler);
+  ## improvedset = parcellfun (strawberry_numberofprocessors, @(x) [mosd(f,x,a,b)], sdpop, "ErrorHandler", @mosderrorhandler);
 
   ## as we cannot figure out how to get parcellfun to do what we want, we use sequential processing here for the time being
   sdphi = zeros(size(phi));
@@ -724,7 +723,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   pop = [best, pop];
   x = pop(1:nx,:);
   z = pop(nx+1:end,:);
-  if NPROC > 1
+  if strawberry_numberofprocessors > 1
     endtime = time;            # wall clock time
   else
     endtime = cputime;
@@ -770,13 +769,13 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## determine the number of processors to use in parallel.  If the
   ## variable has not been set, we use the system function to determine
   ## how many processors there are
-  global NPROC
-                                  # NPROC = 1
-  if isempty(NPROC)
-    NPROC = nproc();
+  global strawberry_numberofprocessors
+                                  # strawberry_numberofprocessors = 1
+  if isempty(strawberry_numberofprocessors)
+    strawberry_numberofprocessors = nproc();
   endif
-  if NPROC > 1
-    printf (": using %d processors for parallel processing.\n", NPROC);
+  if strawberry_numberofprocessors > 1
+    printf (": using %d processors for parallel processing.\n", strawberry_numberofprocessors);
     starttime = time;           # use wall clock time instead of CPU time
   else
     printf (": not using any parallel processing on a single processor system.\n");
@@ -880,7 +879,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
 #+name: iterationoutput
 #+begin_src octave :noweb yes
   if 0 == mod(gen,output)
-    if NPROC > 1
+    if strawberry_numberofprocessors > 1
       dtime = time-starttime;
     else
       dtime = cputime-starttime;
@@ -950,10 +949,10 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   debugprint(1,"Size of newpop: ", size(newpop))
   ## evaluate these in parallel using an appropriate number of processors
   ##parf = @(x) if length(x)>nx, x', else [x, f(x), 0]', endif
-  ##phi = parcellfun (NPROC, parf, newpop)';
+  ##phi = parcellfun (strawberry_numberofprocessors, parf, newpop)';
 
-  if NPROC > 1
-    phi = parcellfun (NPROC, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
+  if strawberry_numberofprocessors > 1
+    phi = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); g(x)], newpop, "VerboseLevel", 0);
   else
     n = length(newpop);
     x = newpop{1};
@@ -981,7 +980,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## function point = mosderrorhandler (s, f, x, a, b)
   ##   printf("Error %d: index %d message=%s\n: ", s.identifier, s.index, s.message)
   ## endfunction
-  ## improvedset = parcellfun (NPROC, @(x) [mosd(f,x,a,b)], sdpop, "ErrorHandler", @mosderrorhandler);
+  ## improvedset = parcellfun (strawberry_numberofprocessors, @(x) [mosd(f,x,a,b)], sdpop, "ErrorHandler", @mosderrorhandler);
 
   ## as we cannot figure out how to get parcellfun to do what we want, we use sequential processing here for the time being
   sdphi = zeros(size(phi));
@@ -1035,7 +1034,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   pop = [best, pop];
   x = pop(1:nx,:);
   y = pop(nx+1:end,:);
-  if NPROC > 1
+  if strawberry_numberofprocessors > 1
     endtime = time;            # wall clock time
   else
     endtime = cputime;
@@ -1053,8 +1052,8 @@ strawberry_test
   function [x z pareto fitness] = strawberry_test
     global esfdebug
     esfdebug = 0
-    global NPROC
-    NPROC = 1;
+    global strawberry_numberofprocessors
+    strawberry_numberofprocessors = 1;
     f = @(x) [ sum((x-0.5).^2+1)
                sum(cos(x))];
     x0 = [0 0 0 0 0]';
@@ -1077,8 +1076,8 @@ strawberry_test
   function [x z paretoset] = strawberry_test3
     global esfdebug
     esfdebug = 0
-    global NPROC
-    NPROC = 1;
+    global strawberry_numberofprocessors
+    strawberry_numberofprocessors = 1;
     global strawberry_fitness_method
     strawberry_fitness_method = 0
     f = @(x) [ sum((x-0.5).^2+1)
@@ -1104,8 +1103,8 @@ The assumption is that Strawberry itself needs no special knowledge to work with
 #+begin_src octave :results output :tangle "mitest.m"
   global esfdebug
   esfdebug = 0
-  global NPROC
-  NPROC = 1;
+  global strawberry_numberofprocessors
+  strawberry_numberofprocessors = 1;
   f = @(x) 3*round(x(2))-5*x(1);
   ## define the inequality contraints. this is a set of equations
   ## where the last expression should evaluate to a vector of
