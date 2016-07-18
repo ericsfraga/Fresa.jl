@@ -28,7 +28,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.18 12:07:39";
+      strawberry_version = "2016.07.18 12:21:23";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -64,9 +64,9 @@ The basic premise is that the fitter the solution, the less far runners are sent
 
 The fitness of the members in the population is calculated differently for 1 criterion problems and multi-criteria problems.  The former is based on a scaled value within the range of values for feasible and infeasible solutions separately.
 
-For multi-objective problems, we have a number of options.  We can use the approach we used in [[file:~/s/research/bibliography.org::#fiandaca-etal-2009a][MOGA]]  which was based on distance to the Pareto set of non-dominated solutions.  However, this has a problem when the set is large compared with the total population size.  Also, it does not necessarily push towards the endpoints of the Pareto front which is often, in the problems we consider, what we want.
+For multi-objective problems, we have a number of options.  We can use the approach we used in [[http://dx.doi.org/10.1080/03052150903074189][MOGA]]  which was based on distance to the Pareto set of non-dominated solutions.  However, this has a problem when the set is large compared with the total population size.  Also, it does not necessarily push towards the endpoints of the Pareto front which is often, in the problems we consider, what we want.
 
-To accomplish the latter, we consider a ranking that takes into account how good each individual objective value is within its own set of values.  If we consider a fitness 1,... for each point for each objective, and then multiply these two ranking values together, this should emphasise the end-points.  The multiplication of vectors of rankings in known as the /Hadamard/ product.
+To accomplish the latter, we consider a ranking that takes into account how good each individual objective value is within its own set of values.  If we consider a fitness 1,... for each point for each objective, and then multiply these two ranking values together, this should emphasise the end-points.  The multiplication of vectors of rankings in known as the [[https://en.wikipedia.org/wiki/Hadamard_product_(matrices)][Hadamard]] product.
 
 #+begin_src octave :tangle strawberry_fitness.m
   function [fit, best] = strawberry_fitness(p,nx,nz,npop)
@@ -196,7 +196,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
   endfunction
 #+end_src
 * isdiverse
-We only want to add solutions to the population that are diverse, i.e. significantly different, from those that are already there.  However, the diversity control should not be at the expense of losing better solutions.  The current implementation is not good in this respect.
+We only want to add solutions to the population that are diverse, i.e. significantly different, from those that are already there.  However, the diversity control should not be at the expense of losing better solutions.  The current implementation is not good in this respect and should be used with care as a result.
 #+begin_src octave :tangle strawberry_isdiverse.m
   function diverse = strawberry_isdiverse (pop, x)
     global nsimilar
@@ -262,7 +262,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
   endfunction
 #+end_src
 * prune
-Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an elite set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
+Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an *elite* set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
 #+begin_src octave :tangle strawberry_prune.m
   function pruned = strawberry_prune (pop, nx, nz)
     global npruned
@@ -301,6 +301,8 @@ Especially for multi-objective problems, we have a problem with diversity in tha
   endfunction
 #+end_src
 * runners
+Two aspects define a plant propagation algorithm: the distance for the runners to propagate and the number of such runners that are generated.  This function addresses the latter.  The better the solution, defined by the fitness \(N\), the more runners should be generated.  The actual number of runners is \(\in [1,N_{r,max}]\) and is randomly generated.
+
 #+begin_src octave :tangle strawberry_runners.m
   function nr = strawberry_runners(N, nrmax)
     r = rand();
@@ -310,8 +312,10 @@ Especially for multi-objective problems, we have a problem with diversity in tha
   endfunction
 #+end_src
 * select
+Selection from the current population, for propagation of runners, is based on a sample size 2 *tournament* selection.  This could be generalised to have a greater number of individuals selected for a tournament, emphasising the most fit solutions.  Other selection approaches could of course be used instead.  Our experience is that this simple selection procedure is effective in balancing the global and local search aspects of a plant propagation algorithm.
+
+The one modification we have with respect to the standard selection procedure is that we only select from those individuals that have not already been selected in the current generation.
 #+begin_src octave :tangle strawberry_select.m
-  ### select: return a member of the population using a tournament selection
   function s = strawberry_select (N)
     ## select only from those solutions that have not been selected
     ## before, i.e. those with non-negative fitness values
@@ -349,6 +353,7 @@ Especially for multi-objective problems, we have a problem with diversity in tha
   endfunction
 #+end_src
 * sort
+For single criterion problems, we sort the population in order of decreasing fitness.  This is purely for the purpose of output and could be removed entirely.
 #+begin_src octave :tangle strawberry_sort.m
   function pop = strawberry_sort (pop,nx,nz)
     [n m] = size(pop);
@@ -376,11 +381,11 @@ Especially for multi-objective problems, we have a problem with diversity in tha
   endfunction
 #+end_src
 * strawberry
-The algorithm is evolutionary, iterating over a number of generations.  In each generation, the solutions are ranked.  The best ones (number defined by population size) are selected for reproduction.  Each solution can propagate itself a number of times and a certain distance.  The best solutions propagate more but for shorter distances to exploit the quality of the solution; the not so good solutions propagate less but further to explore the domain.
+The algorithm is *evolutionary*, iterating over a number of generations.  In each generation, the solutions are ranked according to the objective function values.  In each generation, a number are selected for *propagation*.  Each solution can propagate itself a number of times and a certain distance with both aspects being a function of the solution's fitness.  The best solutions propagate more but for shorter distances to exploit the quality of the solution, i.e. a /local/ search; the not so good solutions propagate less but further to explore the domain, i.e. a /global/ search.
 
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
 
-All of the following ~src~ blocks will be tangled to the same [[file:strawberry.m][strawberry.m]] file.
+All of the following ~src~ blocks will be *tangled* to the same [[file:strawberry.m][strawberry.m]] file.
 ** function definition
 #+begin_src octave :noweb yes :tangle strawberry.m
   function [x z nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
