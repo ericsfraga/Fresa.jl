@@ -1,15 +1,25 @@
+#+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
 #+title: Strawberry plant propagation algorithm
+#+options: num:nil ^:nil
 
-These are the codes I wrote based on the algorithm Abdellah and I developed from his original insight into the propagation of strawberry plants.  The basis of these codes in this particular repository is the codes used for the results presented in the dwelling modelling paper ([[file:~/s/research/bibliography.org::#fraga-etal-2015a][Fraga et al., 2015]]) which were based on the codes used for [[file:~/s/research/bibliography.org::#salhi-fraga-2011a][Salhi & Fraga, 2011]].
+* Overview and introduction
+Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in an up-coming publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 
-In the following codes, we assume column vectors for decision variables, objectives and whether constraints have been violated (=1) or not (=0).
+The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  It is possible to convert this code to MATLAB but the author prefers to use open source software.  This document, for instance, has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.
+
+In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
+
+All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes.  If the /Strawberry/ code is used, please do let the authors know and the above publications should be cited in any research papers written.  The code is made available with no warranty or guarantee of any kind.  Use at own risk.  Some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)) and these are available from the author upon request.
+
+Feedback, including bug reports, is most welcome.
+* Version information
 
 Major version log:
 
+- July 2016 :: multi-objective version extended to work for any number of criteria instead of just 2.
 - October 2015 :: started work on a MI-Strawberry version, hopefully as upwards compatible as possible.
 - September 2015 :: implemented a rank based fitness, used to prepare results in [[file:~/synced/research/multiobjective.optimisation/strawberry/paper.pdf][the paper on understanding the impacts of constraints]].  There is now a choice of fitness functions as the old, Pareto based, fitness function is still available (cf. Deb (2000) for an example).
 
-* version information
 #+name: version
 #+begin_src octave :tangle strawberry_initialise.m
   function strawberry_initialise
@@ -18,7 +28,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.15 09:46:36";
+      strawberry_version = "2016.07.18 12:07:39";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -30,7 +40,7 @@ Major version log:
       endif
     endif
 #+end_src
-* TODO [0/9] improvements or bugs
+* TODO [0/9] improvements or bugs                             :noexport:
 - [ ] handling /uncertainty/ in strawberry with either probability distribution functions (*pdf*) or intervals.  The latter should be easier and possibly sufficient.
 - [ ] *mixed-integer* Strawberry:
   - could we get away with not change anything in the main code but assume that the user passes a function which maps a given solution vector /x/ to a new one, taking care of rounding, e.g. for integer variables?
@@ -52,11 +62,11 @@ The basic premise is that the fitter the solution, the less far runners are sent
 #+end_src
 * fitness
 
-The fitness of the members in the population is calculated differently for 1 criterion problems and 2 criteria problems.  The former is based on a scaled value within the range of values for feasible and infeasible solutions separately.
+The fitness of the members in the population is calculated differently for 1 criterion problems and multi-criteria problems.  The former is based on a scaled value within the range of values for feasible and infeasible solutions separately.
 
 For multi-objective problems, we have a number of options.  We can use the approach we used in [[file:~/s/research/bibliography.org::#fiandaca-etal-2009a][MOGA]]  which was based on distance to the Pareto set of non-dominated solutions.  However, this has a problem when the set is large compared with the total population size.  Also, it does not necessarily push towards the endpoints of the Pareto front which is often, in the problems we consider, what we want.
 
-To accomplish the latter, we consider a ranking that takes into account how good each individual objective value is within its own set of values.  If we consider a fitness 1,... for each point for each objective, and then multiply these two ranking values together, this should emphasise the end-points.
+To accomplish the latter, we consider a ranking that takes into account how good each individual objective value is within its own set of values.  If we consider a fitness 1,... for each point for each objective, and then multiply these two ranking values together, this should emphasise the end-points.  The multiplication of vectors of rankings in known as the /Hadamard/ product.
 
 #+begin_src octave :tangle strawberry_fitness.m
   function [fit, best] = strawberry_fitness(p,nx,nz,npop)
@@ -1133,7 +1143,7 @@ The assumption is that Strawberry itself needs no special knowledge to work with
 
 #+results:
 
-* settings
+* settings                                                    :noexport:
 ** emacs local variables
 # Local Variables:
 # time-stamp-line-limit: 1000
