@@ -4,11 +4,13 @@
 .*.blg$
 .*.data$
 .*.gms$
+.*.html$
 .*.log$
 .*.lst$
 .*.m$
 .*.out$
 .*.pdf$
+.*.png$
 .*.tex$
 .*.toc$
 .*.zip$
