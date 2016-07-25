@@ -28,7 +28,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.18 18:10:25";
+      strawberry_version = "2016.07.25 17:38:37";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -496,14 +496,13 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   if output
     printf("| %9s |", "gen")
     if nz > 1
-      for i=1:nz, printf(" %6sy%02d |", "", i); endfor
-      for i=1:nz, printf(" %6sy%02d |", "", i); endfor
+      for i=1:nz, printf(" %6sz%02d |", "", i); endfor
     else
       for i=1:nx; printf(" %6sx%02d |", "", i); endfor
       for i=1:nz; printf(" %6sy%02d |", "", i); endfor
       if constrained; printf(" %9s |", "c"); endif
     endif
-    printf(" %9s | %9s | %9s |", "$n_f$", "CPU (s)", "Best found")
+    printf(" %9s | %9s | %9s |", "$n_f$", "CPU (s)", "Best iter")
     printf("\n");
     printf("|-\n");
   endif
@@ -582,14 +581,14 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     fprintf(stderr, "\r");
     printf("| %9d |", gen);
     if nz > 1
-      printf (" %9.3g |", best(nx+1:nx+nz,1), best(nx+1:nx+nz,end))
+      printf (" %9.3g |", min(best(nx+1:nx+nz,:),[],2))
       printf(" %9d | %9.1f | %9d |", nfunctionevaluations, dtime, bestgen);
     else
       printf (" %9.3g |", best(1:nx+nz))
       if constrained; printf(" %9.3g |", best(nx+nz+1)); endif
       printf(" %8d | %8.1f | %8d |", nfunctionevaluations, dtime, bestgen);
     endif
-    printf("\n");
+    printf("  \n");
   else
     if nz > 1
       ## [fitness pareto] = moga_fitness (pop(1:nx,:), pop(nx+1:nx+nz,:));
