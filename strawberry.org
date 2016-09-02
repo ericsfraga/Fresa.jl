@@ -5,11 +5,11 @@
 * Overview and introduction
 Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in an up-coming publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 
-The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  It is possible to convert this code to MATLAB but the author prefers to use open source software.  This document, for instance, has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.
+The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, can be requested but it should be notes that the author prefers to use open source software.  This document, for instance, has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code. In any case, bug reports based on the Octave code will be most welcome.
 
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
-All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes.  If the /Strawberry/ code is used, please do let the authors know and the above publications should be cited in any research papers written.  The code is made available with no warranty or guarantee of any kind.  Use at own risk.  Some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)) and these are available from the author upon request.
+All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes.  If the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  The code is made available with no warranty or guarantee of any kind.  Use at own risk.  Some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)) and these are available from the author upon request.
 
 Feedback, including bug reports, is most welcome.
 * Version information
@@ -28,7 +28,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.07.25 17:38:37";
+      strawberry_version = "2016.09.02 15:42:08";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -203,10 +203,11 @@ We only want to add solutions to the population that are diverse, i.e. significa
     global strawberry_diversity_tolerance
     i = 0;
     diverse = 1;
-    while i++ < length(pop) && diverse
+    while i < length(pop) && diverse
       diverse = norm(pop{i}-x) > strawberry_diversity_tolerance;
+      i = i + 1;
     endwhile
-    if ! diverse, nsimilar++; endif
+    if ! diverse, nsimilar = nsimilar + 1; endif
   endfunction
 #+end_src
 * newpopulation
@@ -274,12 +275,14 @@ Especially for multi-objective problems, we have a problem with diversity in tha
       for i=2:size(pop,2)
         diverse = 1;
         j = 0;
-        while diverse && j++<np
+        while diverse && j < np
+          j = j + 1;
           ## diversity based on x values alone
           diverse = norm (pop(1:nx,i)-pruned(1:nx,j)) > strawberry_diversity_tolerance;
         endwhile
         if diverse
           pruned = [pruned, pop(:,i)];
+          np = np + 1;            #keep track of how many copied over
         else
           ## prune one or the other.  ideally, we keep the better
           ## one.  If we cannot distinguish (in a multi-objective
@@ -289,11 +292,11 @@ Especially for multi-objective problems, we have a problem with diversity in tha
               ## current solution is better, i.e. dominates, than previous
               ## one so replace
               pruned(:,j) = pop(:,i);
-              npruned++;
+              npruned = npruned + 1;
             endif
           else
             ## previous solution better, i.e. dominates
-            npruned++;
+            npruned = npruned + 1;
           endif
         endif
       endfor
@@ -509,7 +512,8 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
 #+end_src
 ** iterate
 #+begin_src octave :noweb yes :tangle strawberry.m
-  while gen++ < ngen && (nz > 1 || gen < bestgen+ns)
+  while gen < ngen && (nz > 1 || gen < bestgen+ns)
+    gen = gen + 1;
 #+end_src
 *** calculate fitness and prune
 #+begin_src octave :noweb yes :tangle strawberry.m
@@ -630,7 +634,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
         x(x<a) = a(x<a);        # reset boundary
         x(x>b) = b(x>b);        # reset boundary
         ## if strawberry_isdiverse(newpop,x)
-        newpop{n++} = x;
+        newpop{n} = x;
+        n = n + 1;
         debugprint(2, ": added new member to population: ", x)
         ## endif
       endfor
@@ -669,7 +674,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       endif
     endfor
   endif
-  nfunctionevaluations += length(phi);
+  nfunctionevaluations = nfunctionevaluations + length(phi);
   debugprint (1, ": phi before removal of infeasible solutions", phi)
   phi = phi(:,phi(nx+1,:)<1e19);
   debugprint (1, ": phi after removal of infeasible solutions", phi)
@@ -951,7 +956,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
         x(x<a) = a(x<a);        # reset boundary
         x(x>b) = b(x>b);        # reset boundary
         ## if strawberry_isdiverse(newpop,x)
-        newpop{n++} = x;
+        newpop{n} = x;
+        n = n + 1;
         debugprint(2, ": added new member to population: ", x)
         ## endif
       endfor
@@ -978,7 +984,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       phi(:,i) = [x;f(x);g(x)];
     end
   end
-  nfunctionevaluations += length(phi);
+  nfunctionevaluations = nfunctionevaluations + length(phi);
   debugprint (1, ": phi before removal of infeasible solutions", phi)
   phi = phi(:,phi(nx+1,:)<1e19);
   debugprint (1, ": phi after removal of infeasible solutions", phi)
