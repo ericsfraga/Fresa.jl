@@ -12,6 +12,9 @@ In the following code, we assume column vectors for decision variables and objec
 All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes.  If the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  The code is made available with no warranty or guarantee of any kind.  Use at own risk.  Some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)) and these are available from the author upon request.
 
 Feedback, including bug reports, is most welcome.
+
+** Code for converting from octave to MATLAB                 :noexport:
+Code for doing this can be found [[file:~/s/research/others/dimitrios.gerogiorgis/modo.org::*Distribution%20of%20code][in the MODO work with Edinburgh]].
 * Version information
 
 Major version log:
@@ -28,7 +31,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.09.02 15:42:08";
+      strawberry_version = "2016.09.02 17:00:24";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -1175,6 +1178,10 @@ The assumption is that Strawberry itself needs no special knowledge to work with
 
 #+results:
 
+* Recent change history
+#+begin_src shell :exports results :results output
+hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10
+#+end_src
 * settings                                                    :noexport:
 ** emacs local variables
 # Local Variables:
