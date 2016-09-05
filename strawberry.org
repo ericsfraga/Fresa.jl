@@ -5,17 +5,17 @@
 * Overview and introduction
 Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in an up-coming publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 
-The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, can be requested but it should be notes that the author prefers to use open source software.  This document, for instance, has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code. In any case, bug reports based on the Octave code will be most welcome.
+The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, can be found here: call_distribution().
+
+All code (either version) is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
+
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  Feedback, including bug reports for either Octave or MATLAB distribution, is most welcome.
 
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
-The code, suitably manipulated to be compatible with MATLAB, can be found here: call_distribution(). All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
-
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  Feedback, including bug reports, is most welcome.
-
 ** Upload to web site                                        :noexport:
 #+begin_src shell :results none :exports none
-  scp strawberry.html strawberry_test3.png socrates.ucl.ac.uk:html.pub
+  scp strawberry.org strawberry.html strawberry_test3.png socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Code for converting from octave to MATLAB                 :noexport:
 #+name: distribution
@@ -52,7 +52,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.09.05 15:50:42";
+      strawberry_version = "2016.09.05 15:57:24";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
