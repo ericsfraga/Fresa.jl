@@ -15,7 +15,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 
 ** Upload to web site                                        :noexport:
 #+begin_src shell :results none :exports none
-  scp strawberry.html socrates.ucl.ac.uk:html.pub
+  scp strawberry.html strawberry_test3.png socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Code for converting from octave to MATLAB                 :noexport:
 #+name: distribution
@@ -52,7 +52,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.09.05 15:29:33";
+      strawberry_version = "2016.09.05 15:33:16";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
