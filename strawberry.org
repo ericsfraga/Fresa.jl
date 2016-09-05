@@ -52,7 +52,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.09.05 15:33:16";
+      strawberry_version = "2016.09.05 15:50:42";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -1209,16 +1209,28 @@ hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10
 #+begin_src emacs-lisp :results none
   (setq-local org-publish-project-alist
               '(("strawberry"
-                 :base-directory #'(pwd)
-                 :publishing-directory "/ssh:socrates.ucl.ac.uk:~/html.pub/"
-                 :include '("strawberry.org")
-                 ))
-              )
+                 :base-directory "~/s/research/strawberry/src"
+                 :publishing-directory "/ssh:socrates.ucl.ac.uk:html.pub/"
+                 :include ("strawberry.org")
+                 :publishing-function org-html-publish-to-html
+                 :html-preamble "<!-- the preamble goes here -->\n"
+                 :html-postamble "<!-- the postamble -->
+  <!-- twitter logo -->
+  <a href=\"http://www.twitter.com/ericsfraga\"><img src=\"http://twitter-badges.s3.amazonaws.com/t_logo-b.png\" alt=\"Follow ericsfraga on Twitter\"/></a>
+  <!-- created with org image and link to org mode -->
+  <a href=\"http://orgmode.org/\"><img src=\"./images/org-mode.png\"></a>
+  <!-- linkedin -->
+  <a href=\"http://uk.linkedin.com/pub/eric-fraga/23/b45/247\"><img src=\"http://www.linkedin.com/img/webpromo/btn_viewmy_120x33.png\" width=\"120\" height=\"33\" border=\"0\" alt=\"View Eric Fraga's profile on LinkedIn\"></a>
+  %a (%e)."
+                 :author "Professor Eric S Fraga"
+                 :email "e.fraga@ucl.ac.uk"
+                 :style "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://orgmode.org/worg/worg.css\" />"
+                 )))
 #+end_src
 ** emacs local variables
-# eval: (esf/execute-startup-block)
 
 # Local Variables:
+# eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
 # time-stamp-format: "%04y.%02m.%02d %02H:%02M:%02S"
 # time-stamp-active: t
