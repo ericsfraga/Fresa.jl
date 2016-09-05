@@ -9,12 +9,33 @@ The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/soft
 
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
-All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes.  If the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  The code is made available with no warranty or guarantee of any kind.  Use at own risk.  Some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)) and these are available from the author upon request.
+The code, suitably manipulated to be compatible with MATLAB, can be found here: call_distribution(). All code is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
 
-Feedback, including bug reports, is most welcome.
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  Feedback, including bug reports, is most welcome.
 
+** Upload to web site                                        :noexport:
+#+begin_src shell :results none :exports none
+  scp strawberry.html socrates.ucl.ac.uk:html.pub
+#+end_src
 ** Code for converting from octave to MATLAB                 :noexport:
-Code for doing this can be found [[file:~/s/research/others/dimitrios.gerogiorgis/modo.org::*Distribution%20of%20code][in the MODO work with Edinburgh]].
+#+name: distribution
+#+begin_src shell :results output raw :exports results
+  dist="strawberry-$(date +%Y%m%d)"
+  mkdir ${dist}
+  for mfile in $(find ${HOME}/synced/share/octave/researchcodes/ -name '*.m') \
+                   $(find ${HOME}/synced/share/octave/strawberry/ -name '*.m')
+  do
+      base=$(basename ${mfile} .m)
+      cat ${mfile} | sed -e 's/#/%/g' -e 's/endfunction/end/' -e 's/endfor/end/' -e 's/endif/end/' > ${dist}/${base}.m
+  done
+  zip -r ${dist}.zip ${dist} > /dev/null 2>&1
+  scp ${dist}.zip socrates.ucl.ac.uk:html.pub/ >/dev/null 2>&1
+  echo "[[file:./${dist}.zip][${dist}.zip]]"
+#+end_src 
+
+#+results: distribution
+[[file:./strawberry-20160905.zip][strawberry-20160905.zip]]
+
 * Version information
 
 Major version log:
@@ -31,7 +52,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = "2016.09.02 17:00:24";
+      strawberry_version = "2016.09.05 15:29:33";
       mosd_initialise
       moga_initialise
       printf (": STRAWBERRY %s, main function\n", strawberry_version)
@@ -1183,7 +1204,20 @@ The assumption is that Strawberry itself needs no special knowledge to work with
 hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10
 #+end_src
 * settings                                                    :noexport:
+** org startup on file visit
+#+name: startup
+#+begin_src emacs-lisp :results none
+  (setq-local org-publish-project-alist
+              '(("strawberry"
+                 :base-directory #'(pwd)
+                 :publishing-directory "/ssh:socrates.ucl.ac.uk:~/html.pub/"
+                 :include '("strawberry.org")
+                 ))
+              )
+#+end_src
 ** emacs local variables
+# eval: (esf/execute-startup-block)
+
 # Local Variables:
 # time-stamp-line-limit: 1000
 # time-stamp-format: "%04y.%02m.%02d %02H:%02M:%02S"
