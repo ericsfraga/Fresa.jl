@@ -159,7 +159,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
         debugprint(1, 'bestfit, bestindex', [bestfit, bestindex])
         best = p(:, bestindex);
       else
-        error('Number of objective functions doesn't seem to match');
+        error('Number of objective functions does not seem to match');
       endif
 
     else        # multi-objective case
@@ -357,7 +357,8 @@ The one modification we have with respect to the standard selection procedure is
     available = N >= 0;
     debugprint (4, 'select, available = ', available)
     na = sum(available);
-    indices = (1:n)(available);
+    allpossibleindices = 1:n;
+    indices = allpossibleindices(available);
     switch na
       case 0
         s = 0;                  #no solutions available.
@@ -1090,7 +1091,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   else
     endtime = cputime;
   endif
-  printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', 
+  printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', ...
          endtime-starttime, nfunctionevaluations, npruned, nsimilar)
   printf('MOSD improvements: %d\n', mosd_numberimproved);
 #+end_src
