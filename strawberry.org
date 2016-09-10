@@ -474,6 +474,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   mosd_numberimproved = 0;
   npruned = 0;
   nsimilar = 0;
+  stderr = 2;                     # for MATLAB compatibility
   warning ('error', 'Octave:broadcast');
   ## process arguments
   constrained = nargin > 10;    # has a constraint function been passed?
