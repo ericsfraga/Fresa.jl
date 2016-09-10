@@ -238,7 +238,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
       diverse = norm(pop{i}-x) > strawberry_diversity_tolerance;
       i = i + 1;
     endwhile
-    if ! diverse, nsimilar = nsimilar + 1; endif
+    if ~ diverse, nsimilar = nsimilar + 1; endif
   endfunction
 #+end_src
 * newpopulation
@@ -318,7 +318,7 @@ Especially for multi-objective problems, we have a problem with diversity in tha
           ## prune one or the other.  ideally, we keep the better
           ## one.  If we cannot distinguish (in a multi-objective
           ## sense), we simply keep the one that is already there. 
-          if ! dominates(pruned(nx+1:nx+nz,j),pop(nx+1:nx+nz,i))
+          if ~ dominates(pruned(nx+1:nx+nz,j),pop(nx+1:nx+nz,i))
             if dominates(pop(nx+1:nx+nz,i),pruned(nx+1:nx+nz,j))
               ## current solution is better, i.e. dominates, than previous
               ## one so replace
@@ -576,7 +576,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     best = pareto;
     bestgen = gen;
     ## zzz = zfit (best (1:nx))
-    if !output
+    if ~output
       printf('\n... new best solution at generation %d, z(1)=%g x=', gen, best(nx+1));
       printf('%g ', best(1:nx));
       printf('\n');
@@ -896,7 +896,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     best = pareto;
     bestgen = gen;
     ## zzz = zfit (best (1:nx))
-    if !output
+    if ~output
       printf('\n... new best solution at generation %d, z(1)=%g x=', gen, best(nx+1));
       printf('%g ', best(1:nx));
       printf('\n');
