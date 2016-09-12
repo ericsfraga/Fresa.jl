@@ -33,15 +33,14 @@ In the following code, we assume column vectors for decision variables and objec
                          -e 's/endswitch/end/' \
                          -e 's/endwhile/end/' \
                          -e 's/ printf/ fprintf/' \
+                         -e 's/^printf/ fprintf/' \
                          > ${dist}/${base}.m
   done
   zip -r ${dist}.zip ${dist} > /dev/null 2>&1
+  rm -r ${dist}
   scp ${dist}.zip socrates.ucl.ac.uk:html.pub/ >/dev/null 2>&1
   echo "[[file:./${dist}.zip][${dist}.zip]]"
 #+end_src 
-
-#+results: distribution
-[[file:./strawberry-20160905.zip][strawberry-20160905.zip]]
 
 * Version information
 
@@ -59,7 +58,7 @@ Major version log:
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.09.05 17:03:14';
+      strawberry_version = '2016.09.12 15:40:24';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -780,7 +779,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   else
     endtime = cputime;
   endif
-  printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', 
+  printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', ...
          endtime-starttime, nfunctionevaluations, npruned, nsimilar)
   printf('MOSD improvements: %d\n', mosd_numberimproved);
   endfunction
