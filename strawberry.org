@@ -214,7 +214,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.14 18:40:03';
+      strawberry_version = '2016.10.14 18:42:53';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -231,8 +231,18 @@ We define default functions for the key steps in the strawberry algorithm:
 - neighbour :: given an existing point in the search space, generate a new solution based on the fitness value (0<f<1 with 1 most fit) given
 These functions allow strawberry to be used for more general problems than just nonlinear programming problems.  The default functions, however, are suitable for compact domains defined by bounds in the R^n.
 #+begin_src octave :tangle strawberry_initialise.m
+  global strawberry_lower
+  global strawberry_neighbourfn
+  global strawberry_randomsolutionfn
+  global strawberry_upper
   if isempty(strawberry_randomsolutionfn)
     strawberry_randomsolutionfn = @strawberry_randomsolution;
+    if isempty(strawberry_lower)
+      error('Default strawberry method requires definition of strawberry_lower global vector');
+    endif
+    if isempty(strawberry_upper)
+      error('Default strawberry method requires definition of strawberry_upper global vector');
+    endif
   endif
   if isempty(strawberry_neighbourfn)
     strawberry_neighbourfn = @strawberry_neighbour;
@@ -348,8 +358,8 @@ Especially for multi-objective problems, we have a problem with diversity in tha
 #+end_src
 * random solution -- generate a new solution in the search space
 By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables.  The default function requires the definition of the lower and upper bounds for the domain.
-#+begin_src octave :tangle strawberry_random
-  function x = strawberry_random()
+#+begin_src octave :tangle strawberry_randomsolution
+  function x = strawberry_randomsolution()
     global strawberry_lower
     global strawberry_upper
     r = rand(length(strawberry_lower),1);
