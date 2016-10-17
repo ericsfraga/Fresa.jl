@@ -214,7 +214,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.15 17:07:46';
+      strawberry_version = '2016.10.17 08:27:10';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -267,6 +267,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
 Given a fitness value and a point in the search space, generate a new point in the space.  The better the fitness, the closer the point should be to the given point.  The basis of the Strawberry algorithm is that fit points generate more points in the local area; less fit points generate fewer new points but further away.  Exploitation versus exploration.
 
 The default implementation uses the fitness to define a distance within the bounds of the variables for each dimension.
+#+name: neighbour
 #+begin_src octave :tangle strawberry_neighbour.m
   function n = strawberry_neighbour(x,f)
     global strawberry_lower strawberry_upper
@@ -275,14 +276,14 @@ The default implementation uses the fitness to define a distance within the boun
     ## fprintf(stderr, 'Selected %d with fitness %g to move %g\n', s, N(s), norm(dx))
     debugprint(3, ': dx', dx(1:nx))
     n = x+dx;
-    n(n<a) = a(n<a);        # reset to boundary
-    n(n>b) = b(n>b);        # reset to boundary
+    n(n<strawberry_lower) = strawberry_lower(n<strawberry_lower);        # reset to boundary
+    n(n>strawberry_upper) = strawberry_upper(n>strawberry_upper);        # reset to boundary
   endfunction
 #+end_src
 * newpopulation
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+begin_src octave :tangle strawberry_newpopulation.m
-  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained,g)
+  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained,g)
     global strawberry_numberofprocessors
     nx = length(x0)
     nf = 0;
@@ -293,8 +294,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     xcell{1} = x0;                        # start with initial guess
 
     for i=2:npop
-      r = rand(nx,1);
-      xcell{i} = a + r.*(b-a);
+      xcell{i} = strawberry_randomsolution();
     endfor
     if strawberry_numberofprocessors > 1
       if constrained 
@@ -374,7 +374,7 @@ Especially for multi-objective problems, we have a problem with diversity in tha
 #+end_src
 * random solution -- generate a new solution in the search space
 By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables.  The default function requires the definition of the lower and upper bounds for the domain.
-#+begin_src octave :tangle strawberry_randomsolution
+#+begin_src octave :tangle strawberry_randomsolution.m
   function x = strawberry_randomsolution()
     global strawberry_lower
     global strawberry_upper
@@ -519,6 +519,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   global nsimilar
   global strawberry_fitness_method
   global strawberry_diversity_tolerance
+  global strawberry_lower strawberry_upper
   mosd_numberimproved = 0;
   npruned = 0;
   nsimilar = 0;
@@ -535,6 +536,8 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
     disp('Error: need at least 4 arguments to Strawberry method: x0, a, b & f.')
     return
   end
+  strawberry_lower = a;
+  strawberry_upper = b;
   if nargin<10, 
     output = ngen/50;
   end             # how often to output status of population
@@ -562,9 +565,9 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
 ** initial population
 #+begin_src octave :noweb yes :tangle strawberry.m
   if constrained
-    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained,g);
+    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained,g);
   else
-    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained);
+    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained);
   endif
   pop = strawberry_sort (phi,nx,nz);
   gen = 0;
@@ -708,16 +711,9 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       nr = strawberry_runners (N(s),nrmax); # number of runners
       debugprint(2,': number of runners', nr)
       for r=1:nr
-        dx = (b-a)/2 .* strawberry_distance (N(s),nx); # how far to run
-        ## fprintf(stderr, 'Selected %d with fitness %g to move %g\n', s, N(s), norm(dx))
-        debugprint(3, ': r and dx', [r; dx(1:nx)])
-        x = pop(1:nx,s)+dx;
-        x(x<a) = a(x<a);        # reset boundary
-        x(x>b) = b(x>b);        # reset boundary
-        ## if strawberry_isdiverse(newpop,x)
-        newpop{n} = x;
+        newpop{n} = strawberry_neighbour(pop(1:nx,s), N(s));
+        debugprint(2, ': added new member to population: ', newpop{n})
         n = n + 1;
-        debugprint(2, ': added new member to population: ', x)
         ## endif
       endfor
       ## set fitness so this member is not selected again
