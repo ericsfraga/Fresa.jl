@@ -214,7 +214,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.17 08:27:10';
+      strawberry_version = '2016.10.18 07:41:42';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -227,7 +227,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     endif
 #+end_src
 We define default functions for the key steps in the strawberry algorithm:
-- new solution :: generate a random solution in the search space
+- new random solution :: generate a random solution in the search space
 - neighbour :: given an existing point in the search space, generate a new solution based on the fitness value (0<f<1 with 1 most fit) given
 These functions allow strawberry to be used for more general problems than just nonlinear programming problems.  The default functions, however, are suitable for compact domains defined by bounds in the R^n.
 #+begin_src octave :tangle strawberry_initialise.m
@@ -237,6 +237,7 @@ These functions allow strawberry to be used for more general problems than just 
   global strawberry_upper
   if isempty(strawberry_randomsolutionfn)
     strawberry_randomsolutionfn = @strawberry_randomsolution;
+    printf (': using default random solution generator function.\n');
     if isempty(strawberry_lower)
       error('Default strawberry method requires definition of strawberry_lower global vector');
     endif
@@ -246,6 +247,7 @@ These functions allow strawberry to be used for more general problems than just 
   endif
   if isempty(strawberry_neighbourfn)
     strawberry_neighbourfn = @strawberry_neighbour;
+    printf (': using default neighbouring solution generator function.\n')
   endif
 #+end_src
 * isdiverse
@@ -545,6 +547,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
     strawberry_fitness_method = 1;  #choose MOGA fitness for now
   end
   strawberry_diversity_tolerance = norm(b-a) / 1000;
+  strawberry_initialise
   printf(': ngen=%d npop=%d nrmax=%d ns=%d population strategy=%d and tolerance=%f fitness method=%d\n', ngen, npop, nrmax, ns, population_strategy, strawberry_diversity_tolerance, strawberry_fitness_method)
 
   ## determine the number of processors to use in parallel.  If the
