@@ -214,7 +214,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.18 07:41:42';
+      strawberry_version = '2016.10.18 07:47:41';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -286,6 +286,7 @@ The default implementation uses the fitness to define a distance within the boun
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+begin_src octave :tangle strawberry_newpopulation.m
   function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained,g)
+    global strawberry_randomsolutionfn
     global strawberry_numberofprocessors
     nx = length(x0)
     nf = 0;
@@ -296,7 +297,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     xcell{1} = x0;                        # start with initial guess
 
     for i=2:npop
-      xcell{i} = strawberry_randomsolution();
+      xcell{i} = strawberry_randomsolutionfn();
     endfor
     if strawberry_numberofprocessors > 1
       if constrained 
@@ -522,6 +523,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   global strawberry_fitness_method
   global strawberry_diversity_tolerance
   global strawberry_lower strawberry_upper
+  global strawberry_neighbourfn 
   mosd_numberimproved = 0;
   npruned = 0;
   nsimilar = 0;
@@ -714,7 +716,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       nr = strawberry_runners (N(s),nrmax); # number of runners
       debugprint(2,': number of runners', nr)
       for r=1:nr
-        newpop{n} = strawberry_neighbour(pop(1:nx,s), N(s));
+        newpop{n} = strawberry_neighbourfn(pop(1:nx,s), N(s));
         debugprint(2, ': added new member to population: ', newpop{n})
         n = n + 1;
         ## endif
