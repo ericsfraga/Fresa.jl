@@ -31,6 +31,7 @@ In the following code, we assume column vectors for decision variables and objec
                          -e 's/endfor/end/' \
                          -e 's/endif/end/' \
                          -e 's/endswitch/end/' \
+                         -e 's/end_try_catch/end/' \
                          -e 's/endwhile/end/' \
                          -e 's/ printf/ fprintf/' \
                          -e 's/^printf/ fprintf/' \
@@ -214,7 +215,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.18 07:47:41';
+      strawberry_version = '2016.10.24 16:54:21';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -285,7 +286,7 @@ The default implementation uses the fitness to define a distance within the boun
 * newpopulation
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+begin_src octave :tangle strawberry_newpopulation.m
-  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained,g)
+  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained)
     global strawberry_randomsolutionfn
     global strawberry_numberofprocessors
     nx = length(x0)
@@ -300,37 +301,48 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
       xcell{i} = strawberry_randomsolutionfn();
     endfor
     if strawberry_numberofprocessors > 1
-      if constrained 
-        pop = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); g(x)], xcell, 'VerboseLevel', 0);
-      else 
-        pop = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); 0], xcell, 'VerboseLevel', 0);
-      endif 
-    else
+      if constrained
+        pop = parcellfun (strawberry_numberofprocessors,
+                          @(x) [x; f(x); g(x)], xcell, 'VerboseLevel', 0
+                         );
+      else
+        pop = parcellfun (strawberry_numberofprocessors,
+                          @(x) [x; f(x); 0], xcell, 'VerboseLevel', 0);
+      endif
+    else                          #sequential operation
       x = xcell{1};
       if constrained
-        y = [x; f(x); g(x)];
+        [z g] = f(x);
       else
-        y = [x; f(x); 0];
-      endif 
+        z = f(x);
+        g = 0;
+      endif
+      y = [x; z; g];
       pop = zeros(length(y),npop);
       pop(:,1) = y;
       for i=2:npop
         x = xcell{i};
+        nf = nf+1;
         if constrained
-          pop(:,i) = [x; f(x); g(x)];
+          [z g] = f(x);
         else
-          pop(:,i) = [x; f(x); 0];
+          z = f(x);
+          g = 0;
         endif
+        pop(:,i) = [x; z; g];
       endfor
       ## pop = cellfun (@(x) [x; f(x); 0], xcell);
     endif
+    mtotal = size(pop,2);
     if constrained
       pop = pop(:,pop(end,:) <= 0);
     else
       pop = pop(:,pop(nx+1,:)<1e19)
     endif
     [n m] = size(pop);
-    ## each row consists of nx x values, nz y values and a feasibility indication
+    ninf = ninf + mtotal - m;
+    ## each row consists of nx x values, nz y values and a feasibility
+    ## indication
     nz = n-nx-1
   endfunction
 #+end_src
@@ -467,6 +479,9 @@ For single criterion problems, we sort the population in order of decreasing fit
   endfunction
 #+end_src
 * strawberry
+:PROPERTIES:
+:header-args: :tangle "strawberry.m"
+:END:
 The algorithm is *evolutionary*, iterating over a number of generations.  In each generation, the solutions are ranked according to the objective function values.  In each generation, a number are selected for *propagation*.  Each solution can propagate itself a number of times and a certain distance with both aspects being a function of the solution's fitness.  The best solutions propagate more but for shorter distances to exploit the quality of the solution, i.e. a /local/ search; the not so good solutions propagate less but further to explore the domain, i.e. a /global/ search.
 
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
@@ -481,7 +496,7 @@ The function has the following arguments:
 - x0 :: initial member of the population of solutions
 - a :: lower bounds on all variables
 - b :: upper bounds for all variables
-- f :: handle for the objective function which has signature ~z = f(x)~.
+- f :: handle for the objective function which has signature ~[z g] = f(x)~ where ~g~ is optional and represents the constraints.  If ~g~ is present, the problem is assumed to be constrained and feasible points are those for which ~g~ is 0 (false); infeasible points are those with a value of 1 (true).  It should be noted that any objective function value of 10^{20} is assumed to indicate an infeasible point even if there is no ~g~. 
 - ngen :: one of the stopping criteria: maximum number of generations of plant propagation to allow
 - npop :: the base number in the population.  The actual number will be larger, depending on the value of ~nrmax~.  ~npop~ decides how many plants actually propagate but the number of new solutions depends on the fitness of those chosen to propagate and the maximum number of runners allowed, ~nrmax~.
 - nrmax :: the maximum number of runners to create for any solution if chosen to propagate.
@@ -493,8 +508,6 @@ The function has the following arguments:
   3. the /best/ from the current population, where /best/ will be a single solution for single objective optimisation and a set of /non-dominated/ solutions for multi-objective optimisation.
   4. union of the /best/, the /selected/ and the /new/ solutions.
 - output :: An integer indicating how often to output statistics about the search.
-- g :: The function handle for the constraints, if any.  This function, with signature ~p = g(x)~, is expected to return a 0 value if the point ~x~ is feasible and a positive value otherwise.  The positive value could be a measure of the infeasibility and could be used in fitness evaluation (e.g. for identifying non-dominated solutions if all are unfeasible).
-
 
 In all of the above, vectors (solutions and objective function values for multi-objective optimisation) are column vectors.
 
@@ -507,7 +520,7 @@ Only the first four arguments, ~x0~, ~a~, ~b~ and ~f~, are required.  The rest a
 | population_strategy |       4 |
 | output              | ngen/50 |
 |---------------------+---------|
-There is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  The code does assume that a value of the objective function(s) of 10^{20} is an infeasible solution.
+There is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  
 *** Return values
 The function returns the best point found, ~x~, with associated objective function values, ~z~.  It also returns information on the search:
 - ~nf~ :: number of objective function evaluations.
@@ -530,7 +543,6 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
   stderr = 2;                     # for MATLAB compatibility
   warning ('error', 'Octave:broadcast');
   ## process arguments
-  constrained = nargin > 10;    # has a constraint function been passed?
   if nargin<9, population_strategy = 4; end # population selection strategy
   if nargin<8, ns = 100; end    # number of stable generations
   if nargin<7, nrmax = 5; end   # number of runners
@@ -567,13 +579,25 @@ For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associ
     starttime = cputime;
   endif
 #+end_src
+** constrained problem?
+Determine whether the objective function also has information on feasibility.
+#+begin_src octave
+  constrained = 1;
+  try
+    [z g] = f(x0);
+  catch err
+    if (strcmp (err.identifier, 'Octave:undefined-function') || strcmp(err.id,'MATLAB:UndefinedFunction'))
+      printf(': objective function is unconstrained.\n')
+      constrained = 0;
+    endif
+  end_try_catch
+  if constrained
+    printf(': objective function is constrained.\n');
+  endif
+#+end_src
 ** initial population
 #+begin_src octave :noweb yes :tangle strawberry.m
-  if constrained
-    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained,g);
-  else
-    [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained);
-  endif
+  [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained);
   pop = strawberry_sort (phi,nx,nz);
   gen = 0;
 
@@ -737,29 +761,39 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     else
       phi = parcellfun (strawberry_numberofprocessors, @(x) [x; f(x); 0], newpop, 'VerboseLevel', 0);
     endif
-  else
+  else                            #sequential evaluation
     n = length(newpop);
     x = newpop{1};
-    y = f(x);
-    phi = zeros(length(x)+length(y)+1,n);
     if constrained
-      phi(:,1) = [x;y;g(x)];
+      [y g] = f(x);
     else
-      phi(:,1) = [x;y;0];
+      y = f(x);
+      g = 0;
     endif
+    phi = zeros(length(x)+length(y)+1,n);
+    phi(:,1) = [x;y;g];
     for i=2:n
       x = newpop{i};
+      nf = nf + 1;
       if constrained
-        phi(:,i) = [x;f(x);g(x)];
+        [y g] = f(x);
       else
-        phi(:,i) = [x;f(x);0];
+        y = f(x);
+        g = 0;
       endif
+      phi(:,i) = [x;y;g];
     endfor
   endif
   nfunctionevaluations = nfunctionevaluations + length(phi);
   debugprint (1, ': phi before removal of infeasible solutions', phi)
-  phi = phi(:,phi(nx+1,:)<1e19);
+  ntotal = size(phi,2);
+  if constrained
+    phi = phi(:,phi(end,:) <= 0);
+  else
+    phi = phi(:,phi(nx+1,:)<1e19);
+  endif
   debugprint (1, ': phi after removal of infeasible solutions', phi)
+  ninf = ninf + ntotal - size(phi,2);
 #+end_src
 *** COMMENT apply local search
 #+begin_src octave :noweb yes :tangle strawberry.m
@@ -1222,40 +1256,65 @@ This is simple test of three criteria.  The results can be seen in the following
     paretoset = paretoset(:,indices)
     plot3(paretoset(1,:),paretoset(2,:), paretoset(3,:),'- r',z(1,:),z(2,:), z(3,:),' *g')
 #+end_src
-** testing the use of a mapping for mixed integer problems
-The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]].
+** testing the use of alternative random solutions and neighbour generation for mixed integer problems
+The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]].  This test case exercises three elements:
+1. the random generation of solutions in the search space
+2. the generation of neighbouring solutions
+3. the use of constraints
+*** helper functions for solution generation
+We need to define two functions:
+
+1. generate a random solution in the search space
+   #+begin_src octave :tangle mitestrandom.m
+     function x = mitestrandom()
+       x = [ 1+5*rand()
+             1+round(6*rand()-0.5)];
+       x(x>6) = 6;
+     endfunction
+   #+end_src
+2. generate a neighbouring solution based on the fitness
+   #+begin_src octave :tangle mitestneighbour.m
+     function x = mitestneighbour(x0,f)
+       x = x0 + (1-f)*(rand(length(x0),1)-0.5)*5;
+       x(2) = round(x(2));
+       x(x<1) = 1;
+       x(x>6) = 6;
+     endfunction
+   #+end_src
+*** the actual problem and solution method
+The objective function and constraints are defined in a single Octave function.  The value of the objective function is simple; there are three constraints, all meant to be less than or equal to 0.  ~g~ will be true if any of the constraints are violated.
+#+begin_src octave :tangle "mitestf.m"
+  function [f g] = mitestf(x)
+    f = 3*x(2)-5*x(1);
+    g = any([ 2*x(2) + 3*x(1) - 24;
+              3*x(1) - 2*x(2) - 8;
+              2*x(2)^2 - 2*sqrt(x(2)) + 11*x(2) + 8*x(1) - 39 - 2*sqrt(x(1))*x(2)^2 ]
+            > 0);
+  endfunction
+#+end_src
+
+Strawberry is used on this objective function within a simple rectangle domain.
+
 #+begin_src octave :results output :tangle "mitest.m"
   global esfdebug
   esfdebug = 0
   global strawberry_numberofprocessors
   strawberry_numberofprocessors = 1;
-  f = @(x) 3*round(x(2))-5*x(1);
-  ## define the inequality contraints. this is a set of equations
-  ## where the last expression should evaluate to a vector of
-  ## values. A feasible point is one for which all the values in this
-  ## vector are non-positive.
-  g = @(x) any([ 2*round(x(2)) + 3*x(1) - 24;
-             3*x(1) - 2*round(x(2)) - 8;
-             2*round(x(2))^2 - 2*sqrt(round(x(2))) + 11*round(x(2)) + 8*x(1) - 39 - 2*sqrt(x(1))*round(x(2))^2 ] > 0);
+  global strawberry_randomsolutionfn
+  strawberry_randomsolutionfn = @mitestrandom;
+  global strawberry_neighbourfn
+  strawberry_neighbourfn = @mitestneighbour;
   a = [1;1];
   b = [6;6];
-  ## results = [];
-  ## for i = 1:20
-  ##   x = a + rand(1,2).*(b-a);
-  ##   results = [results ; x, f(x), g(x)];
-  ## endfor
-  ## results
-  x0 = [4;1.32];
+  x0 = [4;1];
   ngen = 100;
   npop = 10;
   nrmax = 5;
   ns = 1000;                       #number of stable generations
   population_strategy = 4;
   output = 10;
-  [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
+  [x y nf ninf bestgen] = strawberry(x0, a, b, @mitestf, ngen, npop, nrmax, ns, population_strategy, output)
 #+end_src 
-
-#+results:
 
 * Recent change history
 #+begin_src shell :exports results :results output
