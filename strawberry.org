@@ -586,7 +586,7 @@ Determine whether the objective function also has information on feasibility.
   try
     [z g] = f(x0);
   catch err
-    if (strcmp (err.identifier, 'Octave:undefined-function') || strcmp(err.id,'MATLAB:UndefinedFunction'))
+    if (strcmp (err.identifier, 'Octave:undefined-function') || strcmp(err.identifier,'MATLAB:UndefinedFunction'))
       printf(': objective function is unconstrained.\n')
       constrained = 0;
     endif
