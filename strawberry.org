@@ -66,7 +66,7 @@ Major version log:
 - [ ] consider resource availability.  I wrote this after the EGH 2015 meeting and I am not sure exactly what I meant but it could be that we shouldn't allow too many solutions in the same place so maybe some form of diversity control?  not sure.
 - [ ] consider killing plants off after a certain number of generations, but keeping an overall /best/ solution record to ensure we don't lose the best solution found overall.  In terms of multi-objective optimisation, this may mean keeping an elite set of non-dominated solutions.
 - [ ] can we make the code available externally, e.g. on a web site?  If so, we need to bring in the MOGA codes into this code base.  This may not be a bad idea in any case but it does limit code re-use.
-* strawberry
+* strawberry -- the main function for the package
 :PROPERTIES:
 :header-args: :tangle "strawberry.m"
 :END:
@@ -471,7 +471,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   printf('MOSD improvements: %d\n', mosd_numberimproved);
   endfunction
 #+end_src
-* distance
+* distance -- the default distance function for real valued compact search domains
 The distance method determines how far to send a runner.  The first argument is the fitness, \(f \in [0,1]\), and the second is the dimension of the problem, \(n>0\), i.e. the number of decision variables.  
 
 The basic premise is that the fitter the solution, the less far runners are sent as there is plenty of /food/ in this local neighbourhood.  A less fit point will send runners further.
@@ -480,7 +480,7 @@ The basic premise is that the fitter the solution, the less far runners are sent
     d = (1-f) * 2*(rand(n,1)-0.5);
   endfunction
 #+end_src
-* fitness
+* fitness -- compute fitness of solutions, both single and multiple criteria
 
 The fitness of the members in the population is calculated differently for 1 criterion problems and multi-criteria problems.  The former is based on a scaled value within the range of values for feasible and infeasible solutions separately.
 
@@ -625,7 +625,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.01 19:16:44';
+      strawberry_version = '2016.11.01 19:24:29';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -661,7 +661,7 @@ These functions allow strawberry to be used for more general problems than just 
     printf (': using default neighbouring solution generator function.\n')
   endif
 #+end_src
-* isdiverse
+* isdiverse -- identify solutions which are sufficiently different
 We only want to add solutions to the population that are diverse, i.e. significantly different, from those that are already there.  However, the diversity control should not be at the expense of losing better solutions.  The current implementation is not good in this respect and should be used with care as a result.
 #+begin_src octave :tangle strawberry_isdiverse.m
   function diverse = strawberry_isdiverse (pop, x)
@@ -676,7 +676,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
     if ~ diverse, nsimilar = nsimilar + 1; endif
   endfunction
 #+end_src
-* neighbour -- generate a neighbouring (fitness dependent) solution
+* neighbour -- default function (compact real valued domain) to generate a neighbouring (fitness dependent) solution
 Given a fitness value and a point in the search space, generate a new point in the space.  The better the fitness, the closer the point should be to the given point.  The basis of the Strawberry algorithm is that fit points generate more points in the local area; less fit points generate fewer new points but further away.  Exploitation versus exploration.
 
 The default implementation uses the fitness to define a distance within the bounds of the variables for each dimension.
@@ -693,7 +693,7 @@ The default implementation uses the fitness to define a distance within the boun
     n(n>strawberry_upper) = strawberry_upper(n>strawberry_upper);        # reset to boundary
   endfunction
 #+end_src
-* newpopulation
+* newpopulation -- create an initial population
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+begin_src octave :tangle strawberry_newpopulation.m
   function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained)
@@ -756,7 +756,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     nz = n-nx-1
   endfunction
 #+end_src
-* prune
+* prune -- remove non-diverse members of the population to avoid stagnation
 Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an *elite* set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
 #+begin_src octave :tangle strawberry_prune.m
   function pruned = strawberry_prune (pop, nx, nz)
@@ -807,7 +807,7 @@ By default, this function returns a random solution in a compact hypercube domai
     x = strawberry_lower + r.*(strawberry_upper-strawberry_lower);
   endfunction
 #+end_src
-* runners
+* runners -- calculate number of runners to generate as a function of fitness
 Two aspects define a plant propagation algorithm: the distance for the runners to propagate and the number of such runners that are generated.  This function addresses the latter.  The better the solution, defined by the fitness \(N\), the more runners should be generated.  The actual number of runners is \(\in [1,N_{r,max}]\) and is randomly generated.
 
 #+begin_src octave :tangle strawberry_runners.m
@@ -818,7 +818,7 @@ Two aspects define a plant propagation algorithm: the distance for the runners t
     debugprint (4, ':runners N r runners max', [N, r, nr, nrmax])
   endfunction
 #+end_src
-* select
+* select -- tournament fitness based selection
 Selection from the current population, for propagation of runners, is based on a sample size 2 *tournament* selection.  This could be generalised to have a greater number of individuals selected for a tournament, emphasising the most fit solutions.  Other selection approaches could of course be used instead.  Our experience is that this simple selection procedure is effective in balancing the global and local search aspects of a plant propagation algorithm.
 
 The one modification we have with respect to the standard selection procedure is that we only select from those individuals that have not already been selected in the current generation.
@@ -860,7 +860,7 @@ The one modification we have with respect to the standard selection procedure is
     endif
   endfunction
 #+end_src
-* sort
+* sort -- for single criterion problems
 For single criterion problems, we sort the population in order of decreasing fitness.  This is purely for the purpose of output and could be removed entirely.
 #+begin_src octave :tangle strawberry_sort.m
   function pop = strawberry_sort (pop,nx,nz)
@@ -889,6 +889,7 @@ For single criterion problems, we sort the population in order of decreasing fit
   endfunction
 #+end_src
 * tests
+#+toc: headlines 2 local
 ** general bicriteria test
 #+begin_src octave :tangle no
 strawberry_test
