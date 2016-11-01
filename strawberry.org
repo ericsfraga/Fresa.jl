@@ -2,6 +2,14 @@
 #+title: Strawberry plant propagation algorithm
 #+options: num:nil ^:nil
 
+|        |                               |
+| *Author* | {{{author}}} ({{{email}}})    |
+| *Date*   | {{{time(%Y-%m-%d %H:%M:%S)}}} |
+|        |                               |
+
+#+options: toc:nil
+#+toc: headlines 1
+
 * Overview and introduction
 Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in an up-coming publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 
@@ -215,7 +223,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.10.24 16:54:21';
+      strawberry_version = '2016.11.01 19:05:04';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -482,6 +490,7 @@ For single criterion problems, we sort the population in order of decreasing fit
 :PROPERTIES:
 :header-args: :tangle "strawberry.m"
 :END:
+#+toc: headlines 1 local
 The algorithm is *evolutionary*, iterating over a number of generations.  In each generation, the solutions are ranked according to the objective function values.  In each generation, a number are selected for *propagation*.  Each solution can propagate itself a number of times and a certain distance with both aspects being a function of the solution's fitness.  The best solutions propagate more but for shorter distances to exploit the quality of the solution, i.e. a /local/ search; the not so good solutions propagate less but further to explore the domain, i.e. a /global/ search.
 
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
@@ -586,9 +595,14 @@ Determine whether the objective function also has information on feasibility.
   try
     [z g] = f(x0);
   catch err
+    printf('Error identifier is %s\n', err.identifier);
+    printf('Error message is %s\n', err.message);
     if (strcmp (err.identifier, 'Octave:undefined-function') || strcmp(err.identifier,'MATLAB:UndefinedFunction'))
       printf(': objective function is unconstrained.\n')
       constrained = 0;
+    else
+      ## not an error we expected to pass this on
+      rethrow(err);
     endif
   end_try_catch
   if constrained
@@ -614,7 +628,11 @@ Determine whether the objective function also has information on feasibility.
     if nz > 1
       for i=1:nz, printf(' %6sz%02d |', '', i); endfor
     else
-      for i=1:nx; printf(' %6sx%02d |', '', i); endfor
+      index = nx;
+      if nx > 4
+        index = 4;
+      endif
+      for i=1:index; printf(' %6sx%02d |', '', i); endfor
       for i=1:nz; printf(' %6sy%02d |', '', i); endfor
       if constrained; printf(' %9s |', 'c'); endif
     endif
@@ -689,7 +707,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
 #+end_src
 *** output statistics if desired
 #+begin_src octave :noweb yes :tangle strawberry.m
-  if 0 == mod(gen,output)
+  if 0 == mod(gen,output) || 1 == gen
     if strawberry_numberofprocessors > 1
       dtime = time-starttime;
     else
@@ -701,7 +719,12 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       printf (' %9.3g |', min(best(nx+1:nx+nz,:),[],2))
       printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, bestgen);
     else
-      printf (' %9.3g |', best(1:nx+nz))
+      if nx > 5
+        indices = [1:4 nx+nz];
+      else
+        indices = 1:nx+nz;
+      endif
+      printf (' %9.3g |', best(indices))
       if constrained; printf(' %9.3g |', best(nx+nz+1)); endif
       printf(' %8d | %8.1f | %8d |', nfunctionevaluations, dtime, bestgen);
     endif
@@ -852,7 +875,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   endif
   if output
     printf('Strawberry: at end, nf=%d ninf=%d best solution:\n', nf, ninf)
-    disp(best);
+    disp(best');
   endif
   ## ensure the best solution is returned
   pop = [best, pop];
