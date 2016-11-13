@@ -494,6 +494,7 @@ For multi-objective problems, we have a number of options.  We can use the appro
 
 To accomplish the latter, we consider a ranking that takes into account how good each individual objective value is within its own set of values.  If we consider a fitness 1,... for each point for each objective, and then multiply these two ranking values together, this should emphasise the end-points.  The multiplication of vectors of rankings in known as the [[https://en.wikipedia.org/wiki/Hadamard_product_(matrices)][Hadamard]] product.
 
+#+name: fitness
 #+begin_src octave :tangle strawberry_fitness.m
   function [fit, best] = strawberry_fitness(p,nx,nz,npop)
     global strawberry_fitness_method 
@@ -631,7 +632,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.11 08:39:48';
+      strawberry_version = '2016.11.13 18:10:09';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -702,6 +703,7 @@ The default implementation uses the fitness to define a distance within the boun
 #+end_src
 * newpopulation -- create an initial population
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
+#+name: newpopulation
 #+begin_src octave :tangle strawberry_newpopulation.m
   function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained)
     global strawberry_randomsolutionfn
@@ -751,11 +753,6 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
       ## pop = cellfun (@(x) [x; f(x); 0], xcell);
     endif
     mtotal = size(pop,2);
-    if constrained
-      pop = pop(:,pop(end,:) <= 0);
-    else
-      pop = pop(:,pop(nx+1,:)<1e19)
-    endif
     [n m] = size(pop);
     ninf = ninf + mtotal - m;
     ## each row consists of nx x values, nz y values and a feasibility
