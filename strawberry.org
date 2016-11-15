@@ -130,7 +130,7 @@ The function returns the best point found, ~x~, with associated objective functi
 - ~nf~ :: number of objective function evaluations.
 - ~ninf~ :: number of infeasible function evaluations.
 - ~bestgen~ :: the generation in which the best solution, ~<x,z>~, was obtained.
-For multi-objective optimisation, ~x~ and ~z~ will be a set of points and associated objective function values.
+For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pareto front defined by a set of /non-dominated/ points and associated objective function values.
 ** initialisation
 #+begin_src octave :noweb yes :tangle strawberry.m
   global esfdebug
@@ -641,7 +641,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.15 19:48:05';
+      strawberry_version = '2016.11.15 19:50:30';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
