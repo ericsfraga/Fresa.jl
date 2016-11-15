@@ -1,10 +1,9 @@
 #+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
 #+title: Strawberry plant propagation algorithm
-#+options: num:nil ^:nil toc:nil
+#+options: num:nil ^:nil toc:nil tex:imagemagick
 
-| *Author*        | {{{author}}} ({{{email}}})    |
-| *Date*          | {{{time(%Y-%m-%d %H:%M:%S)}}} |
-| *Last revision* | {{{modification-time}}}       |
+| *Author*        | {{{author}}} ({{{email}}})                   |
+| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
 
 #+toc: headlines 1
 
@@ -83,16 +82,25 @@ The algorithm is *evolutionary*, iterating over a number of generations.  In eac
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
 
 All of the following ~src~ blocks will be *tangled* to the same [[file:strawberry.m][strawberry.m]] file.
+
+The default /distance/ and /neighbour/ functions are suitable for using Strawberry to solve this problem:
+\begin{align*}
+  && \min_{x\in\cal{D}} z & = f(x) \\
+  \mbox{where} && \cal{D} & \equiv [a,b]^n \subset {\cal{R}}^{n} \\
+  \mbox{subject to} &&  g(x) & \le 0
+\end{align*} 
 ** function definition
 #+begin_src octave :noweb yes :tangle strawberry.m
-  function [x z nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
+  function [x z nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output)
 #+end_src
 *** Arguments
 The function has the following arguments:
 - x0 :: initial member of the population of solutions
 - a :: lower bounds on all variables
 - b :: upper bounds for all variables
-- f :: handle for the objective function which has signature ~[z g] = f(x)~ where ~z~ is a vector of objective function values and ~g~ indicates whether a solution is feasible (~g == 0)~ or infeasible (~g > 0~).  The actual value of ~g~ for infeasible solutions is currently not considered but could, in the future, be used to rank solutions based on how infeasible they may be.  Therefore, it is good practice to have the value be a measure of constraint violation if you wish your code to be future proofed.  If your objective function is unconstrained, simply ensure that ~0~ is returned as the second entry in the return list.
+- f :: handle for the objective function which has signature
+     : [z g] = f(x)
+     where ~z~ is a vector of objective function values and ~g~ indicates whether a solution is feasible (~g == 0)~ or infeasible (~g > 0~).  The actual value of ~g~ for infeasible solutions is currently not considered but could, in the future, be used to rank solutions based on how infeasible they may be.  Therefore, it is good practice to have the value be a measure of constraint violation if you wish your code to be future proofed.  If your objective function is unconstrained, simply ensure that ~0~ is returned as the second entry in the return list.
 - ngen :: one of the stopping criteria: maximum number of generations of plant propagation to allow
 - npop :: the base number in the population.  The actual number will be larger, depending on the value of ~nrmax~.  ~npop~ decides how many plants actually propagate but the number of new solutions depends on the fitness of those chosen to propagate and the maximum number of runners allowed, ~nrmax~.
 - nrmax :: the maximum number of runners to create for any solution if chosen to propagate.
@@ -633,7 +641,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.15 15:50:05';
+      strawberry_version = '2016.11.15 19:48:05';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
