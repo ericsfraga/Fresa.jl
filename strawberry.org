@@ -53,6 +53,7 @@ In the following code, we assume column vectors for decision variables and objec
 
 Major version log:
 
+- November 2016 :: change of interface to Strawberry: the objective function must now return not only the objective function values (first entry in return list) but also the feasibility of the point in the search space (as second entry).
 - July 2016 :: multi-objective version extended to work for any number of criteria instead of just 2.
 - October 2015 :: started work on a MI-Strawberry version, hopefully as upwards compatible as possible.
 - September 2015 :: implemented a rank based fitness, used to prepare results in [[file:~/synced/research/multiobjective.optimisation/strawberry/paper.pdf][the paper on understanding the impacts of constraints]].  There is now a choice of fitness functions as the old, Pareto based, fitness function is still available (cf. Deb (2000) for an example).
@@ -91,7 +92,7 @@ The function has the following arguments:
 - x0 :: initial member of the population of solutions
 - a :: lower bounds on all variables
 - b :: upper bounds for all variables
-- f :: handle for the objective function which has signature ~[z g] = f(x)~ where ~g~ is optional and represents the constraints.  If ~g~ is present, the problem is assumed to be constrained and feasible points are those for which ~g~ is 0 (false); infeasible points are those with a value of 1 (true).  It should be noted that any objective function value of 10^{20} is assumed to indicate an infeasible point even if there is no ~g~. 
+- f :: handle for the objective function which has signature ~[z g] = f(x)~ where ~z~ is a vector of objective function values and ~g~ indicates whether a solution is feasible (~g == 0)~ or infeasible (~g > 0~).  The actual value of ~g~ for infeasible solutions is currently not considered but could, in the future, be used to rank solutions based on how infeasible they may be.  Therefore, it is good practice to have the value be a measure of constraint violation if you wish your code to be future proofed.  If your objective function is unconstrained, simply ensure that ~0~ is returned as the second entry in the return list.
 - ngen :: one of the stopping criteria: maximum number of generations of plant propagation to allow
 - npop :: the base number in the population.  The actual number will be larger, depending on the value of ~nrmax~.  ~npop~ decides how many plants actually propagate but the number of new solutions depends on the fitness of those chosen to propagate and the maximum number of runners allowed, ~nrmax~.
 - nrmax :: the maximum number of runners to create for any solution if chosen to propagate.
@@ -115,7 +116,7 @@ Only the first four arguments, ~x0~, ~a~, ~b~ and ~f~, are required.  The rest a
 | population_strategy |       4 |
 | output              | ngen/50 |
 |---------------------+---------|
-There is no default for ~g~.  If present, it is used; if not, the problem is assumed to be unconstrained although the objective function could be defined to include a penalty function.  
+
 *** Return values
 The function returns the best point found, ~x~, with associated objective function values, ~z~.  It also returns information on the search:
 - ~nf~ :: number of objective function evaluations.
@@ -312,7 +313,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       endif
       printf (' %9.3g |', best(indices))
       if constrained; printf(' %9.3g |', best(nx+nz+1)); endif
-      printf(' %8d | %8.1f | %8d |', nfunctionevaluations, dtime, bestgen);
+      printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, bestgen);
     endif
     printf('  \n');
   else
@@ -632,7 +633,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.13 18:10:09';
+      strawberry_version = '2016.11.15 15:50:05';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
