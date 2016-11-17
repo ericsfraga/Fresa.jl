@@ -20,7 +20,7 @@ In the following code, we assume column vectors for decision variables and objec
 
 ** Upload to web site                                        :noexport:
 #+begin_src shell :results none :exports none
-  scp strawberry.org strawberry.html strawberry_test3.png socrates.ucl.ac.uk:html.pub
+  scp -r strawberry.org strawberry.html strawberry_test3.png ltximg socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Code for converting from octave to MATLAB                 :noexport:
 #+name: distribution
@@ -47,6 +47,9 @@ In the following code, we assume column vectors for decision variables and objec
   scp ${dist}.zip socrates.ucl.ac.uk:html.pub/ >/dev/null 2>&1
   echo "[[file:./${dist}.zip][${dist}.zip]]"
 #+end_src 
+
+#+results: distribution
+[[file:./strawberry-20161116.zip][strawberry-20161116.zip]]
 
 * Version information
 
@@ -641,7 +644,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.15 19:50:30';
+      strawberry_version = '2016.11.16 11:20:02';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -933,6 +936,7 @@ strawberry_test
 ** three criteria test
 This is simple test of three criteria.  The results can be seen in the following plot which shows the solutions in the Pareto set at the end.
 
+#+name: test3criteriaplot
 #+begin_src gnuplot :results file :export results :file "strawberry_test3.png"
   reset
   unset key
@@ -950,9 +954,10 @@ This is simple test of three criteria.  The results can be seen in the following
   splot 'strawberry_test3.data' with impulses
 #+end_src 
 
-#+results:
+#+results: test3criteriaplot
 [[file:strawberry_test3.png]]
 
+#+name: test3criteria
 #+begin_src octave :tangle strawberry_test3.m
   function [x z paretoset] = strawberry_test3
     global esfdebug
