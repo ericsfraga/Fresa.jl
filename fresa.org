@@ -37,26 +37,73 @@ Major version log:
 
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 * TODO [0/0] improvements or bugs                            :noexport:
-* Fresa -- a module
+* Fresa
 :PROPERTIES:
 :header-args: :tangle "Fresa.jl"
 :END:
 #+toc: headlines 2 local
-
+** start of module
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.17 10:33:03"
+  version = "2016.11.17 14:22:04"
   function __init__()
       println("Fresa PPA $version")
   end
 #+end_src
+** variables
+#+name: variables
+#+begin_src julia
+  a = 0
+  b = 1
+  mosd_numberimproved = 0
+  npruned = 0
+  nsimilar = 0
+  population_strategy = 4
+  ns = 100
+  nrmax = 5
+  npop = 100
+  ngen = 1000
+#+end_src 
+** neighbour -- default for real valued decision vectors
+#+name: neighbour
+#+begin_src julia
+  function neighbour(x,f)
+      n = x + (1-f) * 2(rand(length(x),1)-0.5)
+      println(n)
+      n[n.<a] = a[n.<a];
+      n[n.>b] = b[n.>b];
+      return n
+  end
+#+end_src 
+** set bounds -- for real valued decision vectors
+Mostly for testing as bounds will form part of the main method call.
+#+begin_src julia
+  function setbounds(lower,upper)
+      global a = lower;
+      global b = upper;
+  end
+#+end_src 
 ** module end
 #+begin_src julia
   end
-#+end_src 
+#+end_src
 * tests
 #+toc: headlines 2 local
+** neighbour
+#+begin_src julia :tangle testneighbour.jl
+  using Fresa
+  x = rand(5,1)
+  println("$x")
+  a = zeros(5,1)
+  b = ones(5,1)
+  Fresa.setbounds(a,b)
+  for i in 1:10
+      println(i)
+      n = Fresa.neighbour(x,0.1)
+      println("$n")
+  end
+#+end_src 
 * Recent change history
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
