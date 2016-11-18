@@ -19,6 +19,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
 ** Upload to web site                                        :noexport:
+#+name: upload
 #+begin_src shell :results none :exports none
   scp -r fresa.org fresa.html Fresa.jl ltximg socrates.ucl.ac.uk:html.pub
 #+end_src
@@ -27,15 +28,11 @@ In the following code, we assume column vectors for decision variables and objec
 #+begin_src shell :results output raw :exports results
   echo [[file:./Fresa.jl][Fresa.jl]]
 #+end_src 
-
-#+results: distribution
-[[file:./fresa.jl][fresa.jl]]
-
 * Version information
-
 Major version log:
 
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
+A list [[*Recent change history][summary of recent change history]] is given below.
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa
 :PROPERTIES:
@@ -47,7 +44,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 17:53:29"
+  version = "2016.11.18 18:00:06"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -237,6 +234,7 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
   end
 #+end_src
 * tests
+The following are simple tests for either the Fresa optimiser or just individual functions in the module.  You can cut and paste these codes into your own editor and run them.
 #+toc: headlines 2 local
 ** neighbour
 #+name: testneighbour
