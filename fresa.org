@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 09:08:04"
+  version = "2016.11.18 09:40:56"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -96,6 +96,24 @@ Major version log:
       nx[nx.<a] = a[nx.<a];
       nx[nx.>b] = b[nx.>b];
       return nx
+  end
+#+end_src
+** select -- default selection method using size 2 tournament selection
+#+name: select
+#+begin_src julia
+  function select(f)
+      l = length(f)
+      ind1 = rand(1:l)
+      if ind1 == 0
+          ind1 = 1
+      end
+      ind2 = rand(1:l)
+      # println("Comparing $ind1 to $ind2")
+      if f[ind1] > f[ind2]
+          return ind1
+      else
+          return ind2
+      end
   end
 #+end_src 
 ** set bounds -- for real valued decision vectors
@@ -181,8 +199,14 @@ This test uses a simple quadratic objective function to test out the fitness eva
       l = length(pop)
       println("Population size $npop with length $l")
   end
-  println("Population $pop[3,:]")
-  Fresa.fitness(pop)
+  z = pop[3,:]
+  println("Objective function values: $z")
+  fit = Fresa.fitness(pop)
+  println("Fitness: $fit")
+  for i in 1:5
+      index = Fresa.select(fit)
+      println("$i selected $index")
+  end
 #+end_src 
 ** simple objective function
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
@@ -194,19 +218,7 @@ This test uses a simple quadratic objective function, defined within.  All point
   b = 10*ones(2,1)
   Fresa.setbounds(a,b)
   f(x) = ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  z, g = f(x0)
-  pop = [x0;z;g]
-  for i in 1:5
-      x = Fresa.neighbour(x0,0.5)
-      z, g = f(x)
-      pop = hcat(pop, [x;z;g])
-      npop = size(pop)
-      l = length(pop)
-      println("Population size $npop with length $l")
-  end
-  println("Population $pop[3,:]")
-  Fresa.fitness(pop)
-  #Fresa.solve(f, x0, a, b)
+  Fresa.solve(f, x0, a, b)
 #+end_src 
 * Recent change history
 #+name: changehistoryshellblock
