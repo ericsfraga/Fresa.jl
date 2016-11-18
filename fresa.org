@@ -14,7 +14,7 @@ This document has been written using [[http://orgmode.org/][org mode]] in the [[
 
 All code (either version) is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are sed, please do let the authors know and the [[file:strawberry.org][publications]] must be cited in any research papers written.  Feedback, including bug reports, is most welcome.
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used, please do let the authors know and the [[file:strawberry.org][publications]] must be cited in any research papers written.  Feedback, including bug reports, is most welcome.
 
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
@@ -47,34 +47,26 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 16:59:44"
+  version = "2016.11.18 17:53:29"
   function __init__()
       println("Fresa PPA $version")
   end
 #+end_src
 ** variables
+These are variables that are global to the module.
 #+name: variables
 #+begin_src julia
-  a = 0                           # lower bounds
-  b = 1                           # upper bounds
+  a = [0.0]                       # lower bounds
+  b = [1.0]                       # upper bounds
   m = 1                           # objective functions
   n = 1                           # number of decision variables
-  npruned = 0
-  nsimilar = 0
-  ns = 100                        # stopping criterion
-  nrmax = 5                       # number of runners
-  npop = 10                       # population size
-  ngen = 100                      # stopping criterion
-  output = 5                      # how often to output
-  population_strategy = 4         # new population definition
 #+end_src 
 ** fitness
+The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value.  This is described in a soon to appear publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 #+name: fitness
 #+begin_src julia
   function fitness(pop)
       k, l = size(pop)
-      global m = k-n-1
-      # println(": $m objective functions with $l members in population")
       if 1 == m
           s = sortperm(pop[n+1,:])
           zmin = pop[n+1,s[1]]
@@ -104,7 +96,8 @@ Major version log:
       fit
   end
 #+end_src 
-** neighbour -- default for real valued decision vectors
+** neighbour -- generate random point
+A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.
 #+name: neighbour
 #+begin_src julia
   function neighbour(x,f)
@@ -114,12 +107,12 @@ Major version log:
       return nx
   end
 #+end_src
-** pareto -- return set of non-dominated points in population
+** pareto -- set of non-dominated points
+Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
 #+begin_src julia
   function pareto(pop)
       k, l = size(pop)
-      m = k-n-1                   # number of objectives
       z = pop[n+1:n+m,:]
       p = pop[:,1]                # pareto front
       first = true
@@ -127,7 +120,7 @@ Major version log:
           dominated = false
           for j in 1:l
               if i != j
-                  if all(z[:,i] .>= z[:,j])
+                  if all(z[:,i] .>= z[:,j]) && any(z[:,i] .> z[:,j])
                       # println("$i dominated by $j")
                       # println("$(z[:,i]) >= $(z[:,j])")
                       dominated = true;
@@ -149,7 +142,8 @@ Major version log:
   end
 
 #+end_src 
-** select -- default selection method using size 2 tournament selection
+** select -- choose a member of the population
+Given a fitness, ~f~, choose two solutions randomly and select the one with the better fitness.  This is known as a /tournament/ selection procedure of size 2.  Other options are possible but not currently implemented.
 #+name: select
 #+begin_src julia
   function select(f)
@@ -168,18 +162,20 @@ Major version log:
   end
 #+end_src 
 ** set bounds -- for real valued decision vectors
-Mostly for testing as bounds will form part of the main method call.
+Used to set some of the module global variables used by many of the functions in the module.  This could have been done in the main ~solve~ function but was taken out to make testing of small parts of the module easier.
 #+name: setbounds
 #+begin_src julia
   function setbounds(lower,upper)
       global a = lower;
       global b = upper;
       global n = length(lower);
-      println("Size of problem: $n")
+      # println("Size of problem: $n")
   end
 #+end_src
 ** solve -- use the PPA to solve the optimisation problem
-The function expects the objective function, ~f~, an initial guess, ~x0~, and lower, ~a~, and upper, ~b~, bounds.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.
+The function expects the objective function, ~f~, an initial guess, ~x0~, and lower, ~a~, and upper, ~b~, bounds.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.  The actual return values and data structures depends on the number of criteria:
+- 1 :: returns best point, the objective function value, the constraint value and the full population;
+- >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
 #+name: solve
 #+begin_src julia
   function solve(f,x0,a,b;
@@ -187,8 +183,8 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
       tstart = time()
       setbounds(a,b)
       z, g = f(x0)
-      println(": f($x0) = $z with constraint $g")
-      m = length(z)
+      println(": initial point, f($x0) = $z, with constraint $g")
+      global m = length(z)
       println(": there are $m objective functions.")
       pop = [x0;z;g]
       for gen in 1:ngen
