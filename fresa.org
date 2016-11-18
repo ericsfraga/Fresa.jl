@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 15:02:39"
+  version = "2016.11.18 15:24:04"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -291,6 +291,27 @@ This test uses a simple quadratic objective function to test out the fitness eva
 
   using PyPlot
   PyPlot.plot(pareto[3,:], pareto[4,:], "ro")
+  PyPlot.savefig("x.pdf")
+#+end_src 
+** multi-objective test with 3 objectives
+#+name: testmultiobjective3
+#+begin_src julia :tangle testmultiobjective3.jl
+  using Fresa
+  n = 5
+  a = zeros(n,1)
+  b = ones(n,1)
+  x = zeros(n,1)
+  f(x) = ([ sum((x-0.5).^2+1)
+            sum(cos(x))
+            sum(sin(x))],
+          0)
+  pareto, population = Fresa.solve(f, x, a, b)
+
+  println("Pareto front:")
+  println(pareto)
+
+  using PyPlot
+  PyPlot.plot3D(pareto[n+1,:], pareto[n+2,:], pareto[n+3,:], "ro")
   PyPlot.savefig("x.pdf")
 #+end_src 
 ** pareto test
