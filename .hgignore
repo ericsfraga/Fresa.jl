@@ -5,6 +5,7 @@
 .*.data$
 .*.gms$
 .*.html$
+.*.jl$
 .*.log$
 .*.lst$
 .*.m$
