@@ -7,8 +7,12 @@
 
 #+toc: headlines 1
 
+* TODO bugs and new features [0/3]                            :noexport:
+- [ ] use constraint information in fitness calculations
+- [ ] allow for user specified /neighbour/ function
+- [ ] implement MINLP example
 * Overview and introduction
-/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.
+/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in matlab, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as built-in parallelism and multi-dispatch.
 
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().
 
@@ -44,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 18:00:06"
+  version = "2016.11.18 18:42:34"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -360,7 +364,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 * Recent change history
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
-  hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10
+  hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10 fresa.org
 #+end_src
 * settings                                                    :noexport:
 ** org startup on file visit
