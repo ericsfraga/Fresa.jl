@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 14:46:01"
+  version = "2016.11.18 15:02:39"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -87,16 +87,19 @@ Major version log:
               # println("Fitness $f")
           end
       else
-          error("Fresa not implemented for multi-objective optimisation, nz=$M, yet.")
           z = pop[n+1:n+m,:]
           rank = ones(m,l);      #rank of each solution for each objective function 
           for i=1:m
               rank[i,sortperm(z[i,:])] = 1:l;
           end
           # hadamard product of ranks
-          fitness = map(x->prod(x), rank[:,i] for i=1:5)
+          fitness = map(x->prod(x), rank[:,i] for i=1:l)
           # normalise and reverse meaning (1=best, 0=worst)
-          fit = 1 - fitness / maximum(fitness);
+          if l == 1
+              fit = [0.5]
+          else
+              fit = 1 - fitness / maximum(fitness);
+          end
       end
       fit
   end
@@ -125,14 +128,14 @@ Major version log:
           for j in 1:l
               if i != j
                   if all(z[:,i] .>= z[:,j])
-                      println("$i dominated by $j")
-                      println("$(z[:,i]) >= $(z[:,j])")
+                      # println("$i dominated by $j")
+                      # println("$(z[:,i]) >= $(z[:,j])")
                       dominated = true;
                       break;
                   end
               end
           end
-          println("member $(pop[:,i]) is dominated: $dominated")
+          # println("member $(pop[:,i]) is dominated: $dominated")
           if !dominated
               if first
                   p[:,1] = pop[:,i]
@@ -214,8 +217,12 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
       end
       fit = fitness(pop)
       index = sortperm(fit)
-      best = pop[:,index[length(fit)]]
-      best[1:n], best[n+1:n+m], best[n+m+1], pop
+      if m == 1
+          best = pop[:,index[length(fit)]]
+          return best[1:n], best[n+1:n+m], best[n+m+1], pop
+      else
+          return pareto(pop), pop
+      end
   end
 #+end_src 
 ** module end
@@ -269,6 +276,23 @@ This test uses a simple quadratic objective function to test out the fitness eva
       println("$i selected $index")
   end
 #+end_src
+** multi-objective test
+#+name: testmultiobjective
+#+begin_src julia :tangle testmultiobjective.jl
+  using Fresa
+  a = zeros(2,1)
+  b = ones(2,1)
+  x = rand(2,1)
+  f(x) = ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
+  pareto, population = Fresa.solve(f, x, a, b)
+
+  println("Pareto front:")
+  println(pareto)
+
+  using PyPlot
+  PyPlot.plot(pareto[3,:], pareto[4,:], "ro")
+  PyPlot.savefig("x.pdf")
+#+end_src 
 ** pareto test
 #+name: testpareto
 #+begin_src julia :tangle testpareto.jl
