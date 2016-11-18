@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 15:24:04"
+  version = "2016.11.18 15:51:07"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -183,6 +183,7 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
 #+name: solve
 #+begin_src julia
   function solve(f,x0,a,b)
+      tstart = time()
       setbounds(a,b)
       z, g = f(x0)
       println(": f($x0) = $z with constraint $g")
@@ -193,7 +194,15 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
           fit = fitness(pop)
           index = sortperm(fit)
           best = pop[:,index[length(fit)]]
-          print(": $gen best is $best\r")
+          print(": $gen best is $(best[n+1:n+m+1])\r")
+          if gen%output == 0
+              @printf("| %9d | %9.2f | ", gen, time()-tstart)
+              j = m>1 ? n+1 : 1
+              for i=j:n+m+1
+                  @printf("%9g |", best[i])
+              end
+              println()
+          end
           newpop = best
           k, l = size(pop)
           for i in 1:min(l,npop)
