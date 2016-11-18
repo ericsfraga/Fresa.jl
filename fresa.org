@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 09:40:56"
+  version = "2016.11.18 11:27:53"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -74,14 +74,18 @@ Major version log:
   function fitness(pop)
       k, l = size(pop)
       global m = k-n-1
-      println(": $m objective functions with $l members in population")
+      # println(": $m objective functions with $l members in population")
       if 1 == m
           s = sortperm(pop[n+1,:])
           zmin = pop[n+1,s[1]]
-          zmax = pop[n+1,s[length(s)]]
-          println(": objective function values in [$zmin,$zmax]")
-          f = tanh((zmax - pop[n+1,:]) / (zmax - zmin) - 0.5)+0.5
-          println("Fitness $f")
+          zmax = pop[n+1,s[l]]
+          # println(": objective function values in range [$zmin,$zmax]")
+          if l == 1 || abs(zmax-zmin) < eps()
+              f = 0.5*ones(l)
+          else
+              f = tanh((zmax - pop[n+1,:]) / (zmax - zmin) - 0.5)+0.5
+              # println("Fitness $f")
+          end
       else
           error("Fresa not imlemented for multi-objective optimisation, nz=$M, yet.")
       end
@@ -138,23 +142,35 @@ Mostly for testing as bounds will form part of the main method call.
       println(": there are $m objective functions.")
       pop = [x0;z;g]
       for gen in 1:ngen
-          println(": generation $gen")
-          f = fitness(pop)
-          for i in 1:max(length(pop),ngen)
-              s = select(pop,f)
-              if 1 == i
-                  newpop = pop[s]
-              else
-                  newpop = hcat(newpop,pop[s])
+          fit = fitness(pop)
+          index = sortperm(fit)
+          best = pop[:,index[length(fit)]]
+          print(": $gen best is $best\r")
+          newpop = best
+          k, l = size(pop)
+          for i in 1:min(l,npop)
+              s = select(fit)
+              # println(": selection $i is $s")
+              # println(": size of pop is $(size(pop))")
+              selected = pop[:,s]
+              newpop = hcat(newpop,selected)
+              nr = ceil(Int,fit[s]*nrmax*rand(1))[1]
+              if nr < 1
+                  nr = 1
               end
-              nr = ceil(f[s]*nrmax*rand(1))
+              # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbour(pop[s][1:n],f[s])
+                  x = neighbour(pop[1:n,s],fit[s])
                   z, g = f(x)
+                  newpop = hcat(newpop,[x;z;g])
               end
           end
+          pop = newpop;
       end
-      pop
+      fit = fitness(pop)
+      index = sortperm(fit)
+      best = pop[:,index[length(fit)]]
+      best, pop
   end
 #+end_src 
 ** module end
@@ -218,7 +234,9 @@ This test uses a simple quadratic objective function, defined within.  All point
   b = 10*ones(2,1)
   Fresa.setbounds(a,b)
   f(x) = ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  Fresa.solve(f, x0, a, b)
+  best, pop = Fresa.solve(f, x0, a, b)
+  println("Population at end: $pop")
+  println("Best solution is $best")
 #+end_src 
 * Recent change history
 #+name: changehistoryshellblock
