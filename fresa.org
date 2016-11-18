@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 15:51:07"
+  version = "2016.11.18 16:35:38"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -182,7 +182,8 @@ Mostly for testing as bounds will form part of the main method call.
 The function expects the objective function, ~f~, an initial guess, ~x0~, and lower, ~a~, and upper, ~b~, bounds.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.
 #+name: solve
 #+begin_src julia
-  function solve(f,x0,a,b)
+  function solve(f,x0,a,b;
+                 ngen=100, npop=10, output=5, nrmax=5, ns=100)
       tstart = time()
       setbounds(a,b)
       z, g = f(x0)
@@ -256,6 +257,9 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
       println("$n")
   end
 #+end_src
+
+#+results: testneighbour
+
 ** fitness test
 This test uses a simple quadratic objective function to test out the fitness evaluation.
 #+name: testfitness
@@ -314,7 +318,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
             sum(cos(x))
             sum(sin(x))],
           0)
-  pareto, population = Fresa.solve(f, x, a, b)
+  pareto, population = Fresa.solve(f, x, a, b; npop=100, ngen=1000, output=100)
 
   println("Pareto front:")
   println(pareto)
