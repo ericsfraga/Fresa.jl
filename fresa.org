@@ -43,10 +43,11 @@ Major version log:
 :END:
 #+toc: headlines 2 local
 ** start of module
+#+name: modulestart
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.17 16:48:28"
+  version = "2016.11.18 08:30:08"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -54,17 +55,24 @@ Major version log:
 ** variables
 #+name: variables
 #+begin_src julia
-  a = 0
-  b = 1
-  mosd_numberimproved = 0
-  n = 1
+  a = 0                           # lower bounds
+  b = 1                           # upper bounds
+  m = 1                           # objective functions
+  n = 1                           # number of decision variables
   npruned = 0
   nsimilar = 0
-  population_strategy = 4
-  ns = 100
-  nrmax = 5
-  npop = 100
-  ngen = 1000
+  ns = 100                        # stopping criterion
+  nrmax = 5                       # number of runners
+  npop = 10                       # population size
+  ngen = 100                      # stopping criterion
+  output = 5                      # how often to output
+  population_strategy = 4         # new population definition
+#+end_src 
+** fitness
+#+name: fitness
+#+begin_src julia
+  function fitness(pop)
+      s = sortperm(map(x->x[n+1]))
 #+end_src 
 ** neighbour -- default for real valued decision vectors
 #+name: neighbour
@@ -78,6 +86,7 @@ Major version log:
 #+end_src 
 ** set bounds -- for real valued decision vectors
 Mostly for testing as bounds will form part of the main method call.
+#+name: setbounds
 #+begin_src julia
   function setbounds(lower,upper)
       global a = lower;
@@ -85,8 +94,37 @@ Mostly for testing as bounds will form part of the main method call.
       global n = length(lower);
       println("Size of problem: $n")
   end
+#+end_src
+** solve -- use the PPA to solve the optimisation problem
+#+name: solve
+#+begin_src julia
+  function solve(f,x0,a,b)
+      setbounds(a,b)
+      z, g = f(x0)
+      println("f($x0) = $z with constraint $g")
+      pop = [x0;z;g]
+      for gen in 1:ngen
+          println("generation $gen")
+          f = fitness(pop)
+          for i in 1:max(length(pop),ngen)
+              s = select(pop,f)
+              if 1 == i
+                  newpop = pop[s]
+              else
+                  newpop = hcat(newpop,pop[s])
+              end
+              nr = ceil(f[s]*nrmax*rand(1))
+              for r in 1:nr
+                  x = neighbour(pop[s][1:n],f[s])
+                  z, g = f(x)
+              end
+          end
+      end
+      pop
+  end
 #+end_src 
 ** module end
+#+name: moduleend
 #+begin_src julia
   end
 #+end_src
@@ -106,6 +144,17 @@ Mostly for testing as bounds will form part of the main method call.
       n = Fresa.neighbour(x,0.9)
       println("$n")
   end
+#+end_src
+** simple objective function
+This test uses a simple quadratic objective function, defined inline in the invocation of the ~solve~ method.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
+#+name: testsimple
+#+begin_src julia :tangle testsimple.jl
+  using Fresa
+  x0 = 0.5*ones(2,1)
+  a = zeros(2,1)
+  b = 10*ones(2,1)
+  Fresa.solve(x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0),
+              x0, a, b)
 #+end_src 
 * Recent change history
 #+name: changehistoryshellblock
