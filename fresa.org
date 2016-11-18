@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 11:27:53"
+  version = "2016.11.18 13:44:03"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -154,7 +154,7 @@ Mostly for testing as bounds will form part of the main method call.
               # println(": size of pop is $(size(pop))")
               selected = pop[:,s]
               newpop = hcat(newpop,selected)
-              nr = ceil(Int,fit[s]*nrmax*rand(1))[1]
+              nr = ceil(fit[s]*nrmax*rand())
               if nr < 1
                   nr = 1
               end
