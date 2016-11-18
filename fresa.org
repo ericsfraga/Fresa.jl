@@ -47,7 +47,7 @@ Major version log:
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 13:50:35"
+  version = "2016.11.18 14:46:01"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -81,15 +81,24 @@ Major version log:
           zmax = pop[n+1,s[l]]
           # println(": objective function values in range [$zmin,$zmax]")
           if l == 1 || abs(zmax-zmin) < eps()
-              f = 0.5*ones(l)
+              fit = 0.5*ones(l)
           else
-              f = tanh((zmax - pop[n+1,:]) / (zmax - zmin) - 0.5)+0.5
+              fit = tanh((zmax - pop[n+1,:]) / (zmax - zmin) - 0.5)+0.5
               # println("Fitness $f")
           end
       else
-          error("Fresa not imlemented for multi-objective optimisation, nz=$M, yet.")
+          error("Fresa not implemented for multi-objective optimisation, nz=$M, yet.")
+          z = pop[n+1:n+m,:]
+          rank = ones(m,l);      #rank of each solution for each objective function 
+          for i=1:m
+              rank[i,sortperm(z[i,:])] = 1:l;
+          end
+          # hadamard product of ranks
+          fitness = map(x->prod(x), rank[:,i] for i=1:5)
+          # normalise and reverse meaning (1=best, 0=worst)
+          fit = 1 - fitness / maximum(fitness);
       end
-      f
+      fit
   end
 #+end_src 
 ** neighbour -- default for real valued decision vectors
@@ -102,6 +111,41 @@ Major version log:
       return nx
   end
 #+end_src
+** pareto -- return set of non-dominated points in population
+#+name: pareto
+#+begin_src julia
+  function pareto(pop)
+      k, l = size(pop)
+      m = k-n-1                   # number of objectives
+      z = pop[n+1:n+m,:]
+      p = pop[:,1]                # pareto front
+      first = true
+      for i in 1:l
+          dominated = false
+          for j in 1:l
+              if i != j
+                  if all(z[:,i] .>= z[:,j])
+                      println("$i dominated by $j")
+                      println("$(z[:,i]) >= $(z[:,j])")
+                      dominated = true;
+                      break;
+                  end
+              end
+          end
+          println("member $(pop[:,i]) is dominated: $dominated")
+          if !dominated
+              if first
+                  p[:,1] = pop[:,i]
+                  first = false
+              else
+                  p = hcat(p,pop[:,i])
+              end
+          end
+      end
+      p
+  end
+
+#+end_src 
 ** select -- default selection method using size 2 tournament selection
 #+name: select
 #+begin_src julia
@@ -224,6 +268,26 @@ This test uses a simple quadratic objective function to test out the fitness eva
       index = Fresa.select(fit)
       println("$i selected $index")
   end
+#+end_src
+** pareto test
+#+name: testpareto
+#+begin_src julia :tangle testpareto.jl
+  using Fresa
+  a = zeros(2,1)
+  b = ones(2,1)
+  x = rand(2,1)
+  f(x) = ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
+  z, g = f(x)
+  pop = [x; z; g]
+  for i=1:9
+      x = rand(2,1)
+      z, g = f(x)
+      pop = hcat(pop,[x; z; g])
+  end
+  Fresa.setbounds(a,b)
+  p = Fresa.pareto(pop)
+  println("Population is $pop")
+  println("Pareto set is $p")
 #+end_src 
 ** simple objective function
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
