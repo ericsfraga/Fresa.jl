@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.20 13:22:19"
+  version = "2016.11.20 21:46:36"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -336,6 +336,20 @@ This test uses a simple quadratic objective function to test out the fitness eva
       println("$i selected $index")
   end
 #+end_src
+** mixed integer nonlinear example
+#+name: testminlp
+#+begin_src julia
+  using Fresa
+  f = x -> (3x[2] - 5x[1],
+            max(2x[2] + 3x[1] - 24,
+                3x[1] - 2x[2] - 8,
+                2x[2]^2 - 2*sqrt(x[2]) + 11x[2] + 8x[1] - 39 - 2*sqrt(x[1])*x[2]^2))
+  a = [1.0; 1.0]
+  b = [6.0; 6.0]
+  Fresa.setbounds(a,b)
+  p = Fresa.randompopulation(10,f,a,b)
+#+end_src 
+
 ** multi-objective test
 #+name: testmultiobjective
 #+begin_src julia :tangle testmultiobjective.jl
