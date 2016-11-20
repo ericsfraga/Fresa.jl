@@ -21,6 +21,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
 ** Upload to web site                                        :noexport:
+#+name: upload
 #+begin_src shell :results none :exports none
   scp -r strawberry.org strawberry.html strawberry_test3.png ltximg socrates.ucl.ac.uk:html.pub
 #+end_src
@@ -646,7 +647,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.18 18:25:05';
+      strawberry_version = '2016.11.18 18:36:49';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -1049,7 +1050,7 @@ Strawberry is used on this objective function within a simple rectangle domain.
 * Recent change history
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
-hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10
+hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10 strawberry.org
 #+end_src
 * settings                                                    :noexport:
 ** org startup on file visit
