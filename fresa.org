@@ -12,7 +12,7 @@
 - [ ] allow for user specified /neighbour/ function
 - [ ] implement MINLP example
 * Overview and introduction
-/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in matlab, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as built-in parallelism and multi-dispatch.
+/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as built-in parallelism and multi-dispatch.
 
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().
 
@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.18 18:42:34"
+  version = "2016.11.20 10:08:36"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -142,6 +142,24 @@ Select a set consisting of those solutions in a population that are not dominate
       p
   end
 
+#+end_src
+** randompopulation -- for testing other methods
+Create a random population of size ~n~ evaluated using ~f~.
+#+name: randompopulation
+#+begin_src julia
+  function randompopulation(n,f,a,b)
+      x = a + rand(length(b),1).*b
+      z, g = f(x)
+      k = length(x) + length(z) + 1;
+      p = zeros(k,n);
+      p[:,1] = [x;z;g]
+      for j in 2:n
+          x = a + rand(length(b),1).*b
+          z, g = f(x)
+          p[:,j] = [x;z;g]
+      end
+      p
+  end
 #+end_src 
 ** select -- choose a member of the population
 Given a fitness, ~f~, choose two solutions randomly and select the one with the better fitness.  This is known as a /tournament/ selection procedure of size 2.  Other options are possible but not currently implemented.
