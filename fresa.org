@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.20 21:46:36"
+  version = "2016.11.21 09:39:48"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -73,19 +73,23 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       m = k-n-1
       indexfeasible = (1:l)[pop[k,:].<=0]
       indexinfeasible = (1:l)[pop[k,:].>0]
-      feasible = view(pop,1:k,indexfeasible)
-      infeasible = view(pop,1:k,indexinfeasible)
       println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
       fit = zeros(l,1)
-      feasiblefit = vectorfitness(m, feasible[n+1:n+m,:])
+      factor = 1              # for placement in fitness interval (0,1)
+      if length(indexfeasible) > 0
+          feasible = view(pop,1:k,indexfeasible)
+          feasiblefit = vectorfitness(m, feasible[n+1:n+m,:])
+          if length(indexinfeasible) > 0
+              feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness internval
+              factor = 2
+          end
+          fit[indexfeasible] = (feasiblefit+factor-1)/factor # upper half of fitness interval
+      end
       if length(indexinfeasible) > 0
-          # scale up feasible solutions fitness
-          feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness internval
-          infeasiblefit = vectorfitness(m, infeasible[n+1:n+m,:])/2; # lower half
-          fit[indexfeasible] = feasiblefit
-          fit[indexinfeasible] = infeasiblefit
-      else
-          fit = feasiblefit
+          # squeeze infeasible fitness values into (0,0.5) or (0,1) depending
+          # on factor, i.e. whether there are any feasible solutions as well or not
+          infeasible = view(pop,1:k,indexinfeasible)
+          fit[indexinfeasible] = vectorfitness(m, infeasible[n+1:n+m,:])/factor;
       end
       fit
   end
@@ -305,8 +309,6 @@ The following are simple tests for either the Fresa optimiser or just individual
   end
 #+end_src
 
-#+results: testneighbour
-
 ** fitness test
 This test uses a simple quadratic objective function to test out the fitness evaluation.
 #+name: testfitness
@@ -338,7 +340,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
 #+end_src
 ** mixed integer nonlinear example
 #+name: testminlp
-#+begin_src julia
+#+begin_src julia :tangle testminlp.jl
   using Fresa
   f = x -> (3x[2] - 5x[1],
             max(2x[2] + 3x[1] - 24,
@@ -348,6 +350,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
   b = [6.0; 6.0]
   Fresa.setbounds(a,b)
   p = Fresa.randompopulation(10,f,a,b)
+  println(p)
 #+end_src 
 
 ** multi-objective test
@@ -388,8 +391,6 @@ This test uses a simple quadratic objective function to test out the fitness eva
   PyPlot.plot3D(pareto[n+1,:], pareto[n+2,:], pareto[n+3,:], "ro")
   PyPlot.savefig("x.pdf")
 #+end_src 
-
-#+results: testmultiobjective3
 
 ** pareto test
 #+name: testpareto
