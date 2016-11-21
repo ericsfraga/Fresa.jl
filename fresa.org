@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.21 09:39:48"
+  version = "2016.11.21 10:11:51"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -73,7 +73,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       m = k-n-1
       indexfeasible = (1:l)[pop[k,:].<=0]
       indexinfeasible = (1:l)[pop[k,:].>0]
-      println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
+      # println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
       fit = zeros(l,1)
       factor = 1              # for placement in fitness interval (0,1)
       if length(indexfeasible) > 0
@@ -91,15 +91,15 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           infeasible = view(pop,1:k,indexinfeasible)
           fit[indexinfeasible] = vectorfitness(m, infeasible[n+1:n+m,:])/factor;
       end
-      fit
+      vec(fit)
   end
 #+end_src 
 
 #+name: vectorfitness
 #+begin_src julia
   function vectorfitness(m,v)
-      println("VF: v=$v")
-      println("  : of size $(size(v))")
+      # println("VF: v=$v")
+      # println("  : of size $(size(v))")
       if m == 1                   # single objective 
           l = length(v)
           s = sortperm(v[1,:])
@@ -127,7 +127,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
               fit = tanh(0.5 - fitness / maximum(fitness)) + 0.5
           end
       end
-      println("VF: fit=$fit")
+      # println("VF: fit=$fit")
       fit
   end
 
@@ -233,14 +233,15 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
 #+name: solve
 #+begin_src julia
   function solve(f,x0,a,b;
-                 ngen=100, npop=10, output=5, nrmax=5, ns=100)
+                 ngen=100, npop=10, output=5, nrmax=5, ns=100,
+                 neighbourfn=neighbour)
       tstart = time()
       setbounds(a,b)
       z, g = f(x0)
       println(": initial point, f($x0) = $z, with constraint $g")
       global m = length(z)
       println(": there are $m objective functions.")
-      pop = [x0;z;g]
+      pop = reshape([x0;z;g],n+m+1,1) # should not be necessary
       for gen in 1:ngen
           fit = fitness(pop)
           index = sortperm(fit)
@@ -268,7 +269,7 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
               end
               # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbour(pop[1:n,s],fit[s])
+                  x = neighbourfn(pop[1:n,s],fit[s])
                   z, g = f(x)
                   newpop = hcat(newpop,[x;z;g])
               end
@@ -339,6 +340,8 @@ This test uses a simple quadratic objective function to test out the fitness eva
   end
 #+end_src
 ** mixed integer nonlinear example
+The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.  The aim of this example is to test the use of a non-default /neighbour/ function.
+
 #+name: testminlp
 #+begin_src julia :tangle testminlp.jl
   using Fresa
@@ -348,9 +351,18 @@ This test uses a simple quadratic objective function to test out the fitness eva
                 2x[2]^2 - 2*sqrt(x[2]) + 11x[2] + 8x[1] - 39 - 2*sqrt(x[1])*x[2]^2))
   a = [1.0; 1.0]
   b = [6.0; 6.0]
-  Fresa.setbounds(a,b)
-  p = Fresa.randompopulation(10,f,a,b)
-  println(p)
+  function neighbour(x,f)
+      # first x is real, second is integer
+      nx = zeros(2,1)
+      nx = x .+ 5*(1-f) * 2 * (rand(2,1)-0.5)
+      nx[2] = round(nx[2])
+      nx[nx.<1] = 1
+      nx[nx.>6] = 6
+      return nx
+  end
+  bestx, bestz, bestg, pop = Fresa.solve(f, [1.;1.], a, b; neighbourfn=neighbour)
+  println("Population: $pop")
+  println("Best: f($bestx) = $bestz, $bestg")
 #+end_src 
 
 ** multi-objective test
