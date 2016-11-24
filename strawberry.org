@@ -594,7 +594,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 16:23:02';
+      strawberry_version = '2016.11.24 17:50:34';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -972,18 +972,19 @@ We need to define two functions:
    #+end_src
 *** the actual problem and solution method
 The objective function and constraints are defined in a single Octave function.  The value of the objective function is simple; there are three constraints, all meant to be less than or equal to 0.  ~g~ will be true if any of the constraints are violated.
+#+name: mitestf
 #+begin_src octave :tangle "mitestf.m"
   function [f g] = mitestf(x)
     f = 3*x(2)-5*x(1);
-    g = any([ 2*x(2) + 3*x(1) - 24;
+    g = max([ 2*x(2) + 3*x(1) - 24;
               3*x(1) - 2*x(2) - 8;
-              2*x(2)^2 - 2*sqrt(x(2)) + 11*x(2) + 8*x(1) - 39 - 2*sqrt(x(1))*x(2)^2 ]
-            > 0);
+              2*x(2)^2 - 2*sqrt(x(2)) + 11*x(2) + 8*x(1) - 39 - 2*sqrt(x(1))*x(2)^2 ]);
   endfunction
 #+end_src
 
 Strawberry is used on this objective function within a simple rectangle domain.
 
+#+name: mitest
 #+begin_src octave :results output :tangle "mitest.m"
   global esfdebug
   esfdebug = 0
