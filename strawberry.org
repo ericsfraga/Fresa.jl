@@ -18,7 +18,7 @@ All code (either version) is copyright © 2016, Eric S Fraga, all rights reserve
 
 Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  Feedback, including bug reports for either Octave or MATLAB distribution, is most welcome.
 
-In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
+In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation a positive value for infeasible solutions and non-positive for feasible.
 
 ** Upload to web site                                        :noexport:
 #+name: upload
@@ -594,7 +594,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 17:50:34';
+      strawberry_version = '2016.11.24 17:53:40';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
