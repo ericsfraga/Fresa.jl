@@ -637,6 +637,47 @@ To accomplish the latter, we consider a ranking that takes into account how good
     endif
   endfunction
 #+end_src
+
+#+name: vectorfitness
+#+begin_src octave :tangle strawberry_vectorfitness.m
+  function [fit best] = strawberry_vectorfitness(m,v)
+    ## println("VF: v=$v")
+    ## println("  : of size $(size(v))")
+    if m == 1                   # single objective 
+      l = length(v);
+      [sorted indices] = sort(v);
+      zmin = v(s(1));
+      zmax = v(s(l));
+      if l == 1 || abs(zmax-zmin) < eps()
+        fit = 0.5*ones(1,l);
+      else
+        ## avoid extreme 0,1 values
+        fit = tanh((zmax - v) / (zmax - zmin) - 0.5)+0.5;
+      end
+    else                  # multi-objective
+      [m, l] = size(v);
+      rank = ones(m,l); #rank of each solution for each objective function 
+      for i=1:m
+        [sorted indices] = sort(v(i,:));
+        rank(i,indices) = 1:l;
+      end
+      ## hadamard product of ranks
+      fitness = prod(rank);
+      [b index] = max(fitness);
+      best = v(:,index);
+      ## normalise and reverse meaning (1=best, 0=worst)
+      if l == 1
+        fit = 0.5;
+      else
+        ## avoid extreme 0,1 values
+        fit = tanh(0.5 - fitness / b) + 0.5;
+      end
+    end
+    ## println("VF: fit=$fit")
+  end
+
+#+end_src 
+
 * initialise -- default values and version information
 
 #+name: version
@@ -647,7 +688,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.18 18:36:49';
+      strawberry_version = '2016.11.24 10:10:08';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
