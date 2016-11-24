@@ -232,6 +232,7 @@ Determine whether the objective function also has information on feasibility.
     printf('| %9s |', 'gen')
     if nz > 1
       for i=1:nz, printf(' %6sz%02d |', '', i); endfor
+      if constrained; printf(' %9s |', 'c'); endif
     else
       index = nx;
       if nx > 4
@@ -322,6 +323,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf('| %9d |', gen);
     if nz > 1
       printf (' %9.3g |', min(best(nx+1:nx+nz,:),[],2))
+      if constrained; printf(' %9.3g |', min(best(nx+nz+1,:))); endif
       printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, bestgen);
     else
       if nx > 5
@@ -527,7 +529,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     indexfeasible = p(n,:) <= 0;
     indexinfeasible = p(n,:) > 0;
     if sum(indexfeasible) > 0
-      feasiblefit = strawberry_vectorfitness(nz, p(nx+1,indexfeasible));
+      feasiblefit = strawberry_vectorfitness(nz, p(nx+1:nx+nz,indexfeasible));
       if sum(indexinfeasible) > 0
         feasiblefit = feasiblefit/2 + 0.5; # upper half of fitness internval
         factor = 2;
@@ -537,7 +539,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     if sum(indexinfeasible) > 0
       ## squeeze infeasible fitness values into (0,0.5) or (0,1) depending
       ## on factor, i.e. whether there are any feasible solutions as well or not
-      fit(indexinfeasible) = strawberry_vectorfitness(m, p(nx+1:nx+nz,indexinfeasible))/factor;
+      fit(indexinfeasible) = strawberry_vectorfitness(1, p(n,indexinfeasible))/factor;
     end
     [bestfit index] = max(fit);
     best = p(:,index);
@@ -592,7 +594,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 15:54:26';
+      strawberry_version = '2016.11.24 16:23:02';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
