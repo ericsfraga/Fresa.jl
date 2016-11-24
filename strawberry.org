@@ -518,129 +518,32 @@ To accomplish the latter, we consider a ranking that takes into account how good
     if m <= 0
       disp('No solutions in the population');
     endif
-    if nz == 1                    #single objective optimisation
-      if n-nx == 2                # two extra columns: y and constraint
-                                  # violation
-        indexfeasible = p(n,:) <= 0;
-        indexinfeasible = p(n,:) > 0;
-        debugprint(2, 'fitness: indexfeasible = ', indexfeasible)
-        ## there are potentially three cases: all feasible, all
-        ## infeasible or a mix of both.  We want the fitness values
-        ## assigned to cover the range [0,1] so the values given will
-        ## depend on which case we have.  Note that a value of 1 means
-        ## 'more fit'
-        if sum(indexfeasible) > 0
-          ymin = min(p(nx+1, indexfeasible));
-          ymax = max(p(nx+1,indexfeasible));
-          if sum(indexinfeasible) > 0
-            ## case 1: both feasible and infeasible points in the
-            ## population so feasible points take top half of the
-            ## fitness range and infeasible the bottom half.
-            if abs(ymax-ymin) > 1e-4
-              fit(indexfeasible) = 0.5+0.5*(ymax-p(nx+1,indexfeasible))/(ymax-ymin);
-            else                  # all equivalently good, I guess
-              fit(indexfeasible) = 0.75;
-            endif
-            cmin = min(p(n,indexinfeasible));
-            cmax = max(p(n,indexinfeasible));
-            if abs(cmax-cmin) > 1e-4
-              fit(indexinfeasible) = 0.5*(cmax-p(n,indexinfeasible))/(cmax-cmin);
-            else
-              fit(indexinfeasible) = 0.25;
-            endif
-          else                    # only feasible solutions present in population
-            if abs(ymax-ymin) > 1e-4
-              fit(indexfeasible) = (ymax-p(nx+1,indexfeasible))/(ymax-ymin);
-            else                  # all equivalently good, I guess
-              fit(indexfeasible) = 0.5;
-            endif
-          endif
-        else                      # all infeasible
-          cmin = min(p(n,:));
-          cmax = max(p(n,:));
-          if abs(cmax-cmin) > 1e-4
-            fit = (cmax-p(n,:))/(cmax-cmin);
-          else
-            fit = 0.5*ones(1,m);
-          endif
-        endif
-        debugprint(1, 'objective function values', p(n-1,:))
-        debugprint(1, 'fitness values', fit)
-        [bestfit bestindex] = max(fit);
-        debugprint(1, 'bestfit, bestindex', [bestfit, bestindex])
-        best = p(:, bestindex);
-      else
-        error('Number of objective functions does not seem to match');
-      endif
-
-    else        # multi-objective case
-
-      debugprint(4, 'fitness: method ', strawberry_fitness_method)
-      debugprint(4, 'fitness: nx nz', [nx, nz])
-
-      if strawberry_fitness_method == 0
-        ## rank based fitness using ranking of all objectives
-        z = p(nx+1:nx+nz,:);    #extract out the objective function values
-        rank = ones(nz,m);      #for collating the rank of each solution for each objective function 
-        for i=1:nz
-          [zz ind] = sort(z(i,:));
-          rank(i,ind) = 1:m;
-          best(:,i) = p(:,ind(1));
-        endfor
-        fitness = prod(rank,1);   #Hadamard product of rankings
-        fit = 1 - fitness / max(fitness); #normalise and reverse meaning (1=best, 0=worst)
-        debugprint(5, 'fitness.rank: ', rank)
-        debugprint(5, 'fitness.fit  : ', fit)
-        debugprint(5, 'best solutions: ', best)
-        ## extract the best member for each criterion
-        ## ## we also need to extract the set of non-dominated points
-        ## bestindices = findpareto (z);
-        ## bestunsorted = p(:,bestindices);
-        ## [xx bestsortedindices] = sort(bestunsorted(nx+1,:));
-        ## best = bestunsorted(:,bestsortedindices);
-
-      elseif strawberry_fitness_method == 1 #MOGA fitness
-
-        ## use the MOGA fitness function as it is generic
-        ## enough.  However, the MOGA fitness doesn't know about
-        ## infeasible solutions so we need to split the current solution
-        ## into feasible and infeasible solutions.
-        fitindices = p(nx+1,:) < 1e19;
-        ## fprintf(stderr,'%d feasible points\n', sum(fitindices))
-        [fitness pareto] = moga_fitness ( p(1:nx,fitindices), p(nx+1:nx+nz,fitindices));
-        debugprint(3,': fitness', fitness)
-        debugprint(3,': pareto.x', pareto.x)
-        debugprint(3,': pareto.z', pareto.z)
-        npareto = size(pareto.x,2);
-        best = [pareto.x ; pareto.z ; zeros(1,npareto)];
-        ## MOGA fitness is 0 for best and positive values for less good so we reverse and scale [0,1]
-        maxfit = max(fitness);
-        if abs(maxfit) < 1e-6
-          fit = ones(size(fitness));
-        else
-          fit = 1 - fitness/maxfit;
-          debugprint(3,': rescaled fitness', fit)
-        endif
-      else
-        error('Strawberry fitness strategy %d not recognised.\n', strawberry_fitness_method)
-      endif                       #end of which fitness method to use
-    endif                         #end of single versus multi-objective
-    ## finally, at the end, transform the fitness values calculated
-    ## above, which are in [0,1], so that they are in (0,1) with a
-    ## sigmoid shape, emphasising the top solutions, not just the best,
-    ## over the bottom solutions.
-    fit = (tanh(4*fit-2)+1)/2;
-    debugprint (3, ': and fitness reshaped to sigmoid', fit)
-    if min(fit) < 0 || max(fit) > 1
-      printf('Ummm fitness range at end: [%g,%g]\n', min(fit), max(fit));
-      error ('Fitness should always be in [0,1]');
-    endif
+    fit = zeros(m,1);
+    factor = 1;                # for placement in fitness interval (0,1)
+    indexfeasible = p(n,:) <= 0;
+    indexinfeasible = p(n,:) > 0;
+    if sum(indexfeasible) > 0
+      feasible =(pop,1:k,indexfeasible)
+      feasiblefit = strawberry_vectorfitness(nz, p(n+1,indexfeasible));
+      if sum(indexinfeasible) > 0
+        feasiblefit = feasiblefit/2 + 0.5; # upper half of fitness internval
+        factor = 2;
+      end
+      fit(indexfeasible) = (feasiblefit+factor-1)/factor; # upper half of fitness interval
+    end
+    if sum(indexinfeasible) > 0
+      ## squeeze infeasible fitness values into (0,0.5) or (0,1) depending
+      ## on factor, i.e. whether there are any feasible solutions as well or not
+      fit[indexinfeasible] = vectorfitness(m, p(n+1:n+nz,indexinfeasible))/factor;
+    end
+    [bestfit index] = max(fit);
+    best = fit(index);
   endfunction
 #+end_src
 
 #+name: vectorfitness
 #+begin_src octave :tangle strawberry_vectorfitness.m
-  function [fit best] = strawberry_vectorfitness(m,v)
+  function fit = strawberry_vectorfitness(m,v)
     ## println("VF: v=$v")
     ## println("  : of size $(size(v))")
     if m == 1                   # single objective 
@@ -663,14 +566,12 @@ To accomplish the latter, we consider a ranking that takes into account how good
       end
       ## hadamard product of ranks
       fitness = prod(rank);
-      [b index] = max(fitness);
-      best = v(:,index);
       ## normalise and reverse meaning (1=best, 0=worst)
       if l == 1
         fit = 0.5;
       else
         ## avoid extreme 0,1 values
-        fit = tanh(0.5 - fitness / b) + 0.5;
+        fit = tanh(0.5 - fitness / max(fitness)) + 0.5;
       end
     end
     ## println("VF: fit=$fit")
@@ -688,7 +589,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 10:10:08';
+      strawberry_version = '2016.11.24 10:16:24';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
