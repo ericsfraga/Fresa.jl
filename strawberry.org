@@ -592,7 +592,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 15:47:14';
+      strawberry_version = '2016.11.24 15:54:26';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -858,24 +858,29 @@ For single criterion problems, we sort the population in order of decreasing fit
 #+begin_src octave :tangle no
 strawberry_test
 #+end_src 
+#+begin_src octave :tangle strawberry_testobjective.m
+  function [z g] = strawberry_testobjective(x)
+    z = [ sum((x-0.5).^2+1)
+          sum(cos(x))];
+    g = 0;
+  endfunction
+#+end_src 
 #+begin_src octave :tangle strawberry_test.m
   function [x z pareto fitness] = strawberry_test
     global esfdebug
     esfdebug = 0
     global strawberry_numberofprocessors
     strawberry_numberofprocessors = 1;
-    f = @(x) [ sum((x-0.5).^2+1)
-               sum(cos(x))];
     x0 = [0 0 0 0 0]';
     a = zeros(5,1);
     b = ones(5,1);
     printf('Testing bicriteria problem with %d decision variables\n', length(x0))
     printf('starting with initial point '), x0
-    z0 = f(x0)
+    z0 = strawberry_testobjective(x0)
     printf('which has objective %d function values ', length(z0))
     for i=1:length(z0), printf('%f ', z0(i)), endfor; printf('\n')
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
-    [x z nf ninf bestgen] = strawberry(x0, a, b, f, 200, 50);
+    [x z nf ninf bestgen] = strawberry(x0, a, b, @strawberry_testobjective, 200, 50);
     paretoset = z(1:2, findpareto(z(1:2,:)));
     [zz indices] = sort(paretoset(1,:));
     paretoset = paretoset(:,indices)
