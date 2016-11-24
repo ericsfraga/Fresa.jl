@@ -523,8 +523,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     indexfeasible = p(n,:) <= 0;
     indexinfeasible = p(n,:) > 0;
     if sum(indexfeasible) > 0
-      feasible =(pop,1:k,indexfeasible)
-      feasiblefit = strawberry_vectorfitness(nz, p(n+1,indexfeasible));
+      feasiblefit = strawberry_vectorfitness(nz, p(nx+1,indexfeasible));
       if sum(indexinfeasible) > 0
         feasiblefit = feasiblefit/2 + 0.5; # upper half of fitness internval
         factor = 2;
@@ -534,10 +533,10 @@ To accomplish the latter, we consider a ranking that takes into account how good
     if sum(indexinfeasible) > 0
       ## squeeze infeasible fitness values into (0,0.5) or (0,1) depending
       ## on factor, i.e. whether there are any feasible solutions as well or not
-      fit[indexinfeasible] = vectorfitness(m, p(n+1:n+nz,indexinfeasible))/factor;
+      fit(indexinfeasible) = strawberry_vectorfitness(m, p(nx+1:nx+nz,indexinfeasible))/factor;
     end
     [bestfit index] = max(fit);
-    best = fit(index);
+    best = p(:,index);
   endfunction
 #+end_src
 
@@ -549,8 +548,8 @@ To accomplish the latter, we consider a ranking that takes into account how good
     if m == 1                   # single objective 
       l = length(v);
       [sorted indices] = sort(v);
-      zmin = v(s(1));
-      zmax = v(s(l));
+      zmin = v(indices(1));
+      zmax = v(indices(l));
       if l == 1 || abs(zmax-zmin) < eps()
         fit = 0.5*ones(1,l);
       else
@@ -589,7 +588,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.24 10:16:24';
+      strawberry_version = '2016.11.24 15:34:25';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
