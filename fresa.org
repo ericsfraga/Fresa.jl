@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.21 10:11:51"
+  version = "2016.11.24 18:03:33"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -89,7 +89,8 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           # squeeze infeasible fitness values into (0,0.5) or (0,1) depending
           # on factor, i.e. whether there are any feasible solutions as well or not
           infeasible = view(pop,1:k,indexinfeasible)
-          fit[indexinfeasible] = vectorfitness(m, infeasible[n+1:n+m,:])/factor;
+          # use constraint violation for ranking
+          fit[indexinfeasible] = vectorfitness(1, infeasible[n+m+1:n+m+1,:])/factor;
       end
       vec(fit)
   end
