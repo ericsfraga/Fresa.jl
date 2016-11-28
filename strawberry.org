@@ -224,7 +224,7 @@ Determine whether the objective function also has information on feasibility.
   if nz < 2
     best = pop(:,1);
   else
-    best = [];
+    best = pop(:,findpareto(pop(nx+1:nx+nz,:)));
   endif
   bestgen = gen;
   nfunctionevaluations = npop; # initial population size
@@ -243,7 +243,12 @@ Determine whether the objective function also has information on feasibility.
       for i=1:nz; printf(' %6sy%02d |', '', i); endfor
       if constrained; printf(' %9s |', 'c'); endif
     endif
-    printf(' %9s | %9s | %9s |', '$n_f$', 'CPU (s)', 'Best iter')
+    printf(' %9s | %9s |', '$n_f$', 'CPU (s)')
+    if nz > 1
+      printf(' %9s |', 'n_pareto')
+    else
+      printf(' %9s |', 'Best iter')
+    endif
     printf('\n');
     printf('|-\n');
   endif
@@ -264,7 +269,9 @@ Determine whether the objective function also has information on feasibility.
     endif
   endif
   ## prune the solution, removing duplicate members as they contribute nothing
+  ## printf('npruned=%d nx=%d nz=%d\n', npruned, nx, nz)
   pop = strawberry_prune (pop, nx, nz);
+  ## printf('npruned=%d nx=%d nz=%d\n', npruned, nx, nz)
 #+end_src
 *** rank solutions
 The fitness method is used to find the best members of the population and assign each one a ranking N \in (0,1) with higher values better than lower values.  
@@ -289,27 +296,15 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       printf('\n');
     endif
   elseif nz>1
-    ## the set of points returned by the fitness function is not really
-    ## a pareto set.  it is one point for each criterion.  we compare
-    ## these points to the existing ones and update if necessary.
+    ## update the best to be the set of non-dominated points from the union
+    ## of the old best and the current population
     if isempty(best)
       best = pareto;
     else
-      if size(pareto,2) > 1 && size(best,2) > 1
-        for i = 1:2
-          if pareto(nx+i,i) < best(nx+i,i)
-            best(:,i) = pareto(:,i);
-            bestgen = gen;
-          endif
-        endfor
-      else
-        if pareto(nx+1,1) < best(nx+1,1)
-          best(:,1) = pareto(:,1);
-          bestgen = gen;
-        endif
-      endif
+      union = [best, pareto];
+      best = union(:,findpareto(union(nx+1:nx+nz,:)));
     endif
-    debugprint (1, 'size of pareto: ', length(best))
+    debugprint (-1, 'size of pareto: ', length(best))
   endif
 #+end_src
 *** output statistics if desired
@@ -325,7 +320,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     if nz > 1
       printf (' %9.3g |', min(best(nx+1:nx+nz,:),[],2))
       if constrained; printf(' %9.3g |', min(best(nx+nz+1,:))); endif
-      printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, bestgen);
+      printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, size(best,2));
     else
       if nx > 5
         indices = [1:4 nx+nz];
@@ -542,8 +537,12 @@ To accomplish the latter, we consider a ranking that takes into account how good
       ## on factor, i.e. whether there are any feasible solutions as well or not
       fit(indexinfeasible) = strawberry_vectorfitness(1, p(n,indexinfeasible))/factor;
     end
-    [bestfit index] = max(fit);
-    best = p(:,index);
+    if nz < 2
+      [bestfit index] = max(fit);
+      best = p(:,index);
+    else
+      best = p(:,findpareto(p(nx+1:nx+nz,:)));
+    endif
   endfunction
 #+end_src
 
@@ -595,7 +594,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.25 17:09:15';
+      strawberry_version = '2016.11.28 15:56:44';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -725,6 +724,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
 #+end_src
 * prune -- remove non-diverse members of the population to avoid stagnation
 Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an *elite* set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
+#+name: prune
 #+begin_src octave :tangle strawberry_prune.m
   function pruned = strawberry_prune (pop, nx, nz)
     global npruned
@@ -733,13 +733,14 @@ Especially for multi-objective problems, we have a problem with diversity in tha
     if npop > 0
       pruned = pop(:,1);
       np = 1;                       # size of pruned set
-      for i=2:size(pop,2)
+      for i=2:npop
         diverse = 1;
         j = 0;
         while diverse && j < np
           j = j + 1;
           ## diversity based on x values alone
           diverse = norm (pop(1:nx,i)-pruned(1:nx,j)) > strawberry_diversity_tolerance;
+          ## printf('div(%d,%d)=%g %d\r', i, j, norm (pop(1:nx,i)-pruned(1:nx,j)), diverse);
         endwhile
         if diverse
           pruned = [pruned, pop(:,i)];
@@ -748,16 +749,13 @@ Especially for multi-objective problems, we have a problem with diversity in tha
           ## prune one or the other.  ideally, we keep the better
           ## one.  If we cannot distinguish (in a multi-objective
           ## sense), we simply keep the one that is already there. 
+          npruned = npruned + 1;
           if ~ dominates(pruned(nx+1:nx+nz,j),pop(nx+1:nx+nz,i))
             if dominates(pop(nx+1:nx+nz,i),pruned(nx+1:nx+nz,j))
               ## current solution is better, i.e. dominates, than previous
               ## one so replace
               pruned(:,j) = pop(:,i);
-              npruned = npruned + 1;
             endif
-          else
-            ## previous solution better, i.e. dominates
-            npruned = npruned + 1;
           endif
         endif
       endfor
