@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.24 18:03:33"
+  version = "2016.11.28 10:48:51"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -189,7 +189,7 @@ Create a random population of size ~n~ evaluated using ~f~.
       k = length(x) + length(z) + 1;
       p = zeros(k,n);
       p[:,1] = [x;z;g]
-      for j in 2:n
+      @sync @parallel for j in 2:n
           x = a + rand(length(b),1).*b
           z, g = f(x)
           p[:,j] = [x;z;g]
@@ -405,6 +405,17 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   PyPlot.savefig("x.pdf")
 #+end_src 
 
+** parallel test
+Some code to play with the generation of a random population so as to learn how to parallelise a loop in Julia.
+#+begin_src julia :tangle testparallel.jl
+  using Fresa
+  m = 10000;
+  n = 1;
+  a = zeros(n,1)
+  b = π * ones(n,1)
+  f = x -> ( sum(sin(x/i) for i=1:10000), 0)
+  @time p = Fresa.randompopulation(m,f,a,b)
+#+end_src 
 ** pareto test
 #+name: testpareto
 #+begin_src julia :tangle testpareto.jl
