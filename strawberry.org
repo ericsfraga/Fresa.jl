@@ -302,7 +302,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       best = pareto;
     else
       union = [best, pareto];
-      best = union(:,findpareto(union(nx+1:nx+nz,:)));
+      best = strawberry_prune(union(:,findpareto(union(nx+1:nx+nz,:))),nx,nz);
     endif
     debugprint (-1, 'size of pareto: ', length(best))
   endif
@@ -413,13 +413,6 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   nfunctionevaluations = nfunctionevaluations + length(phi);
   debugprint (1, ': phi before removal of infeasible solutions', phi)
   ntotal = size(phi,2);
-  if constrained
-    phi = phi(:,phi(end,:) <= 0);
-  else
-    phi = phi(:,phi(nx+1,:)<1e19);
-  endif
-  debugprint (1, ': phi after removal of infeasible solutions', phi)
-  ninf = ninf + ntotal - size(phi,2);
 #+end_src
 *** COMMENT apply local search
 #+begin_src octave :noweb yes :tangle strawberry.m
@@ -594,7 +587,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.28 15:56:44';
+      strawberry_version = '2016.11.28 16:09:40';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
