@@ -298,16 +298,21 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   elseif nz>1
     ## update the best to be the set of non-dominated points from the union
     ## of the old best and the current population
-    if isempty(best)
+    if isempty(best) || length(best) <= 1
       best = pareto;
     else
       union = [best, pareto];
-      best = strawberry_prune(union(:,findpareto(union(nx+1:nx+nz,:))),nx,nz);
+      if length(union) < nx+nz+1
+        best = [];
+      else
+        best = strawberry_prune(union(:,findpareto(union(nx+1:nx+nz,:))),nx,nz);
+      endif
     endif
     debugprint (-1, 'size of pareto: ', length(best))
   endif
 #+end_src
 *** output statistics if desired
+#+name: outputstatistics
 #+begin_src octave :noweb yes :tangle strawberry.m
   if 0 == mod(gen,output) || 1 == gen
     if strawberry_numberofprocessors > 1
@@ -318,8 +323,13 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     fprintf(stderr, '\r');
     printf('| %9d |', gen);
     if nz > 1
-      printf (' %9.3g |', min(best(nx+1:nx+nz,:),[],2))
-      if constrained; printf(' %9.3g |', min(best(nx+nz+1,:))); endif
+      if ~ isempty(best) && length(best)>1
+        ## printf('Size of best: %d %d\n',size(best))
+        printf (' %9.3g |', min(best(nx+1:nx+nz,:),[],2))
+        if constrained; printf(' %9.3g |', min(best(nx+nz+1,:))); endif
+      else
+        printf(' %9.3g |', zeros(nz+constrained,1));
+      endif
       printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, size(best,2));
     else
       if nx > 5
@@ -335,7 +345,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   else
     if nz > 1
       ## [fitness pareto] = moga_fitness (pop(1:nx,:), pop(nx+1:nx+nz,:));
-      fprintf(stderr, '\r%30s %7d %3d/%4d %9.3g %9.3g %9.3g %9.3g', '', gen, size(best,2), length(pop), best(nx+1:nx+nz,1), best(nx+1:nx+nz,end))
+      ## fprintf(stderr, '\r%30s %7d %3d/%4d %9.3g %9.3g %9.3g %9.3g', '', gen, size(best,2), length(pop), best(nx+1:nx+nz,1), best(nx+1:nx+nz,end))
+      fprintf(stderr, '\r%30s %7d %3d/%4d ', '', gen, size(best,2), length(pop))
     else
       if constrained
         fprintf(stderr, '\r%30s %9d [%9d] %5d %13.6e %13.6e ', '', gen, bestgen, length(pop), best(nx+nz), best(nx+nz+1));
@@ -450,7 +461,12 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## selected and best.
 
   ## fprintf(stderr, 'size best=%d selected=%d phi=%d\n', size(best,2), size(selected,2), size(phi,2));
-  switch (population_strategy)
+  ## cater for when best array is empty
+  ps = population_strategy;
+  if ps > 2 && length(best) < (nx+nz+1)
+    ps = ps - 2;
+  endif
+  switch (ps)
     case 1               # new members alone
       pop = phi;
     case 2               # new with selected
@@ -516,8 +532,10 @@ To accomplish the latter, we consider a ranking that takes into account how good
     fit = zeros(m,1);
     factor = 1;                # for placement in fitness interval (0,1)
     indexfeasible = p(n,:) <= 0;
+    nfeas = sum(indexfeasible);
     indexinfeasible = p(n,:) > 0;
-    if sum(indexfeasible) > 0
+    ninfeas = sum(indexinfeasible);
+    if nfeas > 0
       feasiblefit = strawberry_vectorfitness(nz, p(nx+1:nx+nz,indexfeasible));
       if sum(indexinfeasible) > 0
         feasiblefit = feasiblefit/2 + 0.5; # upper half of fitness internval
@@ -534,7 +552,11 @@ To accomplish the latter, we consider a ranking that takes into account how good
       [bestfit index] = max(fit);
       best = p(:,index);
     else
-      best = p(:,findpareto(p(nx+1:nx+nz,:)));
+      if nfeas > 0
+        best = p(:,findpareto(p(nx+1:nx+nz,indexfeasible)));
+      else
+        best = [];
+      endif
     endif
   endfunction
 #+end_src
@@ -587,7 +609,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.28 16:09:40';
+      strawberry_version = '2016.11.28 16:50:32';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
