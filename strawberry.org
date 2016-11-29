@@ -258,17 +258,9 @@ Determine whether the objective function also has information on feasibility.
   while gen < ngen && (nz > 1 || gen < bestgen+ns)
     gen = gen + 1;
 #+end_src
-*** calculate fitness and prune
+*** prune similar solutions to encouraged diversity
+Remove duplicate members as they contribute nothing.
 #+begin_src octave :noweb yes :tangle strawberry.m
-  if nz > 1
-    ## remove infeasible solutions from the population
-    fitindices = pop(nx+1,:) < 1e19;
-    if sum(fitindices) < size(pop,2)
-      printf('Removing %d solutions from population of %d.  \n', size(pop,2)-sum(fitindices), size(pop,2))
-      pop = pop(:,fitindices);
-    endif
-  endif
-  ## prune the solution, removing duplicate members as they contribute nothing
   ## printf('npruned=%d nx=%d nz=%d\n', npruned, nx, nz)
   pop = strawberry_prune (pop, nx, nz);
   ## printf('npruned=%d nx=%d nz=%d\n', npruned, nx, nz)
@@ -524,7 +516,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
 #+name: fitness
 #+begin_src octave :tangle strawberry_fitness.m
   function [fit, best] = strawberry_fitness(p,nx,nz,npop)
-    global strawberry_fitness_method 
+    global strawberry_fitness_method
     [n m] = size(p);
     debugprint (1, 'fitness, nx nz m n npop', [nx, nz, m, n, npop])
     if m <= 0
@@ -538,15 +530,19 @@ To accomplish the latter, we consider a ranking that takes into account how good
     ninfeas = sum(indexinfeasible);
     if nfeas > 0
       feasiblefit = strawberry_vectorfitness(nz, p(nx+1:nx+nz,indexfeasible));
-      if sum(indexinfeasible) > 0
-        feasiblefit = feasiblefit/2 + 0.5; # upper half of fitness internval
+      ## the ranking of the feasible solutions is possibly adjusted to
+      ## fit in only the upper half of the [0,1] interval if there are
+      ## infeasible solutions as well.  The latter will have fitness
+      ## values in the bottom half of the interval.
+      if ninfeas > 0
         factor = 2;
       end
-      fit(indexfeasible) = (feasiblefit+factor-1)/factor; # upper half of fitness interval
+      fit(indexfeasible) = (feasiblefit+factor-1)/factor;
     end
     if ninfeas > 0
-      ## squeeze infeasible fitness values into (0,0.5) or (0,1) depending
-      ## on factor, i.e. whether there are any feasible solutions as well or not
+      ## squeeze infeasible fitness values into (0,0.5) or (0,1)
+      ## depending on factor, i.e. whether there are any feasible
+      ## solutions as well or not
       fit(indexinfeasible) = strawberry_vectorfitness(1, p(n,indexinfeasible))/factor;
     end
     if nz < 2
@@ -610,7 +606,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.29 14:24:59';
+      strawberry_version = '2016.11.29 14:48:14';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
