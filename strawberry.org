@@ -220,12 +220,7 @@ Determine whether the objective function also has information on feasibility.
   [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained);
   pop = strawberry_sort (phi,nx,nz);
   gen = 0;
-
-  if nz < 2
-    best = pop(:,1);
-  else
-    best = pop(:,findpareto(pop(nx+1:nx+nz,:)));
-  endif
+  best = [];                      #will be defined after fitness evaluation
   bestgen = gen;
   nfunctionevaluations = npop; # initial population size
 
@@ -273,12 +268,17 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   ## evaluate the fitness of the population.  For multi-objective problems,
   ## this has the side effect of returning the pareto front 
   [N pareto] = strawberry_fitness (pop,nx,nz,size(pop,2));
+  ## populationstatistics('pareto',pareto,nx,nz);
   ## keep track of best.  For multi-objective problems, this means keeping the pareto set
   debugprint(1, 'best', best)
   debugprint(1, 'pareto', pareto)
   debugprint(1, 'pop(1)', pop(:,1))
   debugprint(1, 'nx, nz', [nx, nz])
-  if nz < 2 && pareto(nx+1) < best(nx+1) && norm(abs(best(1:nx)-pareto(1:nx))) > 1e-6
+  if nz < 2 ...
+     && (isempty(best) ...
+         || length(best) < 1 ...
+         || (pareto(nx+1) < best(nx+1) ...
+             && norm(abs(best(1:nx)-pareto(1:nx))) > 1e-6))
     best = pareto;
     bestgen = gen;
     ## zzz = zfit (best (1:nx))
@@ -306,7 +306,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
 *** output statistics if desired
 #+name: outputstatistics
 #+begin_src octave :noweb yes :tangle strawberry.m
-  populationstatistics(best,nx,nz);
+  ## populationstatistics('whole',pop,nx,nz);
+  ## populationstatistics('best',best,nx,nz);
   if 0 == mod(gen,output) || 1 == gen
     if strawberry_numberofprocessors > 1
       dtime = time-starttime;
@@ -549,8 +550,15 @@ To accomplish the latter, we consider a ranking that takes into account how good
       [bestfit index] = max(fit);
       best = p(:,index);
     else
+      ## printf('There are %d feasible solutions when calculating fitness\n',nfeas)
       if nfeas > 0
-        best = p(:,findpareto(p(nx+1:nx+nz,indexfeasible)));
+        allindices = 1:m;
+        feasibleindices = allindices(indexfeasible);
+        ## printf('feasible population:\n')
+        ## disp(p(:,indexfeasible))
+        ## printf('and pareto from that population\n')
+        ## disp(p(:,feasibleindices(findpareto(p(nx+1:nx+nz,indexfeasible)))))
+        best = p(:,feasibleindices(findpareto(p(nx+1:nx+nz,indexfeasible))));
       else
         best = [];
       endif
@@ -606,7 +614,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.29 14:48:14';
+      strawberry_version = '2016.11.29 15:15:44';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -737,13 +745,13 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
 * populationstatistics -- mostly for debugging
 #+name: populationstatistics
 #+begin_src octave :tangle populationstatistics.m
-  function populationstatistics(p,nx,nz)
+  function populationstatistics(s,p,nx,nz)
     [m n] = size(p);
     feasible = p(end,:) <= 0;
     nfeasible = sum(feasible);
     infeasible = p(end,:) >= 0;
     ninfeasible = sum(infeasible);
-    printf('Population statistics:\n')
+    printf('Population statistics for %s:\n', s)
     printf(': there are %d members of which %d are feasible.\n', n, nfeasible)
     printf(': min objective function values: ')
     printf('%g ', min(p(nx+1:nx+nz,:),[],2))
