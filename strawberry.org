@@ -12,7 +12,7 @@ Below is the code I have written to implement a /plant propagation algorithm/.  
 
 *Breaking news*! An implementation of the plant propagation algorithm in the [[http://julialang.org/][Julia programming language]], known as [[file:fresa.org][Fresa]], is now available and under further development.  In all likelihood, further development of /Strawberry/ will be limited to bug fixes.
 
-The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, can be found here: call_distribution().
+The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, +can be found here+: call_distribution().
 
 All code (either version) is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
 
@@ -79,7 +79,7 @@ Major version log:
 - [X] need to handle the case of the Pareto set becoming ever larger, potentially infinite in size.  We should prune the set somehow.
 - [X] consider killing plants off after a certain number of generations, but keeping an overall /best/ solution record to ensure we don't lose the best solution found overall.  In terms of multi-objective optimisation, this may mean keeping an elite set of non-dominated solutions.
 - [X] can we make the code available externally, e.g. on a web site?  If so, we need to bring in the MOGA codes into this code base.  This may not be a bad idea in any case but it does limit code re-use.
-* strawberry -- the main function for the package
+* strawberry -- main entry point
 :PROPERTIES:
 :header-args: :tangle "strawberry.m"
 :END:
@@ -503,7 +503,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   printf('MOSD improvements: %d\n', mosd_numberimproved);
   endfunction
 #+end_src
-* distance -- the default distance function for real valued compact search domains
+* distance -- default implementation
 The distance method determines how far to send a runner.  The first argument is the fitness, \(f \in [0,1]\), and the second is the dimension of the problem, \(n>0\), i.e. the number of decision variables.  
 
 The basic premise is that the fitter the solution, the less far runners are sent as there is plenty of /food/ in this local neighbourhood.  A less fit point will send runners further.
@@ -512,7 +512,7 @@ The basic premise is that the fitter the solution, the less far runners are sent
     d = (1-f) * 2*(rand(n,1)-0.5);
   endfunction
 #+end_src
-* fitness -- compute fitness of solutions, both single and multiple criteria
+* fitness -- for single and multi-objective functions
 
 The fitness of the members in the population is calculated differently for 1 criterion problems and multi-criteria problems.  The former is based on a scaled value within the range of values for feasible and infeasible solutions separately.
 
@@ -543,7 +543,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
       end
       fit(indexfeasible) = (feasiblefit+factor-1)/factor; # upper half of fitness interval
     end
-    if sum(indexinfeasible) > 0
+    if ninfeas > 0
       ## squeeze infeasible fitness values into (0,0.5) or (0,1) depending
       ## on factor, i.e. whether there are any feasible solutions as well or not
       fit(indexinfeasible) = strawberry_vectorfitness(1, p(n,indexinfeasible))/factor;
@@ -609,7 +609,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.28 16:50:32';
+      strawberry_version = '2016.11.29 10:27:16';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -646,7 +646,7 @@ These functions allow strawberry to be used for more general problems than just 
     printf (': using default neighbouring solution generator function.\n')
   endif
 #+end_src
-* isdiverse -- identify solutions which are sufficiently different
+* isdiverse -- identify solutions that differ
 We only want to add solutions to the population that are diverse, i.e. significantly different, from those that are already there.  However, the diversity control should not be at the expense of losing better solutions.  The current implementation is not good in this respect and should be used with care as a result.
 #+begin_src octave :tangle strawberry_isdiverse.m
   function diverse = strawberry_isdiverse (pop, x)
@@ -661,7 +661,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
     if ~ diverse, nsimilar = nsimilar + 1; endif
   endfunction
 #+end_src
-* neighbour -- default function (compact real valued domain) to generate a neighbouring (fitness dependent) solution
+* neighbour -- for compact real valued domains
 Given a fitness value and a point in the search space, generate a new point in the space.  The better the fitness, the closer the point should be to the given point.  The basis of the Strawberry algorithm is that fit points generate more points in the local area; less fit points generate fewer new points but further away.  Exploitation versus exploration.
 
 The default implementation uses the fitness to define a distance within the bounds of the variables for each dimension.
@@ -737,7 +737,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     nz = n-nx-1
   endfunction
 #+end_src
-* prune -- remove non-diverse members of the population to avoid stagnation
+* prune -- remove non-diverse members 
 Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an *elite* set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
 #+name: prune
 #+begin_src octave :tangle strawberry_prune.m
@@ -777,7 +777,7 @@ Especially for multi-objective problems, we have a problem with diversity in tha
     endif
   endfunction
 #+end_src
-* random solution -- generate a new solution in the search space
+* random solution -- generate a new solution 
 By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables.  The default function requires the definition of the lower and upper bounds for the domain.
 #+begin_src octave :tangle strawberry_randomsolution.m
   function x = strawberry_randomsolution()
@@ -787,7 +787,7 @@ By default, this function returns a random solution in a compact hypercube domai
     x = strawberry_lower + r.*(strawberry_upper-strawberry_lower);
   endfunction
 #+end_src
-* runners -- calculate number of runners to generate as a function of fitness
+* runners -- number a function of fitness
 Two aspects define a plant propagation algorithm: the distance for the runners to propagate and the number of such runners that are generated.  This function addresses the latter.  The better the solution, defined by the fitness \(N\), the more runners should be generated.  The actual number of runners is \(\in [1,N_{r,max}]\) and is randomly generated.
 
 #+begin_src octave :tangle strawberry_runners.m
