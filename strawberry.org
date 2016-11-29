@@ -52,7 +52,7 @@ In the following code, we assume column vectors for decision variables and objec
 #+end_src 
 
 #+results: distribution
-[[file:./strawberry-20161116.zip][strawberry-20161116.zip]]
+[[file:./strawberry-20161129.zip][strawberry-20161129.zip]]
 
 * Version information
 
@@ -314,6 +314,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
 *** output statistics if desired
 #+name: outputstatistics
 #+begin_src octave :noweb yes :tangle strawberry.m
+  populationstatistics(best,nx,nz);
   if 0 == mod(gen,output) || 1 == gen
     if strawberry_numberofprocessors > 1
       dtime = time-starttime;
@@ -609,7 +610,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.29 10:27:16';
+      strawberry_version = '2016.11.29 14:24:59';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -737,6 +738,30 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     nz = n-nx-1
   endfunction
 #+end_src
+* populationstatistics -- mostly for debugging
+#+name: populationstatistics
+#+begin_src octave :tangle populationstatistics.m
+  function populationstatistics(p,nx,nz)
+    [m n] = size(p);
+    feasible = p(end,:) <= 0;
+    nfeasible = sum(feasible);
+    infeasible = p(end,:) >= 0;
+    ninfeasible = sum(infeasible);
+    printf('Population statistics:\n')
+    printf(': there are %d members of which %d are feasible.\n', n, nfeasible)
+    printf(': min objective function values: ')
+    printf('%g ', min(p(nx+1:nx+nz,:),[],2))
+    printf('\n');
+    if nfeasible > 0
+      printf(': constraint values for feasible solutions in [%g,%g]\n', ...
+             min(p(end,feasible)), max(p(end,feasible)));
+    endif
+    if ninfeasible > 0
+      printf(': constraint values for infeasible solutions in [%g,%g]\n', ...
+             min(p(end,infeasible)), max(p(end,infeasible)));
+    endif
+  endfunction
+#+end_src 
 * prune -- remove non-diverse members 
 Especially for multi-objective problems, we have a problem with diversity in that the pareto set forms an *elite* set.  If this set has multiple copies of the same solutions, the set can grow quite large and increases the computational effort dramatically with little effect on the quality of the solutions obtained.
 #+name: prune
