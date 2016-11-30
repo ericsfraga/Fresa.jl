@@ -10,7 +10,7 @@
 * Overview and introduction
 Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in an up-coming publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
 
-*Breaking news*! An implementation of the plant propagation algorithm in the [[http://julialang.org/][Julia programming language]], known as [[file:fresa.org][Fresa]], is now available and under further development.  In all likelihood, further development of /Strawberry/ will be limited to bug fixes.
+*Breaking news*! An implementation of the plant propagation algorithm in the [[http://julialang.org/][Julia programming language]], known as [[file:fresa.org][Fresa]], is now available and under further development.  The advantage of this new implementation is the use of Julia.  Julia is a new language for scientific computation which has many key properties including parallel computing and /just-in-time/ compilation of code for efficiency.
 
 The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, +can be found here+: call_distribution().
 
@@ -225,6 +225,9 @@ Determine whether the objective function also has information on feasibility.
   nfunctionevaluations = npop; # initial population size
 
   if output
+    printf('In the following table, $n_f$ is number of feasible points,\n')
+    printf('$n_i$ for infeasible, $n_p$ number in Pareto set\n');
+    printf('$c$ best constraint value and $g_b$ best generation.\n');
     printf('| %9s |', 'gen')
     if nz > 1
       for i=1:nz, printf(' %6sz%02d |', '', i); endfor
@@ -238,11 +241,11 @@ Determine whether the objective function also has information on feasibility.
       for i=1:nz; printf(' %6sy%02d |', '', i); endfor
       if constrained; printf(' %9s |', 'c'); endif
     endif
-    printf(' %9s | %9s |', '$n_f$', 'CPU (s)')
+    printf(' %5s | %5s |', '$n_f$', '$n_i$')
     if nz > 1
-      printf(' %9s |', 'n_pareto')
+      printf(' %5s |', '$n_p$')
     else
-      printf(' %9s |', 'Best iter')
+      printf(' %5s |', '$g_b$')
     endif
     printf('\n');
     printf('|-\n');
@@ -316,6 +319,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     endif
     fprintf(stderr, '\r');
     printf('| %9d |', gen);
+    nfeas = sum(pop(end,:)<=0.0);
+    ninfeas = sum(pop(end,:)>0);
     if nz > 1
       if ~ isempty(best) && length(best)>1
         ## printf('Size of best: %d %d\n',size(best))
@@ -324,7 +329,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       else
         printf(' %9.3g |', zeros(nz+constrained,1));
       endif
-      printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, size(best,2));
+      printf(' %5d | %5d | %5d |', nfeas, ninfeas, size(best,2));
     else
       if nx > 5
         indices = [1:4 nx+nz];
@@ -333,7 +338,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
       endif
       printf (' %9.3g |', best(indices))
       if constrained; printf(' %9.3g |', best(nx+nz+1)); endif
-      printf(' %9d | %9.1f | %9d |', nfunctionevaluations, dtime, bestgen);
+      printf(' %5d | %5d | %5d |', nfeas, ninfeas, size(best,2));
     endif
     printf('  \n');
   else
@@ -614,7 +619,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.29 15:15:44';
+      strawberry_version = '2016.11.30 09:52:47';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
