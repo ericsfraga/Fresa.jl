@@ -79,7 +79,7 @@ Major version log:
 - [X] need to handle the case of the Pareto set becoming ever larger, potentially infinite in size.  We should prune the set somehow.
 - [X] consider killing plants off after a certain number of generations, but keeping an overall /best/ solution record to ensure we don't lose the best solution found overall.  In terms of multi-objective optimisation, this may mean keeping an elite set of non-dominated solutions.
 - [X] can we make the code available externally, e.g. on a web site?  If so, we need to bring in the MOGA codes into this code base.  This may not be a bad idea in any case but it does limit code re-use.
-* strawberry -- main entry point
+* Strawberry -- main entry point
 :PROPERTIES:
 :header-args: :tangle "strawberry.m"
 :END:
@@ -180,7 +180,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   ## how many processors there are
   global strawberry_numberofprocessors
   if isempty(strawberry_numberofprocessors)
-    strawberry_numberofprocessors = nproc();
+    strawberry_numberofprocessors = 1; # not currently working for np>1, nproc();
   endif
   if strawberry_numberofprocessors > 1
     printf (': using %d processors for parallel processing.\n', strawberry_numberofprocessors);
@@ -502,7 +502,7 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
   printf('MOSD improvements: %d\n', mosd_numberimproved);
   endfunction
 #+end_src
-* support functions
+* Support functions
 #+toc: headlines 1 local
 
 ** distance -- default implementation
@@ -622,7 +622,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.11.30 10:00:14';
+      strawberry_version = '2016.12.07 16:32:48';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -905,7 +905,7 @@ For single criterion problems, we sort the population in order of decreasing fit
     endif
   endfunction
 #+end_src
-* tests
+* Tests
 #+toc: headlines 2 local
 ** general bicriteria test
 #+begin_src octave :tangle no
