@@ -52,7 +52,7 @@ In the following code, we assume column vectors for decision variables and objec
 #+end_src 
 
 #+results: distribution
-[[file:./strawberry-20161130.zip][strawberry-20161130.zip]]
+[[file:./strawberry-20170204.zip][strawberry-20170204.zip]]
 
 * Version information
 
@@ -311,8 +311,10 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     debugprint (-1, 'size of pareto: ', length(best))
   endif
 #+end_src
-*** output statistics and population periodically
-There are two types of periodic output.  The first, controlled by the ~output~ argument to the function, is a single line summary of the status of the current population.  This defaults to outputting a total of 50 lines over the full evolution.
+*** periodic output
+There are two types of periodic output.
+**** population statistics to console
+The first, controlled by the ~output~ argument to the function, is a single line summary of the status of the current population.  This defaults to outputting a total of 50 lines over the full evolution.
 #+name: outputstatistics
 #+begin_src octave :noweb yes :tangle strawberry.m
   ## populationstatistics('whole',pop,nx,nz);
@@ -367,14 +369,17 @@ There are two types of periodic output.  The first, controlled by the ~output~ a
     printf('Ummmm size of population %d is less than expected (%d)\n', size(1,pop), npop);
   endif
 #+end_src
-The second is the output of the full population to an automatically named file (based on time stamp and generation number).  The default is to not generate this output.  This output is controlled by setting the global variable ~strawberry_output_population~ which should be set to a positive number that specifies which generations to output (modulo == 0).
+**** pareto set to file
+The second is the output of the full population to an automatically named file (based on time stamp and generation number).  The default is to not generate this output.  This output is controlled by setting the global variable ~strawberry_output_population~ which should be set to a positive number that specifies which generations to output (modulo == 0).  This output is only available for multi-objective problems.
 #+name: outputpopulation
 #+begin_src octave
-  if strawberry_output_population > 0 && 0 == mod(gen,strawberry_output_population)
+  if nz > 1 && ...
+     strawberry_output_population > 0 && ...
+     0 == mod(gen,strawberry_output_population)
     filename = sprintf('%s-%s-%06d.data', 'strawberry-population', ...
                        strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
                        gen);
-    poptrans = pop';
+    poptrans = pop(:,findpareto(pop(nx+1:nx+nz,:)))';
     save('-text',filename,'poptrans');
   endif
 #+end_src 
@@ -639,7 +644,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.02.04 15:42:40';
+      strawberry_version = '2017.02.04 16:20:05';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
