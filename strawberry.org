@@ -257,6 +257,7 @@ Determine whether the objective function also has information on feasibility.
   endif
 #+end_src
 ** iterate
+#+toc: headlines 1 local
 #+begin_src octave :noweb yes :tangle strawberry.m
   while gen < ngen && (nz > 1 || gen < bestgen+ns)
     gen = gen + 1;
@@ -375,18 +376,14 @@ The second is the output of the full population to an automatically named file (
 This output is only available for multi-objective problems and a file will be saved only if there is at least one feasible member in the population.
 #+name: outputpopulation
 #+begin_src octave
-  if nz > 1 ...
-     && strawberry_output_population > 0 ...
+  if strawberry_output_population > 0 ...
      && 0 == mod(gen,strawberry_output_population)
-    feasible = pop(:,pop(end,:) <= 0);
-    nfeas = size(feasible,2);
-    if nfeas > 0
       filename = sprintf('%s-%s-%06d.data', 'strawberry-population', ...
                          strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
                          gen);
-      poptrans = feasible(:,findpareto(feasible(nx+1:nx+nz,:)))';
+      [sorted sortindices] = sort(best(nx+1,:));
+      poptrans = best(:,sortindices)';
       save('-text',filename,'poptrans');
-    endif
   endif
 #+end_src 
 *** select and propagate
@@ -650,7 +647,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.02.04 17:06:59';
+      strawberry_version = '2017.02.04 17:28:55';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
