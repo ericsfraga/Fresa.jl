@@ -371,10 +371,11 @@ The second is the output of the full population to an automatically named file (
 #+name: outputpopulation
 #+begin_src octave
   if strawberry_output_population > 0 && 0 == mod(gen,strawberry_output_population)
-    filename = sprintf('%s-%s-%06d.data', 'strawberry-population-', ...
+    filename = sprintf('%s-%s-%06d.data', 'strawberry-population', ...
                        strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
                        gen);
-    save filename pop
+    poptrans = pop';
+    save('-text',filename,'poptrans');
   endif
 #+end_src 
 *** select and propagate
@@ -638,7 +639,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.02.04 11:28:47';
+      strawberry_version = '2017.02.04 15:42:40';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -997,6 +998,8 @@ This is simple test of three criteria.  The results can be seen in the following
     strawberry_numberofprocessors = 1;
     global strawberry_fitness_method
     strawberry_fitness_method = 0
+    global strawberry_output_population
+    strawberry_output_population = 100
     x0 = [0 0 0 0 0]';
     a = zeros(5,1);
     b = ones(5,1);
