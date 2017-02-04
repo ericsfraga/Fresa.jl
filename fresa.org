@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.11.28 10:48:51"
+  version = "2016.12.09 17:16:08"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -455,6 +455,30 @@ This test uses a simple quadratic objective function, defined within.  All point
   hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10 fresa.org
 #+end_src
 * settings                                                    :noexport:
+** latex settings
+#+begin_export latex
+\lstdefinelanguage{Julia}%
+  {morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
+      end,export,false,for,function,immutable,import,importall,if,in,%
+      macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
+      using,while},%
+   sensitive=true,%
+   alsoother={$},%
+   morecomment=[l]\#,%
+   morecomment=[n]{\#=}{=\#},%
+   morestring=[s]{"}{"},%
+   morestring=[m]{'}{'},%
+}[keywords,comments,strings]%
+
+\lstset{%
+    language         = Julia,
+    basicstyle       = \ttfamily,
+    keywordstyle     = \bfseries\color{blue},
+    stringstyle      = \color{magenta},
+    commentstyle     = \color{ForestGreen},
+    showstringspaces = false,
+}
+#+end_export
 ** org startup on file visit
 #+name: startup
 #+begin_src emacs-lisp :results none
