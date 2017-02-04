@@ -371,8 +371,9 @@ The second is the output of the full population to an automatically named file (
 #+name: outputpopulation
 #+begin_src octave
   if strawberry_output_population > 0 && 0 == mod(gen,strawberry_output_population)
-    filename = sprintf('%s-%s.data', 'strawberry-population-', ...
-                       strftime('%Y%m%d-%H:%M:%S', localtime(time())));
+    filename = sprintf('%s-%s-%06d.data', 'strawberry-population-', ...
+                       strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
+                       gen);
     save filename pop
   endif
 #+end_src 
@@ -637,7 +638,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.02.04 11:26:19';
+      strawberry_version = '2017.02.04 11:28:47';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
