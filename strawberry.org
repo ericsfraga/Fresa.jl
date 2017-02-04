@@ -84,6 +84,7 @@ Major version log:
 :header-args: :tangle "strawberry.m"
 :END:
 #+toc: headlines 1 local
+** overview
 The algorithm is *evolutionary*, iterating over a number of generations.  In each generation, the solutions are ranked according to the objective function values.  In each generation, a number are selected for *propagation*.  Each solution can propagate itself a number of times and a certain distance with both aspects being a function of the solution's fitness.  The best solutions propagate more but for shorter distances to exploit the quality of the solution, i.e. a /local/ search; the not so good solutions propagate less but further to explore the domain, i.e. a /global/ search.
 
 A hybrid procedure using a multi-objective steepest descent method, ~MOSD~, is optional.
@@ -148,6 +149,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   global strawberry_diversity_tolerance
   global strawberry_lower strawberry_upper
   global strawberry_neighbourfn 
+  global strawberry_output_population
   mosd_numberimproved = 0;
   npruned = 0;
   nsimilar = 0;
@@ -188,6 +190,9 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   else
     printf (': not using any parallel processing on a single processor system.\n');
     starttime = cputime;
+  endif
+  if isempty(strawberry_output_population)
+    strawberry_output_population = 0
   endif
 #+end_src
 ** constrained problem?
@@ -306,7 +311,8 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     debugprint (-1, 'size of pareto: ', length(best))
   endif
 #+end_src
-*** output statistics if desired
+*** output statistics and population periodically
+There are two types of periodic output.  The first, controlled by the ~output~ argument to the function, is a single line summary of the status of the current population.  This defaults to outputting a total of 50 lines over the full evolution.
 #+name: outputstatistics
 #+begin_src octave :noweb yes :tangle strawberry.m
   ## populationstatistics('whole',pop,nx,nz);
@@ -361,6 +367,15 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     printf('Ummmm size of population %d is less than expected (%d)\n', size(1,pop), npop);
   endif
 #+end_src
+The second is the output of the full population to an automatically named file (based on time stamp and generation number).  The default is to not generate this output.  This output is controlled by setting the global variable ~strawberry_output_population~ which should be set to a positive number that specifies which generations to output (modulo == 0).
+#+name: outputpopulation
+#+begin_src octave
+  if strawberry_output_population > 0 && 0 == mod(gen,strawberry_output_population)
+    filename = sprintf('%s-%s.data', 'strawberry-population-', ...
+                       strftime('%Y%m%d-%H:%M:%S', localtime(time())));
+    save filename pop
+  endif
+#+end_src 
 *** select and propagate
 #+begin_src octave :noweb yes :tangle strawberry.m
   ## generate all the new points and then evaluate them in parallel
@@ -622,7 +637,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2016.12.07 16:32:48';
+      strawberry_version = '2017.02.04 11:26:19';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
