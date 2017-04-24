@@ -62,7 +62,9 @@ Major version log:
 - July 2016 :: multi-objective version extended to work for any number of criteria instead of just 2.
 - October 2015 :: started work on a MI-Strawberry version, hopefully as upwards compatible as possible.
 - September 2015 :: implemented a rank based fitness, used to prepare results in [[file:~/synced/research/multiobjective.optimisation/strawberry/paper.pdf][the paper on understanding the impacts of constraints]].  There is now a choice of fitness functions as the old, Pareto based, fitness function is still available (cf. Deb (2000) for an example).
-* TODO [4/12] improvements or bugs                            :noexport:
+* TODO [4/13] improvements or bugs                            :noexport:
+- [ ] Note taken at MCDA meeting in Padova
+  implement a relaxed dominance definition in Strawberry to better explore the set of non-dominated points.  \epsilon would be based on range of values expected or range actually existing in a population. the identification of an \epsilon based non-dominated set will be non-deterministic or not unique.  Does this matter?
 - [ ] keep an elite set (best of set ∪ best in population) which is not involved in selection but which is presented at the end.  This is to avoid non-dominated solutions that are lost along the way when dealing with multi-objective problems.
 - [ ] include an evolution strategy as part of a genome for a GA 
   - where the strategy is a combination of specific crossover and mutation operators.
@@ -647,7 +649,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.02.04 17:28:55';
+      strawberry_version = '2017.04.24 17:33:39';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
