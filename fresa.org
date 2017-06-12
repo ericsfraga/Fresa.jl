@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2016.12.09 17:16:08"
+  version = "2017.06.12 15:41:50"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -63,7 +63,7 @@ These are variables that are global to the module.
   n = 1                           # number of decision variables
 #+end_src 
 ** fitness
-The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value.  This is described in a soon to appear publication ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
+The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]].
 
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
