@@ -350,7 +350,7 @@ The first, controlled by the ~output~ argument to the function, is a single line
       endif
       printf (' %9.3g |', best(indices))
       if constrained; printf(' %9.3g |', best(nx+nz+1)); endif
-      printf(' %5d | %5d | %5d |', nfeas, ninfeas, size(best,2));
+      printf(' %5d | %5d | %5d |', nfeas, ninfeas, bestgen);
     endif
     printf('  \n');
   else
@@ -441,6 +441,9 @@ This output is only available for multi-objective problems and a file will be sa
       nf = nf + 1;
       if constrained
         [y g] = f(x);
+        if g > 0
+          ninf = ninf + 1;
+        endif
       else
         y = f(x);
         g = 0;
@@ -510,10 +513,10 @@ This output is only available for multi-objective problems and a file will be sa
 #+begin_src octave :noweb yes :tangle strawberry.m
   endwhile
   if gen < ngen
-    printf('Strawberry: terminating condition satisfied due to lack of improvement at gen=%d\n', gen);
+    printf('\n: strawberry terminating condition satisfied due to lack of improvement at gen=%d\n', gen);
   endif
   if output
-    printf('Strawberry: at end, nf=%d ninf=%d best solution:\n', nf, ninf)
+    printf('\n: strawberry at end, nf=%d ninf=%d best solution:\n', nf, ninf)
     disp(best');
   endif
   ## ensure the best solution is returned
@@ -526,7 +529,7 @@ This output is only available for multi-objective problems and a file will be sa
     endtime = cputime;
   endif
   printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', ...
-         endtime-starttime, nfunctionevaluations, npruned, nsimilar)
+         endtime-starttime, nf, npruned, nsimilar)
   printf('MOSD improvements: %d\n', mosd_numberimproved);
   endfunction
 #+end_src
@@ -650,7 +653,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.05.08 10:38:38';
+      strawberry_version = '2017.07.28 11:13:48';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
