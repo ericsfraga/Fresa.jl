@@ -232,7 +232,7 @@ Determine whether the objective function also has information on feasibility.
   bestgen = gen;
   nfunctionevaluations = npop; # initial population size
 
-  if output
+  if output > 0
     printf('In the following table, $n_f$ is number of feasible points,\n')
     printf('$n_i$ for infeasible, $n_p$ number in Pareto set\n');
     printf('$c$ best constraint value and $g_b$ best generation.\n');
@@ -323,7 +323,7 @@ The first, controlled by the ~output~ argument to the function, is a single line
 #+begin_src octave :noweb yes :tangle strawberry.m
   ## populationstatistics('whole',pop,nx,nz);
   ## populationstatistics('best',best,nx,nz);
-  if 0 == mod(gen,output) || 1 == gen
+  if output > 0 && (0 == mod(gen,output) || 1 == gen)
     if strawberry_numberofprocessors > 1
       dtime = time-starttime;
     else
@@ -653,7 +653,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.07.28 11:13:48';
+      strawberry_version = '2017.07.28 11:30:24';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
