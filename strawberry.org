@@ -14,7 +14,7 @@ Below is the code I have written to implement a /plant propagation algorithm/.  
 
 The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, +can be found here+: call_distribution().
 
-All code (either version) is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
+All code (either version) is copyright © 2017, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
 
 Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if the /Strawberry/ code is used, please do let the authors know and the above publications must be cited in any research papers written.  Feedback, including bug reports for either Octave or MATLAB distribution, is most welcome.
 
@@ -52,7 +52,7 @@ In the following code, we assume column vectors for decision variables and objec
 #+end_src 
 
 #+results: distribution
-[[file:./strawberry-20170204.zip][strawberry-20170204.zip]]
+[[file:./strawberry-20170815.zip][strawberry-20170815.zip]]
 
 * Version information
 
@@ -653,7 +653,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.07.28 11:30:24';
+      strawberry_version = '2017.08.15 15:09:40';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
