@@ -52,7 +52,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
 
-  version = "2017.09.04 11:32:35"
+  version = "2017.09.04 14:58:46"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -80,7 +80,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       factor = 1              # for placement in fitness interval (0,1)
       if length(indexfeasible) > 0
           feasible = view(pop,1:k,indexfeasible)
-          feasiblefit = vectorfitness(m, feasible[nx+1:nx+nz,:])
+          feasiblefit = vectorfitness(nz, feasible[nx+1:nx+nz,:])
           if length(indexinfeasible) > 0
               feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness internval
               factor = 2
@@ -112,7 +112,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
               fit = 0.5*ones(l)
           else
               # avoid extreme 0,1 values
-              fit = tanh((zmax - v) / (zmax - zmin) - 0.5)+0.5
+              fit = tanh.((zmax - v) / (zmax - zmin) - 0.5)+0.5
           end
       else                  # multi-objective
           m, l = size(v)
@@ -127,7 +127,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
               fit = [0.5]
           else
               # avoid extreme 0,1 values
-              fit = tanh(0.5 - fitness / maximum(fitness)) + 0.5
+              fit = tanh.(0.5 - fitness / maximum(fitness)) + 0.5
           end
       end
       # println("VF: fit=$fit")
@@ -140,7 +140,7 @@ A random solution is generated with a distance from the original point being inv
 #+name: neighbour
 #+begin_src julia
   function neighbour(x,nx,a,b,f)
-      xnew = x .+ (1-f) * 2(rand(nx,1)-0.5) .* (b-a)
+      xnew = x .+ (1-f) .* 2(rand(nx)-0.5) .* (b-a)
       xnew[xnew.<a] = a[xnew.<a];
       xnew[xnew.>b] = b[xnew.>b];
       return xnew
@@ -187,13 +187,13 @@ Create a random population of size ~n~ evaluated using ~f~.
 #+begin_src julia
   function randompopulation(n,f,a,b)
       nx = length(b)
-      x = a + rand(nx,1).*b
+      x = a + rand(nx).*b
       z, g = f(x)
       k = length(x) + length(z) + 1;
       p = zeros(k,n);
       p[:,1] = [x;z;g]
       @sync @parallel for j in 2:n
-          x = a + rand(nx,1).*b
+          x = a + rand(nx).*b
           z, g = f(x)
           p[:,j] = [x;z;g]
       end
@@ -273,7 +273,7 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
               end
               # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbourfn(pop[1:n,s],nx,a,b,fit[s])
+                  x = neighbourfn(pop[1:nx,s],nx,a,b,fit[s])
                   z, g = f(x)
                   newpop = hcat(newpop,[x;z;g])
               end
@@ -282,11 +282,11 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
       end
       fit = fitness(pop,nx)
       index = sortperm(fit)
-      if m == 1
+      if nz == 1
           best = pop[:,index[length(fit)]]
-          return best[1:nx], best[nx+1:nx+nz], best[nx+ny+1], pop
+          return best[1:nx], best[nx+1:nx+nz], best[nx+nz+1], pop
       else
-          return pareto(pop), pop
+          return pareto(pop,nx,nz), pop
       end
   end
 #+end_src 
@@ -305,7 +305,7 @@ The following are simple tests for either the Fresa optimiser or just individual
   nx = 5
   a = -5*ones(nx,1)
   b = 5*ones(nx,1)
-  x = a + (b-a) .* rand(nx,1)
+  x = a + (b-a) .* rand(nx)
   println("$x")
   for i in 1:10
       print("$i: ")
@@ -358,11 +358,10 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   b = [6.0; 6.0]
   function neighbour(x,nx,a,b,f)
       # first x is real, second is integer
-      newx = zeros(2,1)
-      newx = x .+ (b-a)*(1-f) * 2 * (rand(nx,1)-0.5)
+      newx = x .+ (b-a).*(1-f) .* 2 .* (rand(nx)-0.5)
       newx[2] = round(newx[2])
-      newx[newx.<a] = a
-      newx[newx.>b] = b
+      newx[newx.<a] = a[newx.<a]
+      newx[newx.>b] = b[newx.>b]
       return newx
   end
   bestx, bestz, bestg, pop = Fresa.solve(f, [1.;1.], a, b; neighbourfn=neighbour)
@@ -397,8 +396,8 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   b = ones(nx,1)
   x = zeros(nx,1)
   f = x -> ([ sum((x-0.5).^2+1)
-              sum(cos(x))
-              sum(sin(x))],
+              sum(cos.(x))
+              sum(sin.(x))],
             0)
   pareto, population = Fresa.solve(f, x, a, b; npop=100, ngen=1000, output=100)
 
@@ -418,7 +417,7 @@ Some code to play with the generation of a random population so as to learn how 
   n = 1;
   a = zeros(n,1)
   b = π * ones(n,1)
-  f = x -> ( sum(sin(x/i) for i=1:10000), 0)
+  f = x -> ( sum(sin.(x/i) for i=1:10000), 0)
   @time p = Fresa.randompopulation(m,f,a,b)
 #+end_src 
 ** pareto test
@@ -428,12 +427,12 @@ Some code to play with the generation of a random population so as to learn how 
   nx = 2
   a = zeros(nx,1)
   b = ones(nx,1)
-  x = rand(nx,1)
+  x = rand(nx)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   z, g = f(x)
   pop = [x; z; g]
   for i=1:9
-      x = rand(nx,1)
+      x = rand(nx)
       z, g = f(x)
       pop = hcat(pop,[x; z; g])
   end
