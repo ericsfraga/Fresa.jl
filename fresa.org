@@ -48,7 +48,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 #+begin_src julia
   module Fresa
 
-  version = "2017.06.12 15:41:50"
+  version = "2017.06.12 16:01:26"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -436,6 +436,19 @@ Some code to play with the generation of a random population so as to learn how 
   println("Population is $pop")
   println("Pareto set is $p")
 #+end_src 
+** rosenbrock
+#+name: testrosenbrock
+#+begin_src julia :tangle testrosenbrock.jl
+  using Fresa
+  x0 = 0.5*ones(2,1)
+  a = zeros(2,1)
+  b = 10*ones(2,1)
+  rosenbrock(x) = ((1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2, 0)
+  # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
+  bestx, bestz, bestg, pop = Fresa.solve(rosenbrock, x0, a, b)
+  println("Population at end: $pop")
+  println("Best solution is f($bestx)=$bestz with g=$bestg")
+#+end_src
 ** simple objective function
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
 #+name: testsimple
