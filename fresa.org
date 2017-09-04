@@ -43,24 +43,26 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 :header-args: :tangle "Fresa.jl"
 :END:
 #+toc: headlines 2 local
+The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is a 2d array.  Each column is a point in the search space consisting of =nx= decision variable values, =nz= objective function values and =g=, a single value indicating feasibility with =g≤0= feasible and =g>0= infeasible.
+
+The objective function, =f(x)=, returns two variables: =z=, the vector of objective function values, and =g=, the indication of feasibility as discussed above.
+
 ** start of module
 #+name: modulestart
 #+begin_src julia
   module Fresa
 
-  version = "2017.06.12 16:01:26"
+  version = "2017.09.04 11:32:35"
   function __init__()
       println("Fresa PPA $version")
   end
 #+end_src
-** variables
+** COMMENT variables
 These are variables that are global to the module.
 #+name: variables
 #+begin_src julia
   a = [0.0]                       # lower bounds
   b = [1.0]                       # upper bounds
-  m = 1                           # objective functions
-  n = 1                           # number of decision variables
 #+end_src 
 ** fitness
 The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]].
@@ -68,9 +70,9 @@ The fitness function used depends on the number of objectives.  For single crite
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
 #+begin_src julia
-  function fitness(pop)
+  function fitness(pop,nx)
       k, l = size(pop)
-      m = k-n-1
+      nz = k-nx-1
       indexfeasible = (1:l)[pop[k,:].<=0]
       indexinfeasible = (1:l)[pop[k,:].>0]
       # println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
@@ -78,7 +80,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       factor = 1              # for placement in fitness interval (0,1)
       if length(indexfeasible) > 0
           feasible = view(pop,1:k,indexfeasible)
-          feasiblefit = vectorfitness(m, feasible[n+1:n+m,:])
+          feasiblefit = vectorfitness(m, feasible[nx+1:nx+nz,:])
           if length(indexinfeasible) > 0
               feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness internval
               factor = 2
@@ -90,7 +92,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           # on factor, i.e. whether there are any feasible solutions as well or not
           infeasible = view(pop,1:k,indexinfeasible)
           # use constraint violation for ranking
-          fit[indexinfeasible] = vectorfitness(1, infeasible[n+m+1:n+m+1,:])/factor;
+          fit[indexinfeasible] = vectorfitness(1, infeasible[nx+nz+1:nx+nz+1,:])/factor;
       end
       vec(fit)
   end
@@ -134,23 +136,23 @@ This function uses a helper function, defined below, to assign a fitness to a ve
 
 #+end_src 
 ** neighbour -- generate random point
-A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.
+A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
 #+name: neighbour
 #+begin_src julia
-  function neighbour(x,f)
-      nx = x .+ (1-f) * 2(rand(n,1)-0.5) .* (b-a)
-      nx[nx.<a] = a[nx.<a];
-      nx[nx.>b] = b[nx.>b];
-      return nx
+  function neighbour(x,nx,a,b,f)
+      xnew = x .+ (1-f) * 2(rand(nx,1)-0.5) .* (b-a)
+      xnew[xnew.<a] = a[xnew.<a];
+      xnew[xnew.>b] = b[xnew.>b];
+      return xnew
   end
 #+end_src
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
 #+begin_src julia
-  function pareto(pop)
+  function pareto(pop,nx,nz)
       k, l = size(pop)
-      z = pop[n+1:n+m,:]
+      z = pop[nx+1:nx+nz,:]
       p = pop[:,1]                # pareto front
       first = true
       for i in 1:l
@@ -184,13 +186,14 @@ Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
 #+begin_src julia
   function randompopulation(n,f,a,b)
-      x = a + rand(length(b),1).*b
+      nx = length(b)
+      x = a + rand(nx,1).*b
       z, g = f(x)
       k = length(x) + length(z) + 1;
       p = zeros(k,n);
       p[:,1] = [x;z;g]
       @sync @parallel for j in 2:n
-          x = a + rand(length(b),1).*b
+          x = a + rand(nx,1).*b
           z, g = f(x)
           p[:,j] = [x;z;g]
       end
@@ -216,7 +219,7 @@ Given a fitness, ~f~, choose two solutions randomly and select the one with the 
       end
   end
 #+end_src 
-** set bounds -- for real valued decision vectors
+** COMMENT set bounds -- for real valued decision vectors
 Used to set some of the module global variables used by many of the functions in the module.  This could have been done in the main ~solve~ function but was taken out to make testing of small parts of the module easier.
 #+name: setbounds
 #+begin_src julia
@@ -237,21 +240,21 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
                  ngen=100, npop=10, output=5, nrmax=5, ns=100,
                  neighbourfn=neighbour)
       tstart = time()
-      setbounds(a,b)
+      nx = length(a)
       z, g = f(x0)
+      nz = length(z)
       println(": initial point, f($x0) = $z, with constraint $g")
-      global m = length(z)
-      println(": there are $m objective functions.")
-      pop = reshape([x0;z;g],n+m+1,1) # should not be necessary
+      println(": there are $nz objective functions.")
+      pop = reshape([x0;z;g],nx+nz+1,1) # should not be necessary
       for gen in 1:ngen
-          fit = fitness(pop)
+          fit = fitness(pop,nx)
           index = sortperm(fit)
           best = pop[:,index[length(fit)]]
-          print(": $gen best is $(best[n+1:n+m+1])\r")
+          print(": $gen best is $(best[nx+1:nx+nz+1])\r")
           if gen%output == 0
               @printf("| %9d | %9.2f | ", gen, time()-tstart)
-              j = m>1 ? n+1 : 1
-              for i=j:n+m+1
+              j = nz>1 ? nx+1 : 1
+              for i=j:nx+nz+1
                   @printf("%9g |", best[i])
               end
               println()
@@ -270,18 +273,18 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
               end
               # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbourfn(pop[1:n,s],fit[s])
+                  x = neighbourfn(pop[1:n,s],nx,a,b,fit[s])
                   z, g = f(x)
                   newpop = hcat(newpop,[x;z;g])
               end
           end
           pop = newpop;
       end
-      fit = fitness(pop)
+      fit = fitness(pop,nx)
       index = sortperm(fit)
       if m == 1
           best = pop[:,index[length(fit)]]
-          return best[1:n], best[n+1:n+m], best[n+m+1], pop
+          return best[1:nx], best[nx+1:nx+nz], best[nx+ny+1], pop
       else
           return pareto(pop), pop
       end
@@ -299,14 +302,14 @@ The following are simple tests for either the Fresa optimiser or just individual
 #+name: testneighbour
 #+begin_src julia :tangle testneighbour.jl
   using Fresa
-  a = -5*ones(5,1)
-  b = 5*ones(5,1)
-  x = a + (b-a) .* rand(5,1)
+  nx = 5
+  a = -5*ones(nx,1)
+  b = 5*ones(nx,1)
+  x = a + (b-a) .* rand(nx,1)
   println("$x")
-  Fresa.setbounds(a,b)
   for i in 1:10
       print("$i: ")
-      n = Fresa.neighbour(x,0.9)
+      n = Fresa.neighbour(x,nx,a,b,0.9)
       println("$n")
   end
 #+end_src
@@ -316,15 +319,15 @@ This test uses a simple quadratic objective function to test out the fitness eva
 #+name: testfitness
 #+begin_src julia :tangle testfitness.jl
   using Fresa
-  x0 = 0.5*ones(2,1)
-  a = zeros(2,1)
-  b = 10*ones(2,1)
-  Fresa.setbounds(a,b)
+  nx = 2
+  x0 = 0.5*ones(nx,1)
+  a = zeros(nx,1)
+  b = 10*ones(nx,1)
   f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   z, g = f(x0)
   pop = [x0;z;g]
   for i in 1:5
-      x = Fresa.neighbour(x0,0.5)
+      x = Fresa.neighbour(x0,nx,a,b,0.5)
       z, g = f(x)
       pop = hcat(pop, [x;z;g])
       npop = size(pop)
@@ -346,20 +349,21 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
 #+name: testminlp
 #+begin_src julia :tangle testminlp.jl
   using Fresa
+  nx = 2;
   f = x -> (3x[2] - 5x[1],
             max(2x[2] + 3x[1] - 24,
                 3x[1] - 2x[2] - 8,
                 2x[2]^2 - 2*sqrt(x[2]) + 11x[2] + 8x[1] - 39 - 2*sqrt(x[1])*x[2]^2))
   a = [1.0; 1.0]
   b = [6.0; 6.0]
-  function neighbour(x,f)
+  function neighbour(x,nx,a,b,f)
       # first x is real, second is integer
-      nx = zeros(2,1)
-      nx = x .+ 5*(1-f) * 2 * (rand(2,1)-0.5)
-      nx[2] = round(nx[2])
-      nx[nx.<1] = 1
-      nx[nx.>6] = 6
-      return nx
+      newx = zeros(2,1)
+      newx = x .+ (b-a)*(1-f) * 2 * (rand(nx,1)-0.5)
+      newx[2] = round(newx[2])
+      newx[newx.<a] = a
+      newx[newx.>b] = b
+      return newx
   end
   bestx, bestz, bestg, pop = Fresa.solve(f, [1.;1.], a, b; neighbourfn=neighbour)
   println("Population: $pop")
@@ -370,9 +374,10 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
 #+name: testmultiobjective
 #+begin_src julia :tangle testmultiobjective.jl
   using Fresa
-  a = zeros(2,1)
-  b = ones(2,1)
-  x = rand(2,1)
+  nx = 2
+  a = zeros(nx,1)
+  b = ones(nx,1)
+  x = rand(nx,1)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   pareto, population = Fresa.solve(f, x, a, b; npop=100)
 
@@ -387,10 +392,10 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
 #+name: testmultiobjective3
 #+begin_src julia :tangle testmultiobjective3.jl
   using Fresa
-  n = 5
-  a = zeros(n,1)
-  b = ones(n,1)
-  x = zeros(n,1)
+  nx = 5
+  a = zeros(nx,1)
+  b = ones(nx,1)
+  x = zeros(nx,1)
   f = x -> ([ sum((x-0.5).^2+1)
               sum(cos(x))
               sum(sin(x))],
@@ -401,7 +406,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   println(pareto)
 
   using PyPlot
-  PyPlot.plot3D(pareto[n+1,:], pareto[n+2,:], pareto[n+3,:], "ro")
+  PyPlot.plot3D(pareto[nx+1,:], pareto[nx+2,:], pareto[nx+3,:], "ro")
   PyPlot.savefig("x.pdf")
 #+end_src 
 
@@ -420,19 +425,19 @@ Some code to play with the generation of a random population so as to learn how 
 #+name: testpareto
 #+begin_src julia :tangle testpareto.jl
   using Fresa
-  a = zeros(2,1)
-  b = ones(2,1)
-  x = rand(2,1)
+  nx = 2
+  a = zeros(nx,1)
+  b = ones(nx,1)
+  x = rand(nx,1)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   z, g = f(x)
   pop = [x; z; g]
   for i=1:9
-      x = rand(2,1)
+      x = rand(nx,1)
       z, g = f(x)
       pop = hcat(pop,[x; z; g])
   end
-  Fresa.setbounds(a,b)
-  p = Fresa.pareto(pop)
+  p = Fresa.pareto(pop,nx)
   println("Population is $pop")
   println("Pareto set is $p")
 #+end_src 
@@ -440,9 +445,10 @@ Some code to play with the generation of a random population so as to learn how 
 #+name: testrosenbrock
 #+begin_src julia :tangle testrosenbrock.jl
   using Fresa
-  x0 = 0.5*ones(2,1)
-  a = zeros(2,1)
-  b = 10*ones(2,1)
+  nx = 2
+  x0 = 0.5*ones(nx,1)
+  a = zeros(nx,1)
+  b = 10*ones(nx,1)
   rosenbrock(x) = ((1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2, 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   bestx, bestz, bestg, pop = Fresa.solve(rosenbrock, x0, a, b)
@@ -454,9 +460,10 @@ This test uses a simple quadratic objective function, defined within.  All point
 #+name: testsimple
 #+begin_src julia :tangle testsimple.jl
   using Fresa
-  x0 = 0.5*ones(2,1)
-  a = zeros(2,1)
-  b = 10*ones(2,1)
+  nx = 2
+  x0 = 0.5*ones(nx,1)
+  a = zeros(nx,1)
+  b = 10*ones(nx,1)
   f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   bestx, bestz, bestg, pop = Fresa.solve(f, x0, a, b)
   println("Population at end: $pop")
