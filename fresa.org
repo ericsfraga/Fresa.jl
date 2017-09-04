@@ -16,9 +16,9 @@
 
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().
 
-All code (either version) is copyright © 2016, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
+All code (either version) is copyright © src_shell{echo -n $(date +%Y)}, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used, please do let the authors know and the [[file:strawberry.org][publications]] must be cited in any research papers written.  Feedback, including bug reports, is most welcome.
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  Feedback, including bug reports, is most welcome.
 
 In the following code, we assume column vectors for decision variables and objectives.  The convention on constraint violation is 1 meaning yes, i.e. infeasible solution, and 0 means no violation of the constraints.
 
@@ -52,7 +52,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
 
-  version = "2017.09.04 14:58:46"
+  version = "2017.09.04 15:08:21"
   function __init__()
       println("Fresa PPA $version")
   end
