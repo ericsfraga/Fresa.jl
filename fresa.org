@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 16:50:22"
+  version = "2017.09.05 16:53:23"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -154,10 +154,12 @@ This function uses a helper function, defined below, to assign a fitness to a ve
 #+end_src 
 ** neighbour -- generate random point
 A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
+
+This is the default implementation which assumes that the points in the search space are described by a real valued vector.
 #+name: neighbour
 #+begin_src julia
-  function neighbour(x,nx,a,b,f)
-      xnew = x .+ (1-f) .* 2(rand(nx)-0.5) .* (b-a)
+  function neighbour(x,a,b,f)
+      xnew = x .+ (1-f) .* 2(rand(length(x))-0.5) .* (b-a)
       xnew[xnew.<a] = a[xnew.<a];
       xnew[xnew.>b] = b[xnew.>b];
       return xnew
