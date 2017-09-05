@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 16:53:23"
+  version = "2017.09.05 17:02:05"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -169,16 +169,15 @@ This is the default implementation which assumes that the points in the search s
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
 #+begin_src julia
-  function pareto(pop,nx,nz)
-      k, l = size(pop)
-      z = pop[nx+1:nx+nz,:]
-      p = pop[:,1]                # pareto front
-      first = true
+  function pareto(pop)
+      l = length(pop)
+      z = map(p->p.z, pop)
+      p = Point[]                 # pareto front array
       for i in 1:l
           dominated = false
           for j in 1:l
               if i != j
-                  if all(z[:,i] .>= z[:,j]) && any(z[:,i] .> z[:,j])
+                  if all(z[i] .>= z[j]) && any(z[i] .> z[j])
                       # println("$i dominated by $j")
                       # println("$(z[:,i]) >= $(z[:,j])")
                       dominated = true;
@@ -186,17 +185,13 @@ Select a set consisting of those solutions in a population that are not dominate
                   end
               end
           end
-          # println("member $(pop[:,i]) is dominated: $dominated")
+          # println("member $(pop[i]) is dominated: $dominated")
           if !dominated
-              if first
-                  p[:,1] = pop[:,i]
-                  first = false
-              else
-                  p = hcat(p,pop[:,i])
-              end
+              push!(p,pop[i])
           end
       end
-      p
+  end
+  p
   end
 
 #+end_src
