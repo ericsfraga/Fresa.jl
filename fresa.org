@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 17:02:05"
+  version = "2017.09.05 17:37:24"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -68,6 +68,10 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       x :: Any                    # decision point
       z :: Array{Float64}         # objective function values
       g :: Float64                # constraint violation
+      function Point(x, f)
+          (z, g) = f(x)
+          new(x,z,g)
+      end
   end
 #+end_src 
 ** COMMENT variables
@@ -200,18 +204,18 @@ Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
 #+begin_src julia
   function randompopulation(n,f,a,b)
-      nx = length(b)
-      x = a + rand(nx).*b
-      z, g = f(x)
-      k = length(x) + length(z) + 1;
-      p = zeros(k,n);
-      p[:,1] = [x;z;g]
-      @sync @parallel for j in 2:n
-          x = a + rand(nx).*b
-          z, g = f(x)
-          p[:,j] = [x;z;g]
+      p = Point[]                 # population object
+      @sync @parallel for j in 1:n
+          push!(p, Point(randompoint(a,b), f))
       end
       p
+  end
+#+end_src 
+By default, the following method generates a random point within the search domain.  This does not attempt to find a feasible point, simply one within the box defined by lower, =a=, and upper, =b=, bounds.  
+#+name: randompoint
+#+begin_src julia
+  function randompoint(a,b)
+      x = a + rand(length(a)).*b
   end
 #+end_src 
 ** select -- choose a member of the population
@@ -250,9 +254,9 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
 - >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
 #+name: solve
 #+begin_src julia
-  function solve(f,x0,a,b;
-                 ngen=100, npop=10, output=5, nrmax=5, ns=100,
-                 neighbourfn=neighbour)
+  function solve(f, x0, a, b;     # required arguments
+                 ngen = 100, npop = 10, output = 5, nrmax = 5, ns = 100,
+                 neighbourfn = neighbour)
       tstart = time()
       nx = length(a)
       z, g = f(x0)
