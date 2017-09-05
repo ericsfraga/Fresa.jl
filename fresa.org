@@ -39,6 +39,7 @@ In the following code, we assume column vectors for decision variables and objec
 * Version information
 Major version log:
 
+- September 2017 :: moved to an object representation for points in the search space.
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 A list [[*Recent change history][summary of recent change history]] is given below.
 * TODO [0/0] improvements or bugs                            :noexport:
@@ -56,7 +57,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 18:22:08"
+  version = "2017.09.05 18:23:06"
   function __init__()
       println("Fresa PPA $version")
   end
