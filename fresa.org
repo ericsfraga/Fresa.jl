@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 18:16:56"
+  version = "2017.09.05 18:18:43"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -422,8 +422,12 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   println(pareto)
 
   using PyPlot
-  PyPlot.plot3D(pareto[nx+1,:], pareto[nx+2,:], pareto[nx+3,:], "ro")
-  PyPlot.savefig("x.pdf")
+  z = [pareto[i].z for i in 1:length(pareto)];
+  PyPlot.plot3D([z[i][1] for i=1:length(z)],
+                [z[i][2] for i=1:length(z)],
+                [z[i][3] for i=1:length(z)],
+                "ro")
+  PyPlot.savefig("x3.pdf")
 #+end_src 
 
 ** parallel test
