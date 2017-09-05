@@ -54,8 +54,8 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+name: modulestart
 #+begin_src julia
   module Fresa
-
-  version = "2017.09.05 06:30:47"
+  export solve
+  version = "2017.09.05 11:24:10"
   function __init__()
       println("Fresa PPA $version")
   end
