@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 14:28:27"
+  version = "2017.09.05 16:30:56"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -83,31 +83,32 @@ The fitness function used depends on the number of objectives.  For single crite
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
 #+begin_src julia
-  function fitness(pop,nx)
-      k, l = size(pop)
-      nz = k-nx-1
-      indexfeasible = (1:l)[pop[k,:].<=0]
-      indexinfeasible = (1:l)[pop[k,:].>0]
+  function fitness(pop)
+      l = length(pop)
+      indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
+      indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
       # println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
-      fit = zeros(l,1)
+      fit = zeros(l)
       factor = 1              # for placement in fitness interval (0,1)
       if length(indexfeasible) > 0
-          feasible = view(pop,1:k,indexfeasible)
-          feasiblefit = vectorfitness(nz, feasible[nx+1:nx+nz,:])
+          feasible = view(pop,indexfeasible)
+          # use objective function value(s) for ranking
+          feasiblefit = vectorfitness(map(p->p.z,feasible))
           if length(indexinfeasible) > 0
               feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness interval
-              factor = 2
+              factor = 2                        # have both feasible & infeasible
           end
-          fit[indexfeasible] = (feasiblefit+factor-1)/factor # upper half of fitness interval
+          fit[indexfeasible] = (feasiblefit+factor-1)/factor
       end
       if length(indexinfeasible) > 0
           # squeeze infeasible fitness values into (0,0.5) or (0,1) depending
           # on factor, i.e. whether there are any feasible solutions as well or not
-          infeasible = view(pop,1:k,indexinfeasible)
-          # use constraint violation for ranking
-          fit[indexinfeasible] = vectorfitness(1, infeasible[nx+nz+1:nx+nz+1,:])/factor;
+          infeasible = view(pop,indexinfeasible)
+          # use constraint violation for ranking as objective function values
+          # may not make any sense given that points are infeasible
+          fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible))/factor;
       end
-      vec(fit)
+      fit
   end
 #+end_src 
 
