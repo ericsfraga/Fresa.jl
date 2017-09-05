@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 18:18:43"
+  version = "2017.09.05 18:19:58"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -469,7 +469,7 @@ Some code to play with the generation of a random population so as to learn how 
   x0 = 0.5*ones(nx,1)
   a = zeros(nx,1)
   b = 10*ones(nx,1)
-  rosenbrock(x) = ((1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2, 0)
+  rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   bestx, bestz, bestg, pop = Fresa.solve(rosenbrock, x0, a, b)
   println("Population at end: $pop")
