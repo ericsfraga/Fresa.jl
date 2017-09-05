@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 17:37:24"
+  version = "2017.09.05 17:57:59"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -194,8 +194,7 @@ Select a set consisting of those solutions in a population that are not dominate
               push!(p,pop[i])
           end
       end
-  end
-  p
+      p
   end
 
 #+end_src
@@ -258,53 +257,50 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
                  ngen = 100, npop = 10, output = 5, nrmax = 5, ns = 100,
                  neighbourfn = neighbour)
       tstart = time()
-      nx = length(a)
-      z, g = f(x0)
-      nz = length(z)
-      println(": initial point, f($x0) = $z, with constraint $g")
-      println(": there are $nz objective functions.")
-      pop = reshape([x0;z;g],nx+nz+1,1) # should not be necessary
+      p0 = Point(x0,f)            # initial point
+      nz = length(p0.z)           # number of criteria
+      pop = [p0];                 # create/initialise the population object
+      println(": initial population, $pop")
       for gen in 1:ngen
-          fit = fitness(pop,nx)
+          fit = fitness(pop)
           index = sortperm(fit)
-          best = pop[:,index[length(fit)]]
-          print(": $gen best is $(best[nx+1:nx+nz+1])\r")
+          best = pop[index[end]]
+          print(": $gen best is $(best.z)           \r")
           if gen%output == 0
               @printf("| %9d | %9.2f | ", gen, time()-tstart)
               j = nz>1 ? nx+1 : 1
-              for i=j:nx+nz+1
-                  @printf("%9g |", best[i])
+              for i = 1:length(best[i].z)
+                  @printf("%9g |", best[i].z[j])
               end
               println()
           end
-          newpop = best
-          k, l = size(pop)
+          newpop = [best]
+          l = length(pop)
           for i in 1:min(l,npop)
               s = select(fit)
               # println(": selection $i is $s")
               # println(": size of pop is $(size(pop))")
-              selected = pop[:,s]
-              newpop = hcat(newpop,selected)
+              selected = pop[s]
+              push!(newpop, selected)
               nr = ceil(fit[s]*nrmax*rand())
               if nr < 1
                   nr = 1
               end
               # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbourfn(pop[1:nx,s],nx,a,b,fit[s])
-                  z, g = f(x)
-                  newpop = hcat(newpop,[x;z;g])
+                  x = neighbourfn(pop[s].x,a,b,fit[s])
+                  push!(newpop, Point(x, f))
               end
           end
           pop = newpop;
       end
-      fit = fitness(pop,nx)
+      fit = fitness(pop)
       index = sortperm(fit)
       if nz == 1
-          best = pop[:,index[length(fit)]]
-          return best[1:nx], best[nx+1:nx+nz], best[nx+nz+1], pop
+          best = pop[index[end]]
+          return best.x, best.z, pop
       else
-          return pareto(pop,nx,nz), pop
+          return pareto(pop), pop
       end
   end
 #+end_src 
@@ -478,9 +474,9 @@ This test uses a simple quadratic objective function, defined within.  All point
 #+begin_src julia :tangle testsimple.jl
   using Fresa
   nx = 2
-  x0 = 0.5*ones(nx,1)
-  a = zeros(nx,1)
-  b = 10*ones(nx,1)
+  x0 = 0.5*ones(nx)
+  a = zeros(nx)
+  b = 10*ones(nx)
   f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   bestx, bestz, bestg, pop = Fresa.solve(f, x0, a, b)
   println("Population at end: $pop")
