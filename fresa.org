@@ -55,11 +55,21 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 11:24:10"
+  version = "2017.09.05 14:28:27"
   function __init__()
       println("Fresa PPA $version")
   end
 #+end_src
+** types
+Fresa uses one type, =Point=, which is a point in the search space.  It includes the variable =x=, of indeterminate type to allow for a wide range of applications (e.g. integer versus real values), =z=, the value of the objective function, and =g=, the constraint violation (feasible with ≤0 and infeasible otherwise).
+#+name: types
+#+begin_src julia
+  type Point
+      x :: Any                    # decision point
+      z :: Array{Float64}         # objective function values
+      g :: Float64                # constraint violation
+  end
+#+end_src 
 ** COMMENT variables
 These are variables that are global to the module.
 #+name: variables
@@ -85,7 +95,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           feasible = view(pop,1:k,indexfeasible)
           feasiblefit = vectorfitness(nz, feasible[nx+1:nx+nz,:])
           if length(indexinfeasible) > 0
-              feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness internval
+              feasiblefit = feasiblefit/2 + 0.5 # upper half of fitness interval
               factor = 2
           end
           fit[indexfeasible] = (feasiblefit+factor-1)/factor # upper half of fitness interval
