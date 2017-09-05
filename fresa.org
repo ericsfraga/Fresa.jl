@@ -7,7 +7,8 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [2/6]                            :noexport:
+* TODO bugs and new features [2/7]                            :noexport:
+- [ ] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [ ] consider splicing out the selected member from the population
 - [ ] parallelise the evaluation of the new members of the population
 - [ ] add counters to be able to display number of function evaluations etc.
@@ -55,7 +56,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.05 18:19:58"
+  version = "2017.09.05 18:22:08"
   function __init__()
       println("Fresa PPA $version")
   end
