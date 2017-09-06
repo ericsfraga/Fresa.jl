@@ -7,8 +7,8 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [2/7]                            :noexport:
-- [ ] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
+* TODO bugs and new features [3/7]                            :noexport:
+- [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [ ] consider splicing out the selected member from the population
 - [ ] parallelise the evaluation of the new members of the population
 - [ ] add counters to be able to display number of function evaluations etc.
@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.06 09:16:51"
+  version = "2017.09.06 09:32:54"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -205,7 +205,7 @@ Select a set consisting of those solutions in a population that are not dominate
   end
 
 #+end_src
-** randompopulation -- for testing other methods
+** COMMENT randompopulation -- for testing other methods
 Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
 #+begin_src julia
@@ -322,7 +322,7 @@ The objective function, =f=, should return two results: =z=, the objective vn va
 * tests
 The following are simple tests for either the Fresa optimiser or just individual functions in the module.  You can cut and paste these codes into your own editor and run them.
 #+toc: headlines 2 local
-** neighbour
+** COMMENT neighbour
 #+name: testneighbour
 #+begin_src julia :tangle testneighbour.jl
   using Fresa
@@ -338,7 +338,7 @@ The following are simple tests for either the Fresa optimiser or just individual
   end
 #+end_src
 
-** fitness test
+** COMMENT fitness test
 This test uses a simple quadratic objective function to test out the fitness evaluation.
 #+name: testfitness
 #+begin_src julia :tangle testfitness.jl
@@ -440,7 +440,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   PyPlot.savefig("x3.pdf")
 #+end_src 
 
-** parallel test
+** COMMENT parallel test
 Some code to play with the generation of a random population so as to learn how to parallelise a loop in Julia.
 #+begin_src julia :tangle testparallel.jl
   using Fresa
@@ -451,7 +451,7 @@ Some code to play with the generation of a random population so as to learn how 
   f = x -> ( sum(sin.(x/i) for i=1:10000), 0)
   @time p = Fresa.randompopulation(m,f,a,b)
 #+end_src 
-** pareto test
+** COMMENT pareto test
 #+name: testpareto
 #+begin_src julia :tangle testpareto.jl
   using Fresa
