@@ -7,7 +7,8 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [3/7]                            :noexport:
+* TODO bugs and new features [3/8]                            :noexport:
+- [ ] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [ ] consider splicing out the selected member from the population
 - [ ] parallelise the evaluation of the new members of the population
@@ -55,7 +56,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.06 10:13:39"
+  version = "2017.09.06 17:47:53"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -70,12 +71,12 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       g :: Float64                # constraint violation
       function Point(x, f)
           (z, g) = f(x)
-          if typeof(z) == Array{Float64}
+          if typeof(z) == Array{Float64} || typeof(z) == Array{Float64,1}
               new(x,z,g)
           elseif typeof(z) == Float64
               new(x,[z],g)
           else
-              println("Objective function values should be Float64 values, not $(typeof(z))")
+              error("Objective function values should be Float64 values, not $(typeof(z))")
           end
       end
   end
@@ -269,18 +270,24 @@ The objective function, =f=, should return two results: =z=, the objective funct
                  neighbourfn = neighbour)
       tstart = time()
       p0 = Point(x0,f)            # initial point
+      nf = 1                      # number of function evaluations
       nz = length(p0.z)           # number of criteria
       pop = [p0];                 # create/initialise the population object
       println(": initial population, $pop")
+      @printf("| %9s | %9s | %9s | %9s |", "gen", "npop", "nf", "t (s)")
+      for i in 1:nz
+          @printf(" z%-8d |", i)
+      end
+      @printf("\n|-\n")
       for gen in 1:ngen
           fit = fitness(pop)
           index = sortperm(fit)
           best = pop[index[end]]
           print(": $gen best is $(best.z)           \r")
           if gen%output == 0
-              @printf("| %9d | %9.2f | ", gen, time()-tstart)
+              @printf("| %9d | %9d | %9d | %9.2f |", gen, length(fit), nf, time()-tstart)
               for i = 1:length(best.z)
-                  @printf("%9g |", best.z[i])
+                  @printf(" %9g |", best.z[i])
               end
               println()
           end
@@ -300,6 +307,7 @@ The objective function, =f=, should return two results: =z=, the objective funct
               for r in 1:nr
                   x = neighbourfn(pop[s].x,a,b,fit[s])
                   push!(newpop, Point(x, f))
+                  nf += 1
               end
           end
           pop = newpop;
