@@ -31,7 +31,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 #+end_src
 ** Code for creating a distribution                          :noexport:
 #+name: distribution
-#+begin_src shell :results output raw :exports results :eval never-export
+#+begin_src shell :results output raw :exports results
   echo [[file:./Fresa.jl][Fresa.jl]]
 #+end_src 
 * Version information
@@ -55,7 +55,7 @@ The objective function, =f(x)=, returns two variables: =z=, the vector of object
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.06 09:32:54"
+  version = "2017.09.06 09:34:49"
   function __init__()
       println("Fresa PPA $version")
   end
