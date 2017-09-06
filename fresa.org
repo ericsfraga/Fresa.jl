@@ -34,28 +34,25 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 #+begin_src shell :results output raw :exports results
   echo [[file:./Fresa.jl][Fresa.jl]]
 #+end_src 
-* Version information
+** Version information
 Major version log:
 
 - September 2017 :: moved to an object representation for points in the search space.
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 A list [[*Recent change history][summary of recent change history]] is given below.
 * TODO [0/0] improvements or bugs                            :noexport:
-* Fresa
+* Fresa – The code and documentation
 :PROPERTIES:
 :header-args: :tangle "Fresa.jl"
 :END:
 #+toc: headlines 2 local
-The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is a 2d array.  Each column is a point in the search space consisting of =nx= decision variable values, =nz= objective function values and =g=, a single value indicating feasibility with =g≤0= feasible and =g>0= infeasible.
-
-The objective function, =f(x)=, returns two variables: =z=, the vector of objective function values, and =g=, the indication of feasibility as discussed above.
-
+The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
 ** start of module
 #+name: modulestart
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.06 09:34:49"
+  version = "2017.09.06 09:42:52"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -259,7 +256,7 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
 - 1 :: returns best point, the objective function value, the constraint value and the full population;
 - >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
      
-The objective function, =f=, should return two results: =z=, the objective vn value(s) which must be of type =Float64=, single or array, and =g=, the constraint violation.  If =g≤0=, the point is feasible; any value =g>0= means an infeasible point.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter.
+The objective function, =f=, should return two results: =z=, the objective function value(s) which must be of type =Float64=, single or array, and =g=, the constraint violation.  If =g≤0=, the point is feasible; any value =g>0= means an infeasible point.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter.
 
 =x0= is the initial guess and can be of any type.  =a= and =b= are lower and upper bounds and should be of types consistent with each other and =x0=.  Note that the =neighbourfn= must be specified if the decision points are not arrays of =Float64= or if a different definition of neighbouring points is desired.  The calling sequence for =neighbourfn= is =(x,a,b,fitness)= for some =x=.
 #+name: solve
@@ -319,7 +316,7 @@ The objective function, =f=, should return two results: =z=, the objective vn va
 #+begin_src julia
   end
 #+end_src
-* tests
+* Tests
 The following are simple tests for either the Fresa optimiser or just individual functions in the module.  You can cut and paste these codes into your own editor and run them.
 #+toc: headlines 2 local
 ** COMMENT neighbour
