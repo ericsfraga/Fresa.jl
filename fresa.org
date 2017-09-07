@@ -7,7 +7,8 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [3/8]                            :noexport:
+* TODO bugs and new features [3/9]                            :noexport:
+- [ ] Pareto set should not include infeasible points (unless all are infeasible?
 - [ ] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [ ] consider splicing out the selected member from the population
@@ -56,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.06 17:47:53"
+  version = "2017.09.06 18:06:12"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -183,7 +184,16 @@ Select a set consisting of those solutions in a population that are not dominate
 #+begin_src julia
   function pareto(pop)
       l = length(pop)
-      z = map(p->p.z, pop)
+      indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
+      indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
+      if length(indexfeasible) > 0
+          subset = view(pop,indexfeasible)
+      else
+          println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
+          subset = pop
+      end
+      l = length(subset)
+      z = map(p->p.z, subset)
       p = Point[]                 # pareto front array
       for i in 1:l
           dominated = false
@@ -199,7 +209,7 @@ Select a set consisting of those solutions in a population that are not dominate
           end
           # println("member $(pop[i]) is dominated: $dominated")
           if !dominated
-              push!(p,pop[i])
+              push!(p,subset[i])
           end
       end
       p
