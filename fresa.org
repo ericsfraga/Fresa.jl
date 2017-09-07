@@ -57,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.07 09:21:05"
+  version = "2017.09.07 10:02:18"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -242,6 +242,7 @@ Due to the stochastic nature of the method and also the likely duplication of po
           for j=1:length(pruned)
               if norm((z[i]-pruned[j].z)./(zmax-zmin)) < 100*eps()
                   similar = true;
+                  break;
               end
           end
           if !similar
@@ -359,7 +360,7 @@ The objective function, =f=, should return two results: =z=, the objective funct
               # println(": selection $i is $s")
               # println(": size of pop is $(size(pop))")
               selected = pop[s]
-              push!(newpop, selected)
+              # push!(newpop, selected)
               nr = ceil(fit[s]*nrmax*rand())
               if nr < 1
                   nr = 1
