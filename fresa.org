@@ -57,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.07 11:18:05"
+  version = "2017.09.07 11:20:25"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -374,6 +374,10 @@ The objective function, =f=, should return two results: =z=, the objective funct
                   push!(newpop, Point(x, f))
                   nf += 1
               end
+              # remove selected member from the original population so
+              # it is not selected again
+              splice!(fit, s)
+              splice!(pop, s)
           end
           pop = prune(newpop);
       end
