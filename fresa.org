@@ -57,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.07 08:50:08"
+  version = "2017.09.07 09:21:05"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -216,6 +216,41 @@ Select a set consisting of those solutions in a population that are not dominate
   end
 
 #+end_src
+** prune - control population diversity
+Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population.
+#+name: prune
+#+begin_src julia
+  function prune(pop::Array{Point})
+      z = map(p->p.z, pop)
+      # println("typeof(z)=$(typeof(z))")
+      l = length(z)
+      # println("typeof(z[1])=$(typeof(z[1]))")
+      n = length(z[1])
+      zmin = zeros(n)
+      zmax = zeros(n)
+      for i=1:n
+          row = [z[j][i] for j=1:l]
+          zmin[i] = minimum(row)
+          zmax[i] = maximum(row)
+          if zmax[i] - zmin[i] < 100*eps()
+              zmax[i] = zmin[i]+100*eps()
+          end
+      end
+      pruned = [pop[1]]
+      for i=2:l
+          similar = false
+          for j=1:length(pruned)
+              if norm((z[i]-pruned[j].z)./(zmax-zmin)) < 100*eps()
+                  similar = true;
+              end
+          end
+          if !similar
+              push!(pruned,pop[i])
+          end
+      end
+      pruned
+  end
+#+end_src 
 ** COMMENT randompopulation -- for testing other methods
 Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
@@ -336,7 +371,7 @@ The objective function, =f=, should return two results: =z=, the objective funct
                   nf += 1
               end
           end
-          pop = newpop;
+          pop = prune(newpop);
       end
       fit = fitness(pop)
       index = sortperm(fit)
