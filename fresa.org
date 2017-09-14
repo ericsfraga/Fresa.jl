@@ -57,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.14 17:10:20"
+  version = "2017.09.14 18:09:36"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -324,6 +324,8 @@ The objective function, =f=, should return two results: =z=, the objective funct
       nf = 1                      # number of function evaluations
       nz = length(p0.z)           # number of criteria
       pop = [p0];                 # create/initialise the population object
+      @printf(": solving with ngen=%d npop=%d nrmax=%d ns=%d\n",
+              ngen, npop, nrmax, ns)
       println(": initial population, $pop")
       @printf("| %9s | %9s | %9s | %9s |", "gen", "npop",
               elite ? "np" : "nf", "t (s)")
@@ -445,27 +447,42 @@ This test uses a simple quadratic objective function to test out the fitness eva
   end
 #+end_src
 ** mixed integer nonlinear example
-The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.  The aim of this example is to test the use of a non-default /neighbour/ function.
+The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
+
+The aims of this example are to test the use of a non-default /neighbour/ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
 
 #+name: testminlp
 #+begin_src julia :tangle testminlp.jl
   using Fresa
-  nx = 2;
-  f = x -> (3x[2] - 5x[1],
-            max(2x[2] + 3x[1] - 24,
-                3x[1] - 2x[2] - 8,
-                2x[2]^2 - 2*sqrt(x[2]) + 11x[2] + 8x[1] - 39 - 2*sqrt(x[1])*x[2]^2))
-  a = [1.0; 1.0]
-  b = [6.0; 6.0]
-  function neighbour(x,a,b,f)
-      # first x is real, second is integer
-      newx = x .+ (b-a).*(1-f) .* 2 .* (rand(nx)-0.5)
-      newx[2] = round(newx[2])
-      newx[newx.<a] = a[newx.<a]
-      newx[newx.>b] = b[newx.>b]
-      return newx
+  # define new type for mixed integer problems
+  # in general, this would be vectors of real and integer values
+  type MI
+      x :: Float64
+      y :: Int32
   end
-  bestx, bestz, bestg, pop = Fresa.solve(f, [1.;1.], a, b; neighbourfn=neighbour)
+  f = s -> (3s.y - 5s.x,
+            max(2s.y + 3s.x - 24,
+                3s.x - 2s.y - 8,
+                2s.y^2 - 2*sqrt(s.y) + 11s.y + 8s.x - 39 - 2*sqrt(s.x)*s.y^2))
+  # bounds
+  a = MI(1.0, 1)
+  b = MI(6.0, 6)
+  # function to find a neigbouring solution
+  function neighbour(s,a,b,f)
+      x = s.x + (b.x-a.x)*(1-f)*2*(rand()-0.5)
+      x = x < a.x ? a.x : (x > b.x ? b.x : x)
+      # for the integer variable, we move in one direction or the other
+      # a random number of places depending on fitness
+      positive = rand()>=0.5
+      r = rand()
+      # @printf(": neighbour: f=%g r=%g\n", f, r)
+      inc = ceil(f*r*(b.y-a.y)/2)
+      # @printf(": neighbour: positive=%d inc=%d\n", positive, inc)
+      y = s.y + (positive ? inc : -inc)
+      y = y < a.y ? a.y : (y > b.y ? b.y : y)
+      return MI(x,y)
+  end
+  bestx, bestz, bestg, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100, neighbourfn=neighbour)
   println("Population: $pop")
   println("Best: f($bestx) = $bestz, $bestg")
 #+end_src 
