@@ -57,7 +57,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.07 11:43:41"
+  version = "2017.09.14 17:10:20"
   function __init__()
       println("Fresa PPA $version")
   end
@@ -457,7 +457,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
                 2x[2]^2 - 2*sqrt(x[2]) + 11x[2] + 8x[1] - 39 - 2*sqrt(x[1])*x[2]^2))
   a = [1.0; 1.0]
   b = [6.0; 6.0]
-  function neighbour(x,nx,a,b,f)
+  function neighbour(x,a,b,f)
       # first x is real, second is integer
       newx = x .+ (b-a).*(1-f) .* 2 .* (rand(nx)-0.5)
       newx[2] = round(newx[2])
@@ -609,6 +609,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 ** org startup on file visit
 #+name: startup
 #+begin_src emacs-lisp :results none
+  (org-content 2)
   (setq-local htmlize-output-type 'inline-css)
 #+end_src
 ** emacs local variables
