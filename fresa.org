@@ -1,6 +1,6 @@
 #+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
 #+title: Fresa, a plant propagation algorithm
-#+options: num:nil ^:nil toc:nil tex:imagemagick
+#+options: num:t ^:nil toc:nil tex:imagemagick
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
@@ -62,9 +62,9 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "2017.09.15 11:56:18"
+  version = "[2017-09-15 12:45]"
   function __init__()
-      println("Fresa PPA $version")
+      println("* Fresa PPA $version")
   end
 #+end_src
 ** types
@@ -324,6 +324,7 @@ The objective function, =f=, should return two results: =z=, the objective funct
                  nrmax = 5,       # number of runners maximum
                  ns = 100,        # number of stable solutions for stopping
                  output = 5)      # how often to output information
+      println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
       p0 = Point(x0,f)            # initial point
       nf = 1                      # number of function evaluations
@@ -396,6 +397,20 @@ The objective function, =f=, should return two results: =z=, the objective funct
       else
           return pareto(pop), pop
       end
+  end
+#+end_src 
+** utility functions
+Some functions that are not necessary for Fresa but provide some useful features, especially output related.
+*** org time stamp
+#+name: orgtimestamp
+#+begin_src julia
+  function orgtimestamp(dt::DateTime)
+      return @sprintf("[%d-%02d-%02d %02d:%02d]",
+                      Dates.year(dt),
+                      Dates.month(dt),
+                      Dates.day(dt),
+                      Dates.hour(dt),
+                      Dates.minute(dt))
   end
 #+end_src 
 ** module end
@@ -639,7 +654,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 # Local Variables:
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
-# time-stamp-format: "%04y.%02m.%02d %02H:%02M:%02S"
+# time-stamp-format: "[%04y-%02m-%02d %02H:%02M]"
 # time-stamp-active: t
 # time-stamp-start: "version = \""
 # time-stamp-end: "\""
