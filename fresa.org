@@ -8,7 +8,7 @@
 #+toc: headlines 1
 
 * TODO bugs and new features [3/9]                            :noexport:
-- [ ] Pareto set should not include infeasible points (unless all are infeasible?
+- [ ] Pareto set should not include infeasible points (unless all are infeasible?)
 - [ ] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [ ] consider splicing out the selected member from the population
@@ -62,9 +62,11 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-15 14:23]"
+  version = "[2017-09-15 15:53]"
   function __init__()
-      println("* Fresa PPA $version")
+      if myid() == 1
+          println("* Fresa PPA $version")
+      end
   end
 #+end_src
 ** types
@@ -93,6 +95,13 @@ These are variables that are global to the module.
 #+begin_src julia
   a = [0.0]                       # lower bounds
   b = [1.0]                       # upper bounds
+#+end_src 
+** create a point
+A trivial function that simply creates a new =Point= object.  This is needed for the =remotecall= functionality when using parallel computing because the =remotecall= function has to be given a function and not just a constructor (for some obscure reason that means that a constructor is transformed to a conversion operation... don't ask me).
+#+begin_src julia
+  function createpoint(x,f)
+      return Point(x,f)
+  end
 #+end_src 
 ** fitness
 The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]].
@@ -333,25 +342,41 @@ The objective function, =f=, should return two results: =z=, the objective funct
       @printf(": solving with ngen=%d npop=%d nrmax=%d ns=%d\n",
               ngen, npop, nrmax, ns)
       println(": initial population, $pop")
+      # we use parallel computing if we have more than one processor
+      parallel = nprocs() > 1
+      println(": function evaluations performed ",
+              parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
+      if parallel
+          # will be used to collect results from worker processors
+          results = Array{Future,1}(nprocs())
+      end
       @printf("| %9s | %9s | %9s | %9s |", "gen", "npop",
               elite ? "np" : "nf", "t (s)")
       for i in 1:nz
           @printf(" z%-8d |", i)
       end
       @printf("\n|-\n")
+      # now evolve the population for a predetermined number of generations
       for gen in 1:ngen
+          # evaluate fitness
           fit = fitness(pop)
+          # sort
           index = sortperm(fit)
+          # and remember best which really only makes sense in single
+          # criterion problems but is best in multi-objective case in
+          # the ranking measure used by Fresa
           best = pop[index[end]]
           # if elitism is used
           if elite
               if nz > 1
+                  # elite set is whole pareto set
                   newpop = pareto(pop)
               else
+                  # elite set is single element only
                   newpop = [best]
               end
           else
-              newpop = Array{Float64,1}
+              newpop = Point[]
           end
           print(": $gen np=$(length(newpop)) with most fit z=$(best.z)           \r")
           if gen%output == 0
@@ -362,6 +387,13 @@ The objective function, =f=, should return two results: =z=, the objective funct
               end
               println()
           end
+          if parallel
+              # create array to store all new points; we evaluate them
+              # later hopefully in parallel
+              x = typeof(newpop[1].x)[]
+          end
+          # now loop through population, applying selection and then
+          # generating neighbours
           l = length(pop)
           for i in 1:min(l,npop)
               s = select(fit)
@@ -372,31 +404,64 @@ The objective function, =f=, should return two results: =z=, the objective funct
                   # if no elitism, we ensure selected members remain in population
                   push!(newpop, selected)
               end
+              # number of runners to generate, function of fitness
               nr = ceil(fit[s]*nrmax*rand())
               if nr < 1
                   nr = 1
               end
               # println(": generating $nr runners")
               for r in 1:nr
-                  x = neighbourfn(pop[s].x,a,b,fit[s])
-                  push!(newpop, Point(x, f))
-                  nf += 1
+                  # create a neighbour, also function of fitness
+                  newx = neighbourfn(pop[s].x,a,b,fit[s])
+                  # for parallel evaluation, we store the neighbours and
+                  # evaluate them later; otherwise, we evaluate
+                  # immediately and save the resulting point
+                  if parallel
+                      push!(x, newx)
+                  else
+                      push!(newpop, Point(newx, f))
+                      nf += 1
+                  end
               end
               # remove selected member from the original population so
               # it is not selected again
               splice!(fit, s)
               splice!(pop, s)
           end
+          # if we are making use of parallel computing, we evaluate all
+          # points generated in previous loop.  
+          if parallel
+              i = 0;
+              while i < length(x)
+                  # issue remote evaluation call
+                  for j=1:nprocs()
+                      if i+j <= length(x) 
+                          results[j] = @spawn createpoint(x[i+j],f) #remotecall(createpoint,j,x[i+j],f)
+                          nf += 1
+                      end
+                  end
+                  # now wait for results
+                  for j=1:nprocs()
+                      if i+j <= length(x)
+                          push!(newpop, fetch(results[j]))
+                      end
+                  end
+                  i += nprocs()
+              end
+          end
+          # and finally remove any duplicate points in the new
+          # population and make it the current population for the next
+          # generation
           pop = prune(newpop);
       end
-      fit = fitness(pop)
-      index = sortperm(fit)
-      if nz == 1
-          best = pop[index[end]]
-          return best.x, best.z, best.g, pop
-      else
-          return pareto(pop), pop
-      end
+  fit = fitness(pop)
+  index = sortperm(fit)
+  if nz == 1
+      best = pop[index[end]]
+      return best.x, best.z, best.g, pop
+  else
+      return pareto(pop), pop
+  end
   end
 #+end_src 
 ** utility functions
@@ -471,12 +536,14 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
 
 The aims of this example are to test the use of a non-default /neighbour/ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
 
+This example is also used, for the moment, to test out the parallel implementation of Fresa.  The important aspects are that Fresa as well as the =MI= type be available on all worker processes.  This is not a good example in that the parallel version takes longer than the sequential version.
+
 #+name: testminlp
 #+begin_src julia :tangle testminlp.jl
-  using Fresa
+  @everywhere using Fresa
   # define new type for mixed integer problems
   # in general, this would be vectors of real and integer values
-  type MI
+  @everywhere type MI
       x :: Float64
       y :: Int32
   end
@@ -497,7 +564,7 @@ The aims of this example are to test the use of a non-default /neighbour/ functi
       r = rand()
       # @printf(": neighbour: f=%g r=%g\n", f, r)
       inc = ceil(f*r*(b.y-a.y)/2)
-      # @printf(": neighbour: positive=%d inc=%d\n", positive, inc)
+      # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
       y = s.y + (positive ? inc : -inc)
       y = y < a.y ? a.y : (y > b.y ? b.y : y)
       return MI(x,y)
