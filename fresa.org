@@ -7,13 +7,13 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [3/9]                            :noexport:
-- [ ] Pareto set should not include infeasible points (unless all are infeasible?)
-- [ ] keep Pareto set as elite
+* TODO bugs and new features [8/9]                            :noexport:
+- [X] Pareto set should not include infeasible points (unless all are infeasible?)
+- [X] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
-- [ ] consider splicing out the selected member from the population
-- [ ] parallelise the evaluation of the new members of the population
-- [ ] add counters to be able to display number of function evaluations etc.
+- [X] consider splicing out the selected member from the population
+- [X] parallelise the evaluation of the new members of the population
+- [X] add counters to be able to display number of function evaluations etc.
 - [ ] use constraint information in fitness calculations
 - [X] allow for user specified /neighbour/ function
 - [X] implement MINLP example
@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-15 15:53]"
+  version = "[2017-09-15 15:56]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
