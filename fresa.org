@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-15 12:45]"
+  version = "[2017-09-15 14:23]"
   function __init__()
       println("* Fresa PPA $version")
   end
@@ -493,7 +493,7 @@ The aims of this example are to test the use of a non-default /neighbour/ functi
       x = x < a.x ? a.x : (x > b.x ? b.x : x)
       # for the integer variable, we move in one direction or the other
       # a random number of places depending on fitness
-      positive = rand()>=0.5
+      positive = rand(Bool)
       r = rand()
       # @printf(": neighbour: f=%g r=%g\n", f, r)
       inc = ceil(f*r*(b.y-a.y)/2)
