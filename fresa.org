@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-15 17:00]"
+  version = "[2017-09-17 16:10]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
@@ -209,13 +209,15 @@ Select a set consisting of those solutions in a population that are not dominate
       indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
       if length(indexfeasible) > 0
           subset = view(pop,indexfeasible)
+          indices = indexfeasible
       else
           println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
           subset = pop
+          indices = 1:l
       end
       l = length(subset)
       z = map(p->p.z, subset)
-      p = Point[]                 # pareto front array
+      p = Int[]                 # indices of pareto members in full population
       for i in 1:l
           dominated = false
           for j in 1:l
@@ -230,7 +232,7 @@ Select a set consisting of those solutions in a population that are not dominate
           end
           # println("member $(pop[i]) is dominated: $dominated")
           if !dominated
-              push!(p,subset[i])
+              push!(p,indices[i])
           end
       end
       p
@@ -241,7 +243,8 @@ Select a set consisting of those solutions in a population that are not dominate
 Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population.
 #+name: prune
 #+begin_src julia
-  function prune(pop::Array{Point})
+  function prune(pop::Array{Point}, tolerance)
+      npruned = 0
       z = map(p->p.z, pop)
       # println("typeof(z)=$(typeof(z))")
       l = length(z)
@@ -261,16 +264,18 @@ Due to the stochastic nature of the method and also the likely duplication of po
       for i=2:l
           similar = false
           for j=1:length(pruned)
-              if all(abs.(z[i]-pruned[j].z) .< 100*eps()*(zmax-zmin))
+              if all(abs.(z[i]-pruned[j].z) .< tolerance*(zmax-zmin))
                   similar = true;
                   break;
               end
           end
           if !similar
               push!(pruned,pop[i])
+          else
+              npruned += 1
           end
       end
-      pruned
+      (pruned, npruned)
   end
 #+end_src 
 ** COMMENT randompopulation -- for testing other methods
@@ -339,11 +344,13 @@ The objective function, =f=, should return two results: =z=, the objective funct
                  npop = 10,       # population size
                  nrmax = 5,       # number of runners maximum
                  ns = 100,        # number of stable solutions for stopping
-                 output = 5)      # how often to output information
+                 output = 5,      # how often to output information
+                 tolerance = 0.001) # tolerance for similarity detection
       println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
       p0 = Point(x0,f)            # initial point
       nf = 1                      # number of function evaluations
+      npruned = 0                 # number solutions pruned from population
       nz = length(p0.z)           # number of criteria
       pop = [p0];                 # create/initialise the population object
       @printf(": solving with ngen=%d npop=%d nrmax=%d ns=%d\n",
@@ -357,8 +364,8 @@ The objective function, =f=, should return two results: =z=, the objective funct
           # will be used to collect results from worker processors
           results = Array{Future,1}(nprocs())
       end
-      @printf("| %9s | %9s | %9s | %9s |", "gen", "npop",
-              elite ? "np" : "nf", "t (s)")
+      @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
+              (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
       for i in 1:nz
           @printf(" z%-8d |", i)
       end
@@ -376,8 +383,15 @@ The objective function, =f=, should return two results: =z=, the objective funct
           # if elitism is used
           if elite
               if nz > 1
-                  # elite set is whole pareto set
-                  newpop = pareto(pop)
+                  # elite set is whole pareto set unless it is too
+                  # big. Recall that the pareto function returns the set
+                  # of indices into the population
+                  wholepareto = pareto(pop)
+                  if length(wholepareto) > ceil(npop/2)
+                      newpop = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
+                  else
+                      newpop = pop[wholepareto]
+                  end
               else
                   # elite set is single element only
                   newpop = [best]
@@ -387,8 +401,8 @@ The objective function, =f=, should return two results: =z=, the objective funct
           end
           print(": $gen np=$(length(newpop)) with most fit z=$(best.z)           \r")
           if gen%output == 0
-              @printf("| %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                      elite ? length(newpop) : nf, time()-tstart)
+              @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                      (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
               for i = 1:length(best.z)
                   @printf(" %9g |", best.z[i])
               end
@@ -459,16 +473,28 @@ The objective function, =f=, should return two results: =z=, the objective funct
           # and finally remove any duplicate points in the new
           # population and make it the current population for the next
           # generation
-          pop = prune(newpop);
+          (pop, nn) = prune(newpop, tolerance)
+          npruned += nn
       end
-  fit = fitness(pop)
-  index = sortperm(fit)
+  @printf(": nf=%d npruned=%d\n", nf, npruned)
   if nz == 1
+      fit = fitness(pop)
+      index = sortperm(fit)
       best = pop[index[end]]
       return best.x, best.z, best.g, pop
   else
       return pareto(pop), pop
   end
+  end
+#+end_src 
+** thinout -- make Pareto set smaller
+If we use elitism, for multi-objective problems, we use the Pareto set as the elite set.  However, this set may grow to be large, causing performance challenges as well as making the search less effective at exploration, essentially getting stuck in the local area defined by this elite set.  Therefore, we need to sometimes thin out the Pareto set for its use as an elite set.
+
+The arguments are the whole population, the fitness of the members, the indices in this population for the Pareto set and the number of elements to keep.  We keep the most fit ones.
+#+begin_src julia
+  function thinout(pop, fit, pareto, n::Int)
+      indices = sortperm(fit[pareto])
+      pop[pareto[indices[end-n+1:end]]]
   end
 #+end_src 
 ** utility functions
@@ -592,13 +618,13 @@ This example is also used, for the moment, to test out the parallel implementati
   b = ones(nx,1)
   x = rand(nx,1)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
-  pareto, population = Fresa.solve(f, x, a, b; npop=100)
+  pareto, population = Fresa.solve(f, x, a, b; npop=40, ngen=50, tolerance=0.01)
 
   println("Pareto front:")
-  println(pareto)
+  println(population[pareto])
 
   using PyPlot
-  z = [pareto[i].z for i in 1:length(pareto)];
+  z = [population[pareto[i]].z for i in 1:length(pareto)];
   PyPlot.plot([z[i][1] for i=1:length(z)],
               [z[i][2] for i=1:length(z)],
               "ro")
@@ -616,18 +642,24 @@ This example is also used, for the moment, to test out the parallel implementati
               sum(cos.(x))
               sum(sin.(x))],
             0)
-  pareto, population = Fresa.solve(f, x, a, b; npop=100, ngen=1000, output=100)
+  @profile for i=1
+      pareto, population = Fresa.solve(f, x, a, b;
+                                       npop=20, ngen=300,
+                                       #output=100,
+                                       tolerance=0.01)
+      Profile.print(format=:flat, sortedby=:count)
 
-  println("Pareto front:")
-  println(pareto)
+      println("Pareto front:")
+      println(population[pareto])
 
-  using PyPlot
-  z = [pareto[i].z for i in 1:length(pareto)];
-  PyPlot.plot3D([z[i][1] for i=1:length(z)],
-                [z[i][2] for i=1:length(z)],
-                [z[i][3] for i=1:length(z)],
-                "ro")
-  PyPlot.savefig("x3.pdf")
+      using PyPlot
+      z = [population[pareto[i]].z for i in 1:length(pareto)];
+      PyPlot.plot3D([z[i][1] for i=1:length(z)],
+                    [z[i][2] for i=1:length(z)],
+                    [z[i][3] for i=1:length(z)],
+                    "ro")
+      PyPlot.savefig("x3.pdf")
+  end
 #+end_src 
 
 ** COMMENT parallel test
