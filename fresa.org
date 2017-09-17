@@ -47,7 +47,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the autho
 ** Version information
 Major version log:
 
-- September 2017 :: moved to an object representation for points in the search space.
+- September 2017 :: moved to an object representation for points in the search space and allowed for parallel evaluation of the objective function when multiple processors are available.
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 A list [[*Recent change history][summary of recent change history]] is given below.
 * TODO [0/0] improvements or bugs                            :noexport:
@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-17 16:10]"
+  version = "[2017-09-17 16:15]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
