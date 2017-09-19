@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+begin_src julia
   module Fresa
   export solve
-  version = "[2017-09-17 16:15]"
+  version = "[2017-09-19 07:54]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
@@ -92,8 +92,28 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
   import Base
   Base.show(io::IO, p::Fresa.Point) = print(io, "f(", p.x, ")=", p.z, " g=", p.g)
   # and also an array of points
-  Base.show(io::IO, p::Array{Point,1}) = for i=1:length(p)
-      print(io, p[i], "\n")
+  function Base.show(io::IO, p::Array{Point,1})
+      np = length(p)
+      if np > 0
+          nz = length(p[1].z)
+          println(io, "|-")
+          print(io,"| x |")
+          for i=1:nz
+              print(io," z$(i) |")
+          end
+          println(io, " g |")
+          println(io,"|-")
+          for i=1:length(p)
+              print(io, "| ", p[i].x, " |")
+              for j=1:nz
+                  print(io," ", p[i].z[j], " |")
+              end
+              print(io, " ", p[i].g, " |\n")
+          end
+          println(io,"|-")
+      else
+          print(io,"empty")
+      end
   end
 #+end_src 
 ** COMMENT variables
