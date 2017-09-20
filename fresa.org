@@ -61,7 +61,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-09-20 11:20]"
+  version = "[2017-09-20 12:22]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
@@ -72,6 +72,11 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 Fresa uses one type, =Point=, which is a point in the search space.  It includes the variable =x=, of indeterminate type to allow for a wide range of applications (e.g. integer versus real values), =z=, the value of the objective function, and =g=, the constraint violation (feasible with ≤0 and infeasible otherwise).
 #+name: types
 #+begin_src julia
+  """
+  Point (`x`) in the search space along with objective function 
+  values (`z[]`) and feasbility indication (`g`).  The type of `x` is
+  problem specific.  `z[]` and `g` hold `Float64` values.
+  """
   type Point
       x :: Any                    # decision point
       z :: Array{Float64}         # objective function values
@@ -356,6 +361,27 @@ The objective function, =f=, should return two results: =z=, the objective funct
 =x0= is the initial guess and can be of any type.  =a= and =b= are lower and upper bounds and should be of types consistent with each other and =x0=.  Note that the =neighbourfn= must be specified if the decision points are not arrays of =Float64= or if a different definition of neighbouring points is desired.  The calling sequence for =neighbourfn= is =(x,a,b,fitness)= for some =x=.
 #+name: solve
 #+begin_src julia
+  """
+  Solve an optimisation problem, defined as the minimization of the
+  values returned by the objective function, `f`.  `f` returns not only
+  the objective function values, an array of `Float64` values, but also
+  a measure of feasibility (≤0) or infeasibility (>0).  The problem is
+  solved using the Fresa algorithm.  `x0` is the initial guess and `a`
+  and `b` are *bounds* on the search space.
+
+  The return values for the solution of a single criterion problem are
+  the best point, the objective function value at that point, the
+  feasibility indication for that point and the full population. 
+
+  For a multi-objective problem, the returned values are the set of
+  indices for the points within the full population (the second returned
+  value) approximating the *Pareto* front.
+
+  The population will consist of an array of `Fresa.Point` objects, each
+  of which will have the point in the search space, the objective
+  function value and the feasibility measure.
+
+  """
   function solve(f, x0, a, b;     # required arguments
                  elite = true,    # elitism by default
                  neighbourfn = neighbour, # neighbour function to use
