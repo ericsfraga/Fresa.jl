@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-09-26 10:31]"
+  version = "[2017-09-27 14:35]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
@@ -412,6 +412,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
 
   """
   function solve(f, x0, a, b;     # required arguments
+                 archiveelite = false,  # save thinned out elite members
                  elite = true,    # elitism by default
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                  neighbourfn = neighbour, # neighbour function to use
@@ -428,17 +429,22 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
       npruned = 0                 # number solutions pruned from population
       nz = length(p0.z)           # number of criteria
       pop = [p0];                 # create/initialise the population object
-      @printf(": solving with ngen=%d npop=%d nrmax=%d ns=%d\n",
-              ngen, npop, nrmax, ns)
-      println(": initial population, $pop")
+      if archiveelite
+          archive = Point[]
+      end
+      println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
+      println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
       # we use parallel computing if we have more than one processor
       parallel = nprocs() > 1
       println(": function evaluations performed ",
               parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
+      println("*** initial population")
+      println(pop)
       if parallel
           # will be used to collect results from worker processors
           results = Array{Future,1}(nprocs())
       end
+      println("*** evolution")
       @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
               (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
       for i in 1:nz
@@ -463,7 +469,11 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # of indices into the population
                   wholepareto = pareto(pop)
                   if length(wholepareto) > ceil(npop/2)
-                      newpop = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
+                      newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
+                      if archiveelite
+                          archive = prune(append!(archive, removed), tolerance)[1]
+                          archive = archive[pareto(archive)]
+                      end
                   else
                       newpop = pop[wholepareto]
                   end
@@ -474,7 +484,9 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           else
               newpop = Point[]
           end
-          print(": $gen np=$(length(newpop)) with most fit z=$(best.z)           \r")
+          print(STDERR, ": $gen np=$(length(newpop))",
+                archiveelite ? " na=$(length(archive))" : "",
+                " with most fit z=$(best.z)           \r")
           if gen%output == 0
               @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
                       (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
@@ -551,14 +563,14 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           (pop, nn) = prune(newpop, tolerance)
           npruned += nn
       end
-  @printf(": nf=%d npruned=%d\n", nf, npruned)
+  println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
   if nz == 1
       fit = fitness(pop, fitnesstype)
       index = sortperm(fit)
       best = pop[index[end]]
       return best.x, best.z, best.g, pop
   else
-      return pareto(pop), pop
+      return pareto(archiveelite ? append!(pop,archive) : pop), pop
   end
   end
 #+end_src 
@@ -566,10 +578,11 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
 If we use elitism, for multi-objective problems, we use the Pareto set as the elite set.  However, this set may grow to be large, causing performance challenges as well as making the search less effective at exploration, essentially getting stuck in the local area defined by this elite set.  Therefore, we need to sometimes thin out the Pareto set for its use as an elite set.
 
 The arguments are the whole population, the fitness of the members, the indices in this population for the Pareto set and the number of elements to keep.  We keep the most fit ones.
+#+name: thinout
 #+begin_src julia
   function thinout(pop, fit, pareto, n::Int)
       indices = sortperm(fit[pareto])
-      pop[pareto[indices[end-n+1:end]]]
+      return pop[pareto[indices[end-n+1:end]]], pop[pareto[indices[1:end-n]]]
   end
 #+end_src 
 ** utility functions
@@ -690,30 +703,29 @@ This example is also used, for the moment, to test out the parallel implementati
 #+name: testmultiobjective
 #+begin_src julia :tangle testmultiobjective.jl
   using Fresa
-  function multibojectiveproblem()
-      nx = 2
-      a = zeros(nx,1)
-      b = ones(nx,1)
-      x = rand(nx,1)
-      f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
-      pareto, population = Fresa.solve(f, x, a, b;
-                                       fitnesstype = :hadamard, # :borda,
-                                       ngen=50,
-                                       npop=40,
-                                       tolerance=0.01)
+  nx = 2
+  a = zeros(nx,1)
+  b = ones(nx,1)
+  x = rand(nx,1)
+  f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
+  pareto, population = Fresa.solve(f, x, a, b;
+                                   #fitnesstype = :hadamard,
+                                   fitnesstype = :borda,
+                                   ngen=100,
+                                   npop=10,
+                                   tolerance=0.01)
 
-      println("Pareto front:")
-      println(population[pareto])
-  end
-  using BenchmarkTools
-  @benchmark multibojectiveproblem()
+  println("Pareto front:")
+  println(population[pareto])
+  #using BenchmarkTools
+  #@benchmark
 
-  # using PyPlot
-  # z = [population[pareto[i]].z for i in 1:length(pareto)];
-  # PyPlot.plot([z[i][1] for i=1:length(z)],
-  #             [z[i][2] for i=1:length(z)],
-  #             "ro")
-  # PyPlot.savefig("x.pdf")
+  using PyPlot
+  z = [population[pareto[i]].z for i in 1:length(pareto)];
+  PyPlot.plot([z[i][1] for i=1:length(z)],
+              [z[i][2] for i=1:length(z)],
+              "ro")
+  PyPlot.savefig("x.pdf")
 #+end_src 
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
@@ -729,12 +741,14 @@ This example is also used, for the moment, to test out the parallel implementati
             0)
   @profile for i=1
       pareto, population = Fresa.solve(f, x, a, b;
+                                       archiveelite = false,
                                        npop=20, ngen=300,
                                        #output=100,
                                        tolerance=0.01)
+      println("*** profile data")
       Profile.print(format=:flat, sortedby=:count)
 
-      println("Pareto front:")
+      println("*** Pareto front:")
       println(population[pareto])
 
       using PyPlot
