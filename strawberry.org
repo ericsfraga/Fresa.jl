@@ -177,8 +177,6 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
     strawberry_fitness_method = 1;  #choose MOGA fitness for now
   end
   strawberry_diversity_tolerance = norm(b-a) / 1000;
-  strawberry_initialise
-  printf(': ngen=%d npop=%d nrmax=%d ns=%d population strategy=%d and tolerance=%f fitness method=%d\n', ngen, npop, nrmax, ns, population_strategy, strawberry_diversity_tolerance, strawberry_fitness_method)
 
   ## determine the number of processors to use in parallel.  If the
   ## variable has not been set, we use the system function to determine
@@ -197,6 +195,9 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   if isempty(strawberry_output_population)
     strawberry_output_population = 0
   endif
+  strawberry_initialise
+  printf(': ngen=%d npop=%d nrmax=%d ns=%d population strategy=%d and tolerance=%f fitness method=%d\n', ngen, npop, nrmax, ns, population_strategy, strawberry_diversity_tolerance, strawberry_fitness_method)
+
 #+end_src
 ** constrained problem?
 Determine whether the objective function also has information on feasibility.
@@ -649,6 +650,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
 #+begin_src octave :tangle strawberry_initialise.m
   function strawberry_initialise
     global strawberry_version
+    global strawberry_numberofprocessors
     global strawberry_octave
     global moga_version
     global mosd_version
@@ -662,7 +664,9 @@ To accomplish the latter, we consider a ranking that takes into account how good
       strawberry_octave = exist ('OCTAVE_VERSION', 'builtin') > 0;
       if strawberry_octave
         printf(': running in Octave\n')
-        pkg load parallel             #need parcellfun in particular
+        if strawberry_numberofprocessors > 1
+          pkg load parallel             #need parcellfun in particular
+        endif
       endif
     endif
 #+end_src
