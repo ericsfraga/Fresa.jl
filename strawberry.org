@@ -52,7 +52,7 @@ In the following code, we assume column vectors for decision variables and objec
 #+end_src 
 
 #+results: distribution
-[[file:./strawberry-20170815.zip][strawberry-20170815.zip]]
+[[file:./strawberry-20171121.zip][strawberry-20171121.zip]]
 
 * Version information
 
@@ -653,7 +653,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.10.29 12:33:20';
+      strawberry_version = '2017.11.21 15:45:30';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -1021,7 +1021,10 @@ This is simple test of three criteria.  The results can be seen in the following
     printf('starting with initial point '), x0
     z0 = strawberry_test3objective(x0);
     printf('which has objective %d function values ', length(z0))
-    for i=1:length(z0), printf('%f ', z0(i)), endfor; printf('\n')
+    for i=1:length(z0)
+      printf('%f ', z0(i))
+    endfor
+    printf('\n')
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
     [x z nf ninf bestgen] = strawberry(x0, a, b, @strawberry_test3objective, 1000, 20)
     paretoset = z(1:3, findpareto(z(1:3,:)));
