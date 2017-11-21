@@ -62,7 +62,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-09-27 14:35]"
+  version = "[2017-11-21 10:16]"
   function __init__()
       if myid() == 1
           println("* Fresa PPA $version")
@@ -563,15 +563,15 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           (pop, nn) = prune(newpop, tolerance)
           npruned += nn
       end
-  println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
-  if nz == 1
-      fit = fitness(pop, fitnesstype)
-      index = sortperm(fit)
-      best = pop[index[end]]
-      return best.x, best.z, best.g, pop
-  else
-      return pareto(archiveelite ? append!(pop,archive) : pop), pop
-  end
+      println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+      if nz == 1
+          fit = fitness(pop, fitnesstype)
+          index = sortperm(fit)
+          best = pop[index[end]]
+          return best.x, best.z, best.g, pop
+      else
+          return pareto(archiveelite ? append!(pop,archive) : pop), pop
+      end
   end
 #+end_src 
 ** thinout -- make Pareto set smaller
