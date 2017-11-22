@@ -655,7 +655,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.11.21 15:45:30';
+      strawberry_version = '2017.11.22 13:32:44';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -746,11 +746,11 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     endfor
     if strawberry_numberofprocessors > 1
       if constrained
-        pop = parcellfun (strawberry_numberofprocessors,
-                          @(x) [x; f(x); g(x)], xcell, 'VerboseLevel', 0
+        pop = parcellfun (strawberry_numberofprocessors, ...
+                          @(x) [x; f(x); g(x)], xcell, 'VerboseLevel', 0 ...
                          );
       else
-        pop = parcellfun (strawberry_numberofprocessors,
+        pop = parcellfun (strawberry_numberofprocessors, ...
                           @(x) [x; f(x); 0], xcell, 'VerboseLevel', 0);
       endif
     else                          #sequential operation
