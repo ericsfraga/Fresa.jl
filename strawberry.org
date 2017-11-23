@@ -148,6 +148,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   global mosd_numberimproved
   global npruned
   global nsimilar
+  global strawberry_archive
   global strawberry_fitness_method
   global strawberry_diversity_tolerance
   global strawberry_lower strawberry_upper
@@ -173,6 +174,13 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   if nargin<10, 
     output = ngen/50;
   end             # how often to output status of population
+  ## process global variables
+  if isempty (strawberry_archive)
+    strawberry_archive = 0;
+  endif
+  if strawberry_archive > 0
+    printf(': pareto solutions are archived\n');
+  endif
   if isempty (strawberry_fitness_method)
     strawberry_fitness_method = 1;  #choose MOGA fitness for now
   end
@@ -302,16 +310,21 @@ In the multi-objective case, the pareto front is combined with the elite set, a 
     endif
   elseif nz>1
     ## update the best to be the set of non-dominated points from the union
-    ## of the old best and the current population
-    if isempty(best) || length(best) <= 1
-      best = pareto;
-    else
-      union = [best, pareto];
-      if length(union) < nx+nz+1
-        best = [];
+    ## of the old best and the current population but only include old
+    ## best if we wish to archive solutions
+    if strawberry_archive > 0
+      if isempty(best) || length(best) <= 1
+        best = pareto;
       else
-        best = strawberry_prune(union(:,findpareto(union(nx+1:nx+nz,:))),nx,nz);
+        union = [best, pareto];
+        if length(union) < nx+nz+1
+          best = [];
+        else
+          best = strawberry_prune(union(:,findpareto(union(nx+1:nx+nz,:))),nx,nz);
+        endif
       endif
+    else
+      best = pareto;
     endif
     debugprint (1, 'size of pareto: ', length(best))
   endif
@@ -494,7 +507,8 @@ This output is only available for multi-objective problems and a file will be sa
   ## fprintf(stderr, 'size best=%d selected=%d phi=%d\n', size(best,2), size(selected,2), size(phi,2));
   ## cater for when best array is empty
   ps = population_strategy;
-  if ps > 2 && length(best) < (nx+nz+1)
+  if ps > 2 && length(best) > (npop/2)
+    ## do not do elitism if pareto set too large; kludge!
     ps = ps - 2;
   endif
   switch (ps)
@@ -655,7 +669,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.11.22 13:32:44';
+      strawberry_version = '2017.11.22 20:51:26';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -966,7 +980,10 @@ strawberry_test
     printf('starting with initial point '), x0
     z0 = strawberry_testobjective(x0)
     printf('which has objective %d function values ', length(z0))
-    for i=1:length(z0), printf('%f ', z0(i)), endfor; printf('\n')
+    for i=1:length(z0)
+      printf('%f ', z0(i))
+    endfor
+    printf('\n')
     ## [x y nf ninf bestgen] = strawberry(x0, a, b, f, ngen, npop, nrmax, ns, population_strategy, output, g)
     [x z nf ninf bestgen] = strawberry(x0, a, b, @strawberry_testobjective, 200, 50);
     paretoset = z(1:2, findpareto(z(1:2,:)));
