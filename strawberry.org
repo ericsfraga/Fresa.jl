@@ -192,7 +192,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   ## how many processors there are
   global strawberry_numberofprocessors
   if isempty(strawberry_numberofprocessors)
-    strawberry_numberofprocessors = 1; # not currently working for np>1, nproc();
+    strawberry_numberofprocessors = 1 # not currently working for np>1, nproc();
   endif
   if strawberry_numberofprocessors > 1
     printf (': using %d processors for parallel processing.\n', strawberry_numberofprocessors);
@@ -206,7 +206,8 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
       starttime = cputime;
     endif
   else
-    starttime = tic;                            # start timer (for MATLAB compatibility)
+    tic;                        # start wall clock timer
+    starttime = 0;              # for later use in output statistics
   endif
   if isempty(strawberry_output_population)
     strawberry_output_population = 0
@@ -353,7 +354,7 @@ The first, controlled by the ~output~ argument to the function, is a single line
         dtime = cputime-starttime;
       endif
     else
-      dtime = toc - starttime;
+      dtime = toc;
     endif
     fprintf(stderr, '\r');
     printf('| %9d |', gen);
@@ -687,7 +688,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.11.23 11:30:28';
+      strawberry_version = '2017.11.23 12:07:23';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
