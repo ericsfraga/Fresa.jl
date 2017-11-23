@@ -153,6 +153,7 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   global strawberry_diversity_tolerance
   global strawberry_lower strawberry_upper
   global strawberry_neighbourfn 
+  global strawberry_octave
   global strawberry_output_population
   mosd_numberimproved = 0;
   npruned = 0;
@@ -195,10 +196,17 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   endif
   if strawberry_numberofprocessors > 1
     printf (': using %d processors for parallel processing.\n', strawberry_numberofprocessors);
-    starttime = time;           # use wall clock time instead of CPU time
   else
     printf (': not using any parallel processing on a single processor system.\n');
-    starttime = cputime;
+  endif
+  if strawberry_octave
+    if strawberry_numberofprocessors > 1
+      starttime = time;           # use wall clock time instead of CPU time
+    else
+      starttime = cputime;
+    endif
+  else
+    starttime = tic;                            # start timer (for MATLAB compatibility)
   endif
   if isempty(strawberry_output_population)
     strawberry_output_population = 0
@@ -338,10 +346,14 @@ The first, controlled by the ~output~ argument to the function, is a single line
   ## populationstatistics('whole',pop,nx,nz);
   ## populationstatistics('best',best,nx,nz);
   if output > 0 && (0 == mod(gen,output) || 1 == gen)
-    if strawberry_numberofprocessors > 1
-      dtime = time-starttime;
+    if strawberry_octave
+      if strawberry_numberofprocessors > 1
+        dtime = time-starttime;
+      else
+        dtime = cputime-starttime;
+      endif
     else
-      dtime = cputime-starttime;
+      dtime = toc - starttime;
     endif
     fprintf(stderr, '\r');
     printf('| %9d |', gen);
@@ -393,14 +405,16 @@ The second is the output of the full population to an automatically named file (
 This output is only available for multi-objective problems and a file will be saved only if there is at least one feasible member in the population.
 #+name: outputpopulation
 #+begin_src octave
-  if strawberry_output_population > 0 ...
-     && 0 == mod(gen,strawberry_output_population)
+  if strawberry_octave
+    if strawberry_output_population > 0 ...
+       && 0 == mod(gen,strawberry_output_population)
       filename = sprintf('%s-%s-%06d.data', 'strawberry-population', ...
                          strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
                          gen);
       [sorted sortindices] = sort(best(nx+1,:));
       poptrans = best(:,sortindices)';
       save('-text',filename,'poptrans');
+    endif
   endif
 #+end_src 
 *** select and propagate
@@ -538,10 +552,14 @@ This output is only available for multi-objective problems and a file will be sa
   pop = [best, pop];
   x = pop(1:nx,:);
   z = pop(nx+1:end,:);
-  if strawberry_numberofprocessors > 1
-    endtime = time;            # wall clock time
+  if strawberry_octave
+    if strawberry_numberofprocessors > 1
+      endtime = time;            # wall clock time
+    else
+      endtime = cputime;
+    endif
   else
-    endtime = cputime;
+    endtime = toc;
   endif
   printf('\n: strawberry method elapsed time: %.1f with %d functions evaluated and %d solutions pruned with %d similar.\n', ...
          endtime-starttime, nf, npruned, nsimilar)
@@ -669,7 +687,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.11.23 08:52:28';
+      strawberry_version = '2017.11.23 11:30:28';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
