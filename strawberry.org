@@ -409,8 +409,8 @@ This output is only available for multi-objective problems and a file will be sa
   if strawberry_octave
     if strawberry_output_population > 0 ...
        && 0 == mod(gen,strawberry_output_population)
-      filename = sprintf('%s-%s-%06d.data', 'strawberry-population', ...
-                         strftime('%Y%m%d-%H:%M:%S', localtime(time())), ...
+      filename = sprintf('%s-%s-%06d.txt', 'strawberry-population', ...
+                         strftime('%Y%m%d-%H%M%S', localtime(time())), ...
                          gen);
       [sorted sortindices] = sort(best(nx+1,:));
       poptrans = best(:,sortindices)';
@@ -688,7 +688,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2017.11.23 12:07:23';
+      strawberry_version = '2017.11.24 11:49:54';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
