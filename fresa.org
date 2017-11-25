@@ -63,7 +63,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-11-25 18:47]"
+  version = "[2017-11-25 18:58]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; -*-")
@@ -90,7 +90,7 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       g :: Float64                # constraint violation
       function Point(x, f)
           (z, g) = f(x)
-          println("typeof(g) = $(typeof(g)) with length $(length(g))")
+          # println("typeof(g) = $(typeof(g)) with length $(length(g))")
           if typeof(g) != Float64
               # println("typeof(g)==Array{Float64,1} = $(typeof(g)==Array{Float64,1})")
               if typeof(g) == Array{Float64,1} && length(g) == 1
