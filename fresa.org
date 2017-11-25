@@ -62,9 +62,10 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-11-25 10:56]"
+  version = "[2017-11-25 10:59]"
   function __init__()
       if myid() == 1
+          println("# -*- mode: org; -*-")
           println("* Fresa PPA $version")
       end
   end
