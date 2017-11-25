@@ -7,7 +7,8 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [8/9]                            :noexport:
+* TODO bugs and new features [8/10]                           :noexport:
+- [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
 - [X] Pareto set should not include infeasible points (unless all are infeasible?)
 - [X] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
@@ -62,7 +63,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-11-25 10:59]"
+  version = "[2017-11-25 18:47]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; -*-")
@@ -73,7 +74,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 ** types
 *** Point
 Fresa uses one type, =Point=, which is a point in the search space.  It includes the variable =x=, of indeterminate type to allow for a wide range of applications (e.g. integer versus real values), =z=, the value of the objective function, and =g=, the constraint violation (feasible with ≤0 and infeasible otherwise).
-#+name: types
+#+name: pointtype
 #+begin_src julia
   """
 
@@ -89,7 +90,7 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       g :: Float64                # constraint violation
       function Point(x, f)
           (z, g) = f(x)
-          # println("typeof(g) = $(typeof(g)) with length $(length(g))")
+          println("typeof(g) = $(typeof(g)) with length $(length(g))")
           if typeof(g) != Float64
               # println("typeof(g)==Array{Float64,1} = $(typeof(g)==Array{Float64,1})")
               if typeof(g) == Array{Float64,1} && length(g) == 1
@@ -97,8 +98,6 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
               else
                   error("Constraint g must be a single Float64 value.  Not $(typeof(g))")
               end
-          else
-              error("Constraint g must be a single Float64 value.  Not $(typeof(g))")
           end
           if typeof(z) == Array{Float64} || typeof(z) == Array{Float64,1}
               new(x,z,g)
@@ -111,6 +110,7 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
   end
 #+end_src 
 Customise how a Point is displayed:
+#+name: showpoint
 #+begin_src julia
   import Base
   Base.show(io::IO, p::Fresa.Point) = print(io, "f(", p.x, ")=", p.z, " g=", p.g)
