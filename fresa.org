@@ -63,7 +63,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-11-25 18:58]"
+  version = "[2017-11-27 16:13]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; -*-")
@@ -245,7 +245,10 @@ This function uses a helper function, defined below, to assign a fitness to a ve
                   else
                       fit = 0.5*ones(l)
                   end
-              else
+              elseif fitnesstype == :nondominated
+                  # similar to that used by NSGA-II (Deb 2000)
+                  fitness = 
+                      else
                   throw(ArgumentError("Type of fitness evaluation must be either :hadamard or :borda, not $(repr(fitnesstype))."))
               end
           end
@@ -287,6 +290,7 @@ Select a set consisting of those solutions in a population that are not dominate
       l = length(subset)
       z = map(p->p.z, subset)
       p = Int[]                 # indices of pareto members in full population
+      d = Int[]                 # indices for dominated members
       for i in 1:l
           dominated = false
           for j in 1:l
@@ -300,11 +304,13 @@ Select a set consisting of those solutions in a population that are not dominate
               end
           end
           # println("member $(pop[i]) is dominated: $dominated")
-          if !dominated
-              push!(p,indices[i])
+          if dominated
+              push!(d,indices[i]) # dominated
+          else
+              push!(p,indices[i]) # pareto, i.e. non-dominated
           end
       end
-      p
+      (p, d)
   end
 
 #+end_src
