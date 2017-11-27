@@ -63,10 +63,10 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-11-27 16:13]"
+  version = "[2017-11-27 16:53]"
   function __init__()
       if myid() == 1
-          println("# -*- mode: org; -*-")
+          println("# -*- mode: org; eval: (org-content 3); -*-")
           println("* Fresa PPA $version")
       end
   end
@@ -188,6 +188,8 @@ This function uses a helper function, defined below, to assign a fitness to a ve
   end
 #+end_src 
 
+The helper function works with a single vector of objective function values which may consist of single or multiple objectives.
+
 #+name: vectorfitness
 #+begin_src julia
   """
@@ -247,16 +249,35 @@ This function uses a helper function, defined below, to assign a fitness to a ve
                   end
               elseif fitnesstype == :nondominated
                   # similar to that used by NSGA-II (Deb 2000)
-                  fitness = 
-                      else
-                  throw(ArgumentError("Type of fitness evaluation must be either :hadamard or :borda, not $(repr(fitnesstype))."))
+                  fitness = zeros(l)
+                  maxl = assigndominancefitness!(fitness,v,1)
+                  # println("Resulting fitness: $fitness")
+                  fit = tanh.((maxl-fitness)/maxl - 0.5) + 0.5
+                  # println(":  scaled fitness: $fit")
+              else
+                  throw(ArgumentError("Type of fitness evaluation must be either :borda, :nondominated, or :hadamard, not $(repr(fitnesstype))."))
               end
           end
       end
       # println("VF: fit=$fit")
       fit
   end
-
+#+end_src
+The following function is used by the vector fitness evaluation to recurse through the levels of non-dominance to assign fitness based on those levels.
+#+name: assigndominancefitness
+#+begin_src julia
+  function assigndominancefitness!(f,v,l)
+      # assign value l to all members of v which dominate rest and then
+      # recurse on those which are dominated
+      (p, d) = nondominated(v, 1:length(v))
+      # println("Assigning fitness $l to $p")
+      f[p] = l
+      if !isempty(d)
+          assigndominancefitness!(view(f,d),v[d],l+1)
+      else
+          l
+      end
+  end
 #+end_src 
 ** neighbour -- generate random point
 A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
@@ -275,6 +296,8 @@ This is the default implementation which assumes that the points in the search s
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
 #+begin_src julia
+  # indices of non-dominated and dominated points from the population of
+  # Point objects
   function pareto(pop)
       l = length(pop)
       indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
@@ -287,8 +310,17 @@ Select a set consisting of those solutions in a population that are not dominate
           subset = pop
           indices = 1:l
       end
-      l = length(subset)
       z = map(p->p.z, subset)
+      # use function below to return indices of non-dominated and
+      # dominated from objective function values alone in the subset of
+      # feasible solutions
+      nondominated(z, indices)
+  end
+
+  # set of non-dominated (and dominated) points from array of objective
+  # function values alone.
+  function nondominated(z, indices)
+      l = length(z)
       p = Int[]                 # indices of pareto members in full population
       d = Int[]                 # indices for dominated members
       for i in 1:l
@@ -312,7 +344,6 @@ Select a set consisting of those solutions in a population that are not dominate
       end
       (p, d)
   end
-
 #+end_src
 ** prune - control population diversity
 Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population.
@@ -491,12 +522,12 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # elite set is whole pareto set unless it is too
                   # big. Recall that the pareto function returns the set
                   # of indices into the population
-                  wholepareto = pareto(pop)
+                  wholepareto = pareto(pop)[1]
                   if length(wholepareto) > ceil(npop/2)
                       newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
                       if archiveelite
                           archive = prune(append!(archive, removed), tolerance)[1]
-                          archive = archive[pareto(archive)]
+                          archive = archive[pareto(archive)[1]]
                       end
                   else
                       newpop = pop[wholepareto]
@@ -594,7 +625,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           best = pop[index[end]]
           return best.x, best.z, best.g, pop
       else
-          return pareto(archiveelite ? append!(pop,archive) : pop), pop
+          return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
       end
   end
 #+end_src 
@@ -812,9 +843,10 @@ Some code to play with the generation of a random population so as to learn how 
       z, g = f(x)
       pop = hcat(pop,[x; z; g])
   end
-  p = Fresa.pareto(pop,nx)
+  (p, d) = Fresa.pareto(pop,nx)
   println("Population is $pop")
   println("Pareto set is $p")
+  println("Dominated set is $d")
 #+end_src 
 ** rosenbrock
 #+name: testrosenbrock
