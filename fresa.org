@@ -7,15 +7,16 @@
 
 #+toc: headlines 1
 
-* TODO bugs and new features [8/10]                           :noexport:
+* TODO bugs and new features [8/11]                           :noexport:
+- [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
 - [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+- [ ] use constraint information in fitness calculations
 - [X] Pareto set should not include infeasible points (unless all are infeasible?)
 - [X] keep Pareto set as elite
 - [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
 - [X] consider splicing out the selected member from the population
 - [X] parallelise the evaluation of the new members of the population
 - [X] add counters to be able to display number of function evaluations etc.
-- [ ] use constraint information in fitness calculations
 - [X] allow for user specified /neighbour/ function
 - [X] implement MINLP example
 * Overview and introduction
@@ -63,7 +64,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2017-12-01 10:01]"
+  version = "[2017-12-07 14:03]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
