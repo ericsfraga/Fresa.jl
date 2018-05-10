@@ -696,7 +696,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.01.02 13:41:18';
+      strawberry_version = '2018.05.10 15:38:54';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -1081,7 +1081,23 @@ This is simple test of three criteria.  The results can be seen in the following
     plot3(paretoset(1,:),paretoset(2,:), paretoset(3,:),'- r',z(1,:),z(2,:), z(3,:),' *g')
 #+end_src
 ** testing the use of alternative random solutions and neighbour generation for mixed integer problems
-The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]].  This test case exercises three elements:
+The assumption is that Strawberry itself needs no special knowledge to work with integer variables.  The problem encoded here is from [[file:~/hg/jacaranda/inputs/minlp/westerlund/icheap6.in][Westerlund]]:
+
+\begin{equation*}
+\min_{x,y} z = 3y-5x
+\end{equation*}
+
+subject to
+
+\begin{align*}
+2y + 3x & \le 24 \\
+3x - 2y & \le 8 \\
+2y^2 - 2 \sqrt{y} + 11y + 8x - 2 \sqrt{x} y^2 &\le 39
+\end{align*}
+
+with real valued \(x \in [1,6]\) and integer valued \(y \in[1,6]\).
+
+This test case exercises three elements:
 1. the random generation of solutions in the search space
 2. the generation of neighbouring solutions
 3. the use of constraints
@@ -1105,6 +1121,9 @@ We need to define two functions:
        x(x>6) = 6;
      endfunction
    #+end_src
+   
+Note the use of hard-code values for the lower (1) and upper (6) bounds on both variables.  These are used for the bounds checking in the second function and for generating suitable random points within the bounded domain in the first function.
+
 *** the actual problem and solution method
 The objective function and constraints are defined in a single Octave function.  The value of the objective function is simple; there are three constraints, all meant to be less than or equal to 0.  ~g~ will be true if any of the constraints are violated.
 #+name: mitestf
@@ -1179,6 +1198,7 @@ hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10 strawberry.or
 ** emacs local variables
 
 # Local Variables:
+# org-confirm-babel-evaluate: nil
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
 # time-stamp-format: "%04y.%02m.%02d %02H:%02M:%02S"
