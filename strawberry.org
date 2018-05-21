@@ -1,6 +1,9 @@
 #+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
 #+title: Strawberry plant propagation algorithm
+#+author:    Professor Eric S Fraga
+#+email:     e.fraga@ucl.ac.uk
 #+options: num:t ^:nil toc:nil tex:imagemagick
+# +html_head: <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
@@ -291,7 +294,7 @@ Determine whether the objective function also has information on feasibility.
   while gen < ngen && (nz > 1 || gen < bestgen+ns)
     gen = gen + 1;
 #+end_src
-*** prune similar solutions to encouraged diversity
+*** prune similar solutions to encourage diversity
 Remove duplicate members as they contribute nothing.
 #+begin_src octave :noweb yes :tangle strawberry.m
   ## printf('npruned=%d nx=%d nz=%d\n', npruned, nx, nz)
@@ -696,7 +699,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.05.10 15:38:54';
+      strawberry_version = '2018.05.21 17:18:02';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
