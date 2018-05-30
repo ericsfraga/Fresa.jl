@@ -64,7 +64,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-05-30 17:19]"
+  version = "[2018-05-30 17:41]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
@@ -757,6 +757,7 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
 #+end_src
 
 *** an objective function with interface to GAMS 
+The objective function for Fresa takes the decision variables, ~x~, and uses these to set the GAMS model variables ~X1~, ~X2~, and ~X3~.  After solving the GAMS model, the results, consisting of the objective function value ~Z~ and the residual, ~res~, are output to a file for subsequent reading into the Julia code.  The absolute value of the residual is used as a second criterion.
 #+name: gamsf
 #+begin_src julia
   function f(x::Array{Float64,1})
@@ -797,11 +798,21 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
   a = [0.0;0.0;0.0]
   b = [5.0;3.0;3.0]
   x0 = [4.0;2.0;2.0]
-  pareto, population = Fresa.solve(f, x0, a, b; ngen=100)
+  pareto, population = Fresa.solve(f, x0, a, b;
+                                   fitnesstype = :borda,
+                                   ngen = 100)
   println("Pareto front:")
   println(population[pareto])
 #+end_src
-
+and plot out the resulting Pareto set in objective function space:
+#+begin_src julia
+  using PyPlot
+  z = [population[pareto[i]].z for i in 1:length(pareto)];
+  PyPlot.plot([z[i][1] for i=1:length(z)],
+              [z[i][2] for i=1:length(z)],
+              "ro")
+  PyPlot.savefig("x.pdf")
+#+end_src
 *** COMMENT test GAMS example objective function 
 #+name: gamstest
 #+begin_src julia 
