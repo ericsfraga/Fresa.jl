@@ -162,7 +162,6 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
   global strawberry_archive
   global strawberry_fitness_method
   global strawberry_diversity_tolerance
-  global strawberry_lower strawberry_upper
   global strawberry_neighbourfn 
   global strawberry_octave
   global strawberry_output_population
@@ -181,8 +180,6 @@ For multi-objective optimisation, ~x~ and ~z~ will be an approximation to the Pa
     disp('Error: need at least 4 arguments to Strawberry method: x0, a, b & f.')
     return
   end
-  strawberry_lower = a;
-  strawberry_upper = b;
   if nargin<10, 
     output = ngen/50;
   end             # how often to output status of population
@@ -254,7 +251,7 @@ Determine whether the objective function also has information on feasibility.
 #+end_src
 ** initial population
 #+begin_src octave :noweb yes :tangle strawberry.m
-  [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained);
+  [phi, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained);
   pop = strawberry_sort (phi,nx,nz);
   gen = 0;
   best = [];                      #will be defined after fitness evaluation
@@ -444,7 +441,7 @@ This output is only available for multi-objective problems and a file will be sa
       nr = strawberry_runners (N(s),nrmax); # number of runners
       debugprint(2,': number of runners', nr)
       for r=1:nr
-        newpop{n} = strawberry_neighbourfn(pop(1:nx,s), N(s));
+        newpop{n} = strawberry_neighbourfn(pop(1:nx,s), a, b, N(s));
         debugprint(2, ': added new member to population: ', newpop{n})
         n = n + 1;
         ## endif
@@ -699,7 +696,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.05.21 17:18:02';
+      strawberry_version = '2018.05.30 12:05:00';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -719,19 +716,11 @@ We define default functions for the key steps in the strawberry algorithm:
 - neighbour :: given an existing point in the search space, generate a new solution based on the fitness value (0<f<1 with 1 most fit) given
 These functions allow strawberry to be used for more general problems than just nonlinear programming problems.  The default functions, however, are suitable for compact domains defined by bounds in the R^n.
 #+begin_src octave :tangle strawberry_initialise.m
-  global strawberry_lower
   global strawberry_neighbourfn
   global strawberry_randomsolutionfn
-  global strawberry_upper
   if isempty(strawberry_randomsolutionfn)
     strawberry_randomsolutionfn = @strawberry_randomsolution;
     printf (': using default random solution generator function.\n');
-    if isempty(strawberry_lower)
-      error('Default strawberry method requires definition of strawberry_lower global vector');
-    endif
-    if isempty(strawberry_upper)
-      error('Default strawberry method requires definition of strawberry_upper global vector');
-    endif
   endif
   if isempty(strawberry_neighbourfn)
     strawberry_neighbourfn = @strawberry_neighbour;
@@ -759,25 +748,25 @@ Given a fitness value and a point in the search space, generate a new point in t
 The default implementation uses the fitness to define a distance within the bounds of the variables for each dimension.
 #+name: neighbour
 #+begin_src octave :tangle strawberry_neighbour.m
-  function n = strawberry_neighbour(x,f)
-    global strawberry_lower strawberry_upper
+  function n = strawberry_neighbour(x,a,b,f)
     nx = length(x);
-    dx = (strawberry_upper-strawberry_lower)/2 .* strawberry_distance (f,nx); # how far to run
+    dx = (b-a)/2 .* strawberry_distance (f,nx); # how far to run
     ## fprintf(stderr, 'Selected %d with fitness %g to move %g\n', s, N(s), norm(dx))
     debugprint(3, ': dx', dx(1:nx))
     n = x+dx;
-    n(n<strawberry_lower) = strawberry_lower(n<strawberry_lower);        # reset to boundary
-    n(n>strawberry_upper) = strawberry_upper(n>strawberry_upper);        # reset to boundary
+    n(n<a) = a(n<a);        # reset to boundary
+    n(n>b) = b(n>b);        # reset to boundary
   endfunction
 #+end_src
 ** newpopulation -- create an initial population
 Create a random population, distributed uniformly (hopefully) throughout the domain defined by the lower and upper bounds of the optimisation variables.
 #+name: newpopulation
 #+begin_src octave :tangle strawberry_newpopulation.m
-  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,npop,f,constrained)
+  function [pop, nx, nz, nf, ninf] = strawberry_newpopulation (x0,a,b,npop,f,constrained)
     global strawberry_randomsolutionfn
     global strawberry_numberofprocessors
-    nx = length(x0)
+    nx = length(x0);
+    printf(': %d decision variables\n', nx);
     nf = 0;
     ninf = 0;
     pop = [];                     # will be array of x+y values
@@ -786,7 +775,7 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     xcell{1} = x0;                        # start with initial guess
 
     for i=2:npop
-      xcell{i} = strawberry_randomsolutionfn();
+      xcell{i} = strawberry_randomsolutionfn(a,b);
     endfor
     if strawberry_numberofprocessors > 1
       if constrained
@@ -826,7 +815,8 @@ Create a random population, distributed uniformly (hopefully) throughout the dom
     ninf = ninf + mtotal - m;
     ## each row consists of nx x values, nz y values and a feasibility
     ## indication
-    nz = n-nx-1
+    nz = n-nx-1;
+    printf(': %d objective function values\n', nz);
   endfunction
 #+end_src
 ** populationstatistics -- mostly for debugging
@@ -896,11 +886,9 @@ Especially for multi-objective problems, we have a problem with diversity in tha
 ** random solution -- generate a new solution 
 By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables.  The default function requires the definition of the lower and upper bounds for the domain.
 #+begin_src octave :tangle strawberry_randomsolution.m
-  function x = strawberry_randomsolution()
-    global strawberry_lower
-    global strawberry_upper
-    r = rand(length(strawberry_lower),1);
-    x = strawberry_lower + r.*(strawberry_upper-strawberry_lower);
+  function x = strawberry_randomsolution(a, b)
+    r = rand(length(a),1);
+    x = a + r.*(b-a);
   endfunction
 #+end_src
 ** runners -- number a function of fitness
@@ -1109,19 +1097,19 @@ We need to define two functions:
 
 1. generate a random solution in the search space
    #+begin_src octave :tangle mitestrandom.m
-     function x = mitestrandom()
-       x = [ 1+5*rand()
-             1+round(6*rand()-0.5)];
-       x(x>6) = 6;
+     function x = mitestrandom(a,b)
+       x = [ a(1)+(b(1)-a(1))*rand()
+             a(2)+round((b(2)-a(2))*rand()-0.5)];
+       x(x>b) = b(x>b);
      endfunction
    #+end_src
 2. generate a neighbouring solution based on the fitness
    #+begin_src octave :tangle mitestneighbour.m
-     function x = mitestneighbour(x0,f)
-       x = x0 + (1-f)*(rand(length(x0),1)-0.5)*5;
+     function x = mitestneighbour(x0, a, b, f)
+       x = x0 + (1-f)*(rand(length(x0),1)-0.5).*(b-a);
        x(2) = round(x(2));
-       x(x<1) = 1;
-       x(x>6) = 6;
+       x(x<a) = a(x<a);
+       x(x>b) = b(x>b);
      endfunction
    #+end_src
    
