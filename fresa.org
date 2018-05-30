@@ -64,7 +64,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-05-30 14:43]"
+  version = "[2018-05-30 17:19]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
@@ -726,6 +726,7 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
 #+name: gamsmodel
 #+begin_src gams :tangle "gamsdeclarations.gms"
   $TITLE Test Problem 
+  $OFFDIGIT
   $OFFSYMXREF 
   $OFFSYMLIST 
 
@@ -779,9 +780,9 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
       open("gamsoutput.txt", "r") do f
           lines = readlines(f)
           z[1] = parse(Float64, lines[1])
-          z[2] = parse(Float64, lines[2])
+          z[2] = abs(parse(Float64, lines[2]))
           modelstat = parse(Float64, lines[3])
-          if modelstat != 2 && modelstat != 5
+          if modelstat != 1 && modelstat != 5
               g = 1
           end
       end
@@ -790,10 +791,21 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
   end
 #+end_src
 
-*** test GAMS example objective function 
+*** solve the problem using Fresa
+#+begin_src julia
+  using Fresa
+  a = [0.0;0.0;0.0]
+  b = [5.0;3.0;3.0]
+  x0 = [4.0;2.0;2.0]
+  pareto, population = Fresa.solve(f, x0, a, b; ngen=100)
+  println("Pareto front:")
+  println(population[pareto])
+#+end_src
+
+*** COMMENT test GAMS example objective function 
 #+name: gamstest
 #+begin_src julia 
-  (z, g) = f([1.0;2.0;3.0])
+  (z, g) = f([0.0;0.0;0.0])
   println("z = $z and g = $g")
 #+end_src
 
