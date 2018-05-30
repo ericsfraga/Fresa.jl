@@ -61,6 +61,7 @@ In the following code, we assume column vectors for decision variables and objec
 
 Major version log:
 
+- May 2018 :: ~neighbour~ and ~random solution~ functions have been refactored to include the lower and upper bounds as arguments.  This will affect any codes that defined their own such functions.
 - November 2016 :: change of interface to Strawberry: the objective function must now return not only the objective function values (first entry in return list) but also the feasibility (measure of constraint violation) of the point in the search space (as second entry).
 - July 2016 :: multi-objective version extended to work for any number of criteria instead of just 2.
 - October 2015 :: started work on a MI-Strawberry version, hopefully as upwards compatible as possible.
@@ -696,7 +697,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.05.30 12:16:11';
+      strawberry_version = '2018.05.30 12:19:54';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
