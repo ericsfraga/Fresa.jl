@@ -64,7 +64,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-05-30 17:41]"
+  version = "[2018-05-30 17:52]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
@@ -756,11 +756,11 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
   OPTION LIMCOL = 0; 
 #+end_src
 
-*** an objective function with interface to GAMS 
+*** a multi-objective function with interface to GAMS 
 The objective function for Fresa takes the decision variables, ~x~, and uses these to set the GAMS model variables ~X1~, ~X2~, and ~X3~.  After solving the GAMS model, the results, consisting of the objective function value ~Z~ and the residual, ~res~, are output to a file for subsequent reading into the Julia code.  The absolute value of the residual is used as a second criterion.
 #+name: gamsf
 #+begin_src julia
-  function f(x::Array{Float64,1})
+  function fmo(x::Array{Float64,1})
       open("gamsexample.gms", "w") do f
           write(f, "\$include gamsdeclarations.gms\n")
           write(f, "X1.fx = $(x[1]); \n")
@@ -792,13 +792,49 @@ The objective function for Fresa takes the decision variables, ~x~, and uses the
   end
 #+end_src
 
-*** solve the problem using Fresa
+*** a single objective function with interface to GAMS 
+In this case, the value of the residual, in absolute sense, is a measure of feasibility.  We have a single criterion, the value of the GAMS objective function.
+#+name: gamsf
+#+begin_src julia
+  function fsingle(x::Array{Float64,1})
+      open("gamsexample.gms", "w") do f
+          write(f, "\$include gamsdeclarations.gms\n")
+          write(f, "X1.fx = $(x[1]); \n")
+          write(f, "X2.fx = $(x[2]); \n")
+          write(f, "X3.fx = $(x[3]); \n")
+          write(f, "solve TEST using NLP minimizing Z; \n")
+          write(f, "file fresa /'gamsoutput.txt'/ ;\n")
+          write(f, "put fresa ;\n")
+          write(f, "put z.l /;\n")
+          write(f, "put res.l /;\n")
+          write(f, "put TEST.modelstat /;\n")
+      end
+      # execute GAMS
+      run( `/opt/gams/latest/gams gamsexample.gms` )
+      # read in results
+      z = 0.0
+      g = 0.0
+      open("gamsoutput.txt", "r") do f
+          lines = readlines(f)
+          z = parse(Float64, lines[1])
+          g = abs(parse(Float64, lines[2]))
+          modelstat = parse(Float64, lines[3])
+          if modelstat != 1 && modelstat != 5
+              g = 10 # penalty function
+          end
+      end
+      # return results
+      ( z, g )
+  end
+#+end_src
+
+*** solve the multi-objective problem using Fresa
 #+begin_src julia
   using Fresa
   a = [0.0;0.0;0.0]
   b = [5.0;3.0;3.0]
   x0 = [4.0;2.0;2.0]
-  pareto, population = Fresa.solve(f, x0, a, b;
+  pareto, population = Fresa.solve(fmo, x0, a, b;
                                    fitnesstype = :borda,
                                    ngen = 100)
   println("Pareto front:")
@@ -811,8 +847,17 @@ and plot out the resulting Pareto set in objective function space:
   PyPlot.plot([z[i][1] for i=1:length(z)],
               [z[i][2] for i=1:length(z)],
               "ro")
-  PyPlot.savefig("x.pdf")
+  PyPlot.savefig("gamsmo.pdf")
 #+end_src
+
+*** solve the single objective version
+#+begin_src julia
+  bestx, bestz, bestg, pop = Fresa.solve(fsingle, x0, a, b;
+                                         ngen = 100)
+  println("Population: $pop")
+  println("Best: f($bestx) = $bestz, $bestg")
+#+end_src
+
 *** COMMENT test GAMS example objective function 
 #+name: gamstest
 #+begin_src julia 
