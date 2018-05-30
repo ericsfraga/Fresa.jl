@@ -40,7 +40,9 @@ Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
-  scp -r fresa.org fresa.html Fresa.jl ltximg socrates.ucl.ac.uk:html.pub
+  scp -r fresa.org fresa.html Fresa.jl \
+      testgams.jl gamsdeclarations.gms \
+      ltximg socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Code for creating a distribution                          :noexport:
 #+name: distribution
@@ -64,7 +66,7 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-05-30 17:52]"
+  version = "[2018-05-30 18:00]"
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
@@ -720,6 +722,8 @@ This test uses a simple quadratic objective function to test out the fitness eva
 [[https://www.gams.com/][The GAMS]] modelling system is used by many to write and solve optimization problems and many different solvers are available, including both local and global optimizers.  However, there are some problems for which the solvers may not be able to find good solutions.  Fresa may provide a suitable alternative solver for such problems.  However, one of the best features of GAMS is that the model can be represented purely by the equations without the need to determine an evaluation sequence for these equations given a decision vector.  It is therefore desirable to consider using Fresa with GAMS models.
 
 This example implements an objective function which invokes GAMS to solve the model given values for some decision variables.  This interface to GAMS requires writing and reading from files so will not be appropriate for small models due to the overheads in file access.
+
+The files for this example can be downloaded: [[file:testgams.jl][Julia code]] and [[file:gamsdeclarations.gms][GAMS model]].
 *** the GAMS model
 We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, Ravindran and Ragsdell (1983).  This problem seeks to minimise the square of the decision variables while minimising a residual value =res=.  We treat this as a multi-objective problem which cannot be done directly in GAMS.  By looking at it as a multi-objective problem, we can gain insight into the trade-offs between the residual and the primary objective function.
 
