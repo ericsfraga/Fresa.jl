@@ -2,7 +2,7 @@
 #+title: Strawberry plant propagation algorithm
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
-#+options: num:t ^:nil toc:nil tex:imagemagick
+#+options: num:t ^:t toc:nil tex:imagemagick
 # +html_head: <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
@@ -696,7 +696,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.05.30 12:05:00';
+      strawberry_version = '2018.05.30 12:16:11';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
@@ -743,7 +743,7 @@ We only want to add solutions to the population that are diverse, i.e. significa
   endfunction
 #+end_src
 ** neighbour -- for compact real valued domains
-Given a fitness value and a point in the search space, generate a new point in the space.  The better the fitness, the closer the point should be to the given point.  The basis of the Strawberry algorithm is that fit points generate more points in the local area; less fit points generate fewer new points but further away.  Exploitation versus exploration.
+Given a fitness value, ~f~ \in (0,1), a point in the search space, ~x~, and the lower, ~a~ and upper, ~b~, bounds, generate a new point in the space.  The better the fitness, i.e. closer to 1, the closer the point should be to the given point.  The basis of the Strawberry algorithm is that fitter points generate more points in the local area; less fit points generate fewer new points but further away.  /Exploitation versus exploration/.
 
 The default implementation uses the fitness to define a distance within the bounds of the variables for each dimension.
 #+name: neighbour
@@ -884,7 +884,7 @@ Especially for multi-objective problems, we have a problem with diversity in tha
   endfunction
 #+end_src
 ** random solution -- generate a new solution 
-By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables.  The default function requires the definition of the lower and upper bounds for the domain.
+Given the lower, ~a~ and upper, ~b~, bounds, generate a random point in the search space.  By default, this function returns a random solution in a compact hypercube domain in R^n defined by the bounds on the variables, \(x \in \bbcode{R}^n \cap [a,b]\).  
 #+begin_src octave :tangle strawberry_randomsolution.m
   function x = strawberry_randomsolution(a, b)
     r = rand(length(a),1);
