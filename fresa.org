@@ -67,7 +67,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-09-11 16:34]"
+  version = "[2018-09-11 16:50]"
   using Dates
   using Distributed
   using Printf
@@ -242,7 +242,7 @@ The helper function works with a single vector of objective function values whic
                   fitness = map(x->prod(x), rank[:,i] for i=1:l)
                   # normalise and reverse meaning (1=best, 0=worst) while avoiding
                   # extreme 0,1 values using the hyperbolic tangent
-                  fit = tanh.(0.5 - fitness / maximum(fitness)) + 0.5
+                  fit = tanh.(0.5 .- fitness ./ maximum(fitness)) .+ 0.5
               elseif fitnesstype == :borda
                   for i=1:m
                       rank[i,sortperm([v[j][i] for j=1:l])] = l:-1:1;
@@ -252,7 +252,7 @@ The helper function works with a single vector of objective function values whic
                   # normalise (1=best, 0=worst) while avoiding
                   # extreme 0,1 values using the hyperbolic tangent
                   if (maximum(fitness)-minimum(fitness)) > eps()
-                      fit = tanh.((fitness - minimum(fitness)) / (maximum(fitness)-minimum(fitness)) - 0.5) + 0.5
+                      fit = tanh.((fitness .- minimum(fitness)) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
                   else
                       fit = 0.5*ones(l)
                   end
@@ -280,7 +280,7 @@ The following function is used by the vector fitness evaluation to recurse throu
       # recurse on those which are dominated
       (p, d) = pareto(v)
       # println("Assigning fitness $l to $p")
-      f[p] = l
+      f[p] .= l
       if !isempty(d)
           assigndominancefitness!(view(f,d),v[d],l+1)
       else
@@ -295,7 +295,7 @@ This is the default implementation which assumes that the points in the search s
 #+name: neighbour
 #+begin_src julia
   function neighbour(x,a,b,f)
-      xnew = x .+ (1-f) .* 2(rand(length(x))-0.5) .* (b-a)
+      xnew = x .+ (1.0 .- f) .* 2(rand(length(x)).-0.5) .* (b.-a)
       xnew[xnew.<a] = a[xnew.<a];
       xnew[xnew.>b] = b[xnew.>b];
       return xnew
@@ -838,7 +838,8 @@ In this case, the value of the residual, in absolute sense, is a measure of feas
 
 *** solve the multi-objective problem using Fresa
 #+begin_src julia
-  using Fresa
+  include("Fresa.jl")
+  # using Fresa
   a = [0.0;0.0;0.0]
   b = [5.0;3.0;3.0]
   x0 = [4.0;2.0;2.0]
@@ -923,7 +924,7 @@ This example is also used, for the moment, to test out the parallel implementati
 ** multi-objective test
 #+name: testmultiobjective
 #+begin_src julia :tangle testmultiobjective.jl
-  using Fresa
+  include("Fresa.jl")
   nx = 2
   a = zeros(nx,1)
   b = ones(nx,1)
@@ -952,12 +953,13 @@ This example is also used, for the moment, to test out the parallel implementati
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
 #+begin_src julia :tangle testmultiobjective3.jl
-  using Fresa
+  include("Fresa.jl")
+  using Profile
   nx = 5
   a = zeros(nx,1)
   b = ones(nx,1)
   x = zeros(nx,1)
-  f = x -> ([ sum((x-0.5).^2+1)
+  f = x -> ([ sum((x.-0.5).^2 .+ 1)
               sum(cos.(x))
               sum(sin.(x))],
             0)
@@ -1018,7 +1020,7 @@ Some code to play with the generation of a random population so as to learn how 
 ** rosenbrock
 #+name: testrosenbrock
 #+begin_src julia :tangle testrosenbrock.jl
-  using Fresa
+  include("Fresa.jl")
   nx = 2
   x0 = 0.5*ones(nx,1)
   a = zeros(nx,1)
@@ -1033,7 +1035,7 @@ Some code to play with the generation of a random population so as to learn how 
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
 #+name: testsimple
 #+begin_src julia :tangle testsimple.jl
-  using Fresa
+  include("Fresa.jl")
   nx = 2
   x0 = 0.5*ones(nx)
   a = zeros(nx)
