@@ -1,11 +1,16 @@
-#+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
+# Note: export to HTML using twbs (=,ewh=)
+
 #+title: Fresa, a plant propagation algorithm
-#+options: num:t ^:nil toc:nil tex:imagemagick
+#+author:    Professor Eric S Fraga
+#+email:     e.fraga@ucl.ac.uk
+#+options: num:nil ^:nil toc:t tex:imagemagick
+
+#+html: <style type="text/css"> .nav {position: fixed;}</style>
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
 
-#+toc: headlines 1
+# +toc: headlines 1
 
 * TODO bugs and new features [8/11]                           :noexport:
 - [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
@@ -20,14 +25,18 @@
 - [X] allow for user specified /neighbour/ function
 - [X] implement MINLP example
 * Overview and introduction
-/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as +built-in parallelism+ and +multi-dispatch+, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
+#+begin_quote
+*Update*: Fresa now works with Julia version 1.0.0. 
+#+end_quote
+
+/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
 
 Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  Feedback, including bug reports, is most welcome.
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().  To use this code, you could add this to your =~/.juliarc.jl= file (for Linux; for MS Windows, check the [[http://www.julialang.org/][Julia]] documentation):
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().  To use this code, you could add this to your =~/.julia/config/startup.jl= file (for Linux; for MS Windows, check the [[http://www.julialang.org/][Julia]] documentation):
 #+begin_src julia
   push!(LOAD_PATH,"/directory/where/Fresa/was/saved")
 #+end_src 
@@ -36,7 +45,9 @@ Alternatively, you can =include= the code directly before =using= it:
   include("Fresa.jl")
   using Fresa
 #+end_src 
-Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below]] may require one or more of the following packages: ~BenchmarkTools~, ~PyPlot~.
+The test examples that are described below all assume that the load path has been set as shown in the first code snippet above, i.e. in the configuration startup file.
+
+Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below]] may require one or more of the following packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
@@ -60,14 +71,14 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 :PROPERTIES:
 :header-args: :tangle "Fresa.jl"
 :END:
-#+toc: headlines 2 local
+# +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
 ** start of module and dependencies
 Fresa depends on a number of packages that should be available in any Julia installation.  These are packages for displaying output and using parallel computing capabilities when available on the actual hardware.
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-09-11 16:50]"
+  version = "[2018-09-12 13:44]"
   using Dates
   using Distributed
   using Printf
@@ -671,7 +682,7 @@ Some functions that are not necessary for Fresa but provide some useful features
 #+end_src
 * Tests
 The following are simple tests for either the Fresa optimiser or just individual functions in the module.  You can cut and paste these codes into your own editor and run them.
-#+toc: headlines 2 local
+# +toc: headlines 2 local
 ** COMMENT neighbour
 #+name: testneighbour
 #+begin_src julia :tangle testneighbour.jl
@@ -838,8 +849,7 @@ In this case, the value of the residual, in absolute sense, is a measure of feas
 
 *** solve the multi-objective problem using Fresa
 #+begin_src julia
-  include("Fresa.jl")
-  # using Fresa
+  using Fresa
   a = [0.0;0.0;0.0]
   b = [5.0;3.0;3.0]
   x0 = [4.0;2.0;2.0]
@@ -885,7 +895,7 @@ This example is also used, for the moment, to test out the parallel implementati
 #+begin_src julia :tangle testminlp.jl
   using Distributed
   using Printf
-  @everywhere include("Fresa.jl")
+  @everywhere using Fresa
   # define new type for mixed integer problems
   # in general, this would be vectors of real and integer values
   @everywhere struct MI
@@ -924,7 +934,7 @@ This example is also used, for the moment, to test out the parallel implementati
 ** multi-objective test
 #+name: testmultiobjective
 #+begin_src julia :tangle testmultiobjective.jl
-  include("Fresa.jl")
+  using Fresa
   nx = 2
   a = zeros(nx,1)
   b = ones(nx,1)
@@ -953,7 +963,7 @@ This example is also used, for the moment, to test out the parallel implementati
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
 #+begin_src julia :tangle testmultiobjective3.jl
-  include("Fresa.jl")
+  using Fresa
   using Profile
   nx = 5
   a = zeros(nx,1)
@@ -1020,7 +1030,7 @@ Some code to play with the generation of a random population so as to learn how 
 ** rosenbrock
 #+name: testrosenbrock
 #+begin_src julia :tangle testrosenbrock.jl
-  include("Fresa.jl")
+  using Fresa
   nx = 2
   x0 = 0.5*ones(nx,1)
   a = zeros(nx,1)
@@ -1035,7 +1045,7 @@ Some code to play with the generation of a random population so as to learn how 
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
 #+name: testsimple
 #+begin_src julia :tangle testsimple.jl
-  include("Fresa.jl")
+  using Fresa
   nx = 2
   x0 = 0.5*ones(nx)
   a = zeros(nx)
@@ -1084,6 +1094,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 ** emacs local variables
 
 # Local Variables:
+# org-confirm-babel-evaluate: nil
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
 # time-stamp-format: "[%04y-%02m-%02d %02H:%02M]"
