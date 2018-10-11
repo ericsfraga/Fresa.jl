@@ -12,7 +12,8 @@
 
 # +toc: headlines 1
 
-* TODO bugs and new features [8/11]                           :noexport:
+* TODO bugs and new features [8/12]                           :noexport:
+- [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
 - [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
 - [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
 - [ ] use constraint information in fitness calculations
@@ -78,7 +79,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-09-12 13:44]"
+  version = "[2018-10-11 09:54]"
   using Dates
   using Distributed
   using Printf
