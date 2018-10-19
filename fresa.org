@@ -3,7 +3,7 @@
 #+title: Fresa, a plant propagation algorithm
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
-#+options: num:nil ^:nil toc:t tex:imagemagick
+#+options: num:t ^:nil toc:t tex:imagemagick
 
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
 
@@ -79,7 +79,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-10-11 09:54]"
+  version = "[2018-10-19 16:34]"
   using Dates
   using Distributed
   using Printf
