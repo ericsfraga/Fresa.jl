@@ -1,14 +1,20 @@
-#+INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
+# Note: export to HTML using twbs (=,ewh=)
+
+# +INCLUDE:   /home/ucecesf/hg/homepages/level-0.org
 #+title: Strawberry plant propagation algorithm
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
-#+options: num:t ^:t toc:nil tex:imagemagick
+# +options: num:t ^:t toc:nil tex:imagemagick
+#+options: num:t ^:nil toc:t tex:imagemagick H:4
+
+#+html: <style type="text/css"> .nav {position: fixed;}</style>
+
 # +html_head: <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
 
-#+toc: headlines 1
+# +toc: headlines 1
 
 * Overview and introduction
 Below is the code I have written to implement a /plant propagation algorithm/.  It is based on the algorithm Professor Abdellah Salhi and I developed from his original insight into the propagation of strawberry plants.  The basis of the code in this particular repository is the code used for the results presented in a paper on the modelling of energy systems for domestic dwellings ([[http://dx.doi.org/10.1260/1748-3018.9.1.13][Fraga et al., 2015]]) and in a paper on the control of a dynamic fermentation process ([[http://dx.doi.org/10.1016/j.compchemeng.2017.10.019][Rodman et al., 2018]]).  This code was in turn based on the code used for the original paper ([[https://www.researchgate.net/publication/252321319_Nature-Inspired_Optimisation_Approaches_and_the_New_Plant_Propagation_Algorithm][Salhi & Fraga, 2011]]).  The multi-objective ranking method for fitness evaluation has been described in another publication on renewable energy system design ([[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]).
@@ -697,7 +703,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.05.30 12:19:54';
+      strawberry_version = '2018.10.19 16:33:03';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
