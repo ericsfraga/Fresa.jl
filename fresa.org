@@ -80,7 +80,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-11-23 11:15]"
+  version = "[2018-11-28 15:30]"
   using Dates
   using Distributed
   using Printf
@@ -108,8 +108,12 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       x :: Any                    # decision point
       z :: Array{Float64}         # objective function values
       g :: Float64                # constraint violation
-      function Point(x, f)
-          (z, g) = f(x)
+      function Point(x, f, parameters)
+          if typeof(parameters) == Nothing
+              (z, g) = f(x)
+          else
+              (z, g) = f(x,parameters)
+          end
           # println("typeof(g) = $(typeof(g)) with length $(length(g))")
           if typeof(g) != Float64
               # println("typeof(g)==Array{Float64,1} = $(typeof(g)==Array{Float64,1})")
@@ -169,10 +173,10 @@ These are variables that are global to the module.
   b = [1.0]                       # upper bounds
 #+end_src 
 ** create a point
-A trivial function that simply creates a new =Point= object.  This is needed for the =remotecall= functionality when using parallel computing because the =remotecall= function has to be given a function and not just a constructor (for some obscure reason that means that a constructor is transformed to a conversion operation... don't ask me).
+A trivial function that simply creates a new =Point= object.  This is needed for the =remotecall= functionality when using parallel computing because the =remotecall= function has to be given a function and not just a constructor (for some obscure reason that means that a constructor is transformed to a conversion operation... don't ask me).  The optional parameters argument is passed through: it is the =Point= creation method that checks to see if these are defined or not.
 #+begin_src julia
-  function createpoint(x,f)
-      return Point(x,f)
+  function createpoint(x,f,parameters)
+      return Point(x,f,parameters)
   end
 #+end_src 
 ** fitness
@@ -411,10 +415,10 @@ Due to the stochastic nature of the method and also the likely duplication of po
 Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
 #+begin_src julia
-  function randompopulation(n,f,a,b)
+  function randompopulation(n,f,parameters,a,b)
       p = Point[]                 # population object
       @sync @parallel for j in 1:n
-          push!(p, Point(randompoint(a,b), f))
+          push!(p, Point(randompoint(a,b), f, parameters))
       end
       p
   end
@@ -463,6 +467,8 @@ The function expects the objective function, ~f~, an initial guess, ~x0~, and lo
      
 The objective function, =f=, should return two results: =z=, the objective function value(s) which must be of type =Float64=, single or array, and =g=, the constraint violation.  If =g≤0=, the point is feasible; any value =g>0= means an infeasible point.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter.
 
+The calling sequence for =f= is a point in the search space plus, optionally, the =parameters= defined in the call to =solve=.
+
 =x0= is the initial guess and can be of any type.  =a= and =b= are lower and upper bounds and should be of types consistent with each other and =x0=.  Note that the =neighbourfn= must be specified if the decision points are not arrays of =Float64= or if a different definition of neighbouring points is desired.  The calling sequence for =neighbourfn= is =(x,a,b,fitness)= for some =x=.
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
@@ -490,6 +496,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
 
   """
   function solve(f, x0, a, b;     # required arguments
+                 parameters = nothing, # allow parameters for objective function 
                  archiveelite = false,  # save thinned out elite members
                  elite = true,    # elitism by default
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
@@ -502,7 +509,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                  tolerance = 0.001) # tolerance for similarity detection
       println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
-      p0 = Point(x0,f)            # initial point
+      p0 = Point(x0,f,parameters)
       nf = 1                      # number of function evaluations
       npruned = 0                 # number solutions pruned from population
       nz = length(p0.z)           # number of criteria
@@ -605,7 +612,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   if parallel
                       push!(x, newx)
                   else
-                      push!(newpop, Point(newx, f))
+                      push!(newpop, Point(newx, f, parameters))
                       nf += 1
                   end
               end
@@ -622,7 +629,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # issue remote evaluation call
                   for j=1:nprocs()
                       if i+j <= length(x) 
-                          results[j] = @spawn createpoint(x[i+j],f) #remotecall(createpoint,j,x[i+j],f)
+                          results[j] = @spawn createpoint(x[i+j],f,parameters)
                           nf += 1
                       end
                   end
@@ -1006,7 +1013,7 @@ Some code to play with the generation of a random population so as to learn how 
   a = zeros(n,1)
   b = π * ones(n,1)
   f = x -> ( sum(sin.(x/i) for i=1:10000), 0)
-  @time p = Fresa.randompopulation(m,f,a,b)
+  @time p = Fresa.randompopulation(m,f,nothing,a,b)
 #+end_src 
 ** COMMENT pareto test
 #+name: testpareto
