@@ -5,6 +5,8 @@
 #+email:     e.fraga@ucl.ac.uk
 #+options: num:t ^:nil toc:t tex:imagemagick
 
+# add extra meta information when tangling the code
+#+property: header-args :comments yes
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
@@ -71,7 +73,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
 :PROPERTIES:
-:header-args: :tangle "Fresa.jl"
+:header-args: :tangle "Fresa.jl" :comments yes
 :END:
 # +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
@@ -80,14 +82,14 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2018-12-05 09:01]"
+  version = "[2019-06-01 13:47]"
   using Dates
   using Distributed
   using Printf
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
-          println("* Fresa PPA $version")
+          println("* Fresa PPA version $version")
       end
   end
 #+end_src
@@ -180,7 +182,7 @@ A trivial function that simply creates a new =Point= object.  This is needed for
   end
 #+end_src 
 ** fitness
-The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[[http://www.springer.com/gb/book/9783319299730][Fraga & Amusat, 2016]]].
+The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[http://www.springer.com/gb/ook/9783319299730][Fraga & Amusat, 2016]].
 
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
