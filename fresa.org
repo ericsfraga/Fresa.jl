@@ -83,7 +83,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-02 18:28]"
+  version = "[2019-06-02 18:34]"
   using Dates
   using Distributed
   using Printf
@@ -976,9 +976,9 @@ This example is also used, for the moment, to test out the parallel implementati
 #+begin_src julia :tangle testmultiobjective.jl
   using Fresa
   nx = 2
-  a = zeros(nx,1)
-  b = ones(nx,1)
-  x = rand(nx,1)
+  a = zeros(nx)
+  b = ones(nx)
+  x = rand(nx)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   pareto, population = Fresa.solve(f, x, a, b;
                                    #fitnesstype = :hadamard,
@@ -1006,9 +1006,9 @@ This example is also used, for the moment, to test out the parallel implementati
   using Fresa
   using Profile
   nx = 5
-  a = zeros(nx,1)
-  b = ones(nx,1)
-  x = zeros(nx,1)
+  a = zeros(nx)
+  b = ones(nx)
+  x = zeros(nx)
   f = x -> ([ sum((x.-0.5).^2 .+ 1)
               sum(cos.(x))
               sum(sin.(x))],
@@ -1072,9 +1072,9 @@ Some code to play with the generation of a random population so as to learn how 
 #+begin_src julia :tangle testrosenbrock.jl
   using Fresa
   nx = 2
-  x0 = 0.5*ones(nx,1)
-  a = zeros(nx,1)
-  b = 10*ones(nx,1)
+  x0 = 0.5*ones(nx)
+  a = zeros(nx)
+  b = 10*ones(nx)
   rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   bestx, bestz, bestg, pop = Fresa.solve(rosenbrock, x0, a, b)
