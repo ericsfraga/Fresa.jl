@@ -83,7 +83,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-02 18:34]"
+  version = "[2019-06-02 18:40]"
   using Dates
   using Distributed
   using Printf
@@ -344,7 +344,7 @@ There is also a version that expects single valued =Float64= arguments.
       newx
   end
 #+end_src
-Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be define.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
+Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
