@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-01 13:47]"
+  version = "[2019-06-02 18:26]"
   using Dates
   using Distributed
   using Printf
@@ -310,7 +310,7 @@ The following function is used by the vector fitness evaluation to recurse throu
 ** neighbour -- generate random point
 A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
 
-This is the default implementation which assumes that the points in the search space are described by a real valued vector.
+Fresa comes with two default methods for generating neighbouring solutions. The first is for a search space defined by vectors of =Float64= values:
 #+name: neighbourarray
 #+begin_src julia
   function neighbour(x :: Array{Float64,1},
@@ -324,7 +324,7 @@ This is the default implementation which assumes that the points in the search s
       return xnew
   end
 #+end_src
-There is also a version that expects single valued arguments.
+There is also a version that expects single valued =Float64= arguments.
 #+name: neighbourfloat
 #+begin_src julia
   function neighbour(x :: Float64,
@@ -343,7 +343,7 @@ There is also a version that expects single valued arguments.
       newx
   end
 #+end_src
-
+Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be define.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248)
 #+name: pareto
@@ -495,7 +495,9 @@ The objective function, =f=, should return two results: =z=, the objective funct
 
 The calling sequence for =f= is a point in the search space plus, optionally, the =parameters= defined in the call to =solve=.
 
-=x0= is the initial guess and can be of any type.  =a= and =b= are lower and upper bounds and should be of types consistent with each other and =x0=.  Note that the =neighbourfn= must be specified if the decision points are not arrays of =Float64= or if a different definition of neighbouring points is desired.  The calling sequence for =neighbourfn= is =(x,a,b,fitness)= for some =x=.
+=x0= is the initial guess and can be of any type.  =a= and =b= are lower and upper bounds and should be of types consistent with each other and =x0=.
+
+If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example.
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
 #+name: solve
@@ -526,7 +528,6 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                  archiveelite = false,  # save thinned out elite members
                  elite = true,    # elitism by default
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
-                 neighbourfn = neighbour, # neighbour function to use
                  ngen = 100,      # number of generations
                  npop = 10,       # population size
                  nrmax = 5,       # number of runners maximum
@@ -631,7 +632,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
               # println(": generating $nr runners")
               for r in 1:nr
                   # create a neighbour, also function of fitness
-                  newx = neighbourfn(pop[s].x,a,b,fit[s])
+                  newx = neighbour(pop[s].x,a,b,fit[s])
                   # for parallel evaluation, we store the neighbours and
                   # evaluate them later; otherwise, we evaluate
                   # immediately and save the resulting point
@@ -946,8 +947,11 @@ This example is also used, for the moment, to test out the parallel implementati
   # bounds
   a = MI(1.0, 1)
   b = MI(6.0, 6)
-  # function to find a neigbouring solution
-  function neighbour(s,a,b,f)
+  # function to find a neighbouring solution for MI type decision points
+  function Fresa.neighbour(s :: MI,
+                           a :: MI,
+                           b :: MI,
+                           f :: Float64) :: MI
       x = s.x + (b.x-a.x)*(1-f)*2*(rand()-0.5)
       x = x < a.x ? a.x : (x > b.x ? b.x : x)
       # for the integer variable, we move in one direction or the other
@@ -961,7 +965,7 @@ This example is also used, for the moment, to test out the parallel implementati
       y = y < a.y ? a.y : (y > b.y ? b.y : y)
       return MI(x,y)
   end
-  bestx, bestz, bestg, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100, neighbourfn=neighbour)
+  bestx, bestz, bestg, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100)
   println("Population: $pop")
   println("Best: f($bestx) = $bestz, $bestg")
 #+end_src 
