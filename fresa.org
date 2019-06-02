@@ -67,6 +67,7 @@ Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below
 ** Version information
 Major version log:
 
+- June 2019 :: The calling interface for using the =Fresa.solve= method has changed.  Specifically, when the search space is defined by data structures that are not a vector of =Float64= values, the user must create a =Fresa.neighbour= function definition for the specific data structure type.
 - September 2017 :: moved to an object representation for points in the search space and allowed for parallel evaluation of the objective function when multiple processors are available.
 - November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 A list [[*Recent change history][summary of recent change history]] is given below.
@@ -82,7 +83,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-02 18:26]"
+  version = "[2019-06-02 18:28]"
   using Dates
   using Distributed
   using Printf
