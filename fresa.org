@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-06 11:24]"
+  version = "[2019-06-11 17:07]"
   using Dates
   using Distributed
   using Printf
@@ -536,6 +536,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                  nrmax = 5,       # number of runners maximum
                  ns = 100,        # number of stable solutions for stopping
                  output = 5,      # how often to output information
+                 plotvectors = false, # generate output file for search plot
                  tolerance = 0.001) # tolerance for similarity detection
       println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
@@ -549,6 +550,10 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
       end
       println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
       println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
+      if plotvectors
+          plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
+          println(": output of vectors for subsequent plotting")
+      end
       # we use parallel computing if we have more than one processor
       parallel = nprocs() > 1
       println(": function evaluations performed ",
@@ -643,6 +648,9 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                       push!(x, newx)
                   else
                       push!(newpop, Point(newx, f, parameters))
+                      if plotvectors
+                          write(plotvectorio, "$(pop[s].x)\n$newx\n\n")
+                      end
                       nf += 1
                   end
               end
@@ -679,6 +687,9 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           npruned += nn
       end
       println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+      if plotvectors
+          close(plotvectorio)
+      end
       if nz == 1
           fit = fitness(pop, fitnesstype)
           index = sortperm(fit)
@@ -988,6 +999,7 @@ This example is also used, for the moment, to test out the parallel implementati
                                    fitnesstype = :nondominated,
                                    ngen=100,
                                    npop=10,
+                                   plotvectors=true,
                                    tolerance=0.01)
 
   println("Pareto front:")
