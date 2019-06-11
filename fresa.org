@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-11 17:07]"
+  version = "[2019-06-11 17:42]"
   using Dates
   using Distributed
   using Printf
@@ -649,7 +649,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   else
                       push!(newpop, Point(newx, f, parameters))
                       if plotvectors
-                          write(plotvectorio, "$(pop[s].x)\n$newx\n\n")
+                          write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                       end
                       nf += 1
                   end
