@@ -21,7 +21,7 @@ Below is the code I have written to implement a /plant propagation algorithm/.  
 
 An implementation of the plant propagation algorithm in the [[http://julialang.org/][Julia programming language]], known as [[file:fresa.org][Fresa]], is now available and under further development.  The advantage of this new implementation is the use of Julia.  Julia is a new language for scientific computation which has many key properties including abstract data and dynamic types, multiple dispatch, parallel computing and /just-in-time/ compilation of code for efficiency.
 
-The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, +can be found here+: call_distribution().
+The /Strawberry/ algorithm has been implemented in the [[http://www.gnu.org/software/octave/][Octave]] programming language.  A MATLAB compatible (untested) version, automagically generated from the Octave code, is made available from a link below but it should be noted that the author prefers to use open source software.  The Octave version is embedded in the [[http:strawberry.org][the original ~org~ document]] used to generate this web page.  This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, suitably manipulated to be compatible with MATLAB, *can be found here*: call_distribution().
 
 All code (either version) and this document are copyright © {{{time(%Y)}}}, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  The code from the above link includes some supplementary functions are required for the /Strawberry/ method (utility functions, multi-objective genetic algorithm (MOGA), and multi-objective steepest descent (MOSD)).
 
@@ -703,7 +703,7 @@ To accomplish the latter, we consider a ranking that takes into account how good
     global moga_version
     global mosd_version
     if isempty (strawberry_version)
-      strawberry_version = '2018.10.19 16:33:03';
+      strawberry_version = '2019.06.24 12:21:04';
       mosd_initialise
       moga_initialise
       printf (': STRAWBERRY %s, main function\n', strawberry_version)
