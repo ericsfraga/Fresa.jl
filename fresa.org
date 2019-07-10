@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-11 17:42]"
+  version = "[2019-06-11 17:55]"
   using Dates
   using Distributed
   using Printf
@@ -601,6 +601,12 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # elite set is single element only
                   newpop = [best]
               end
+              # if plotting vectors for the search, include elitism
+              if plotvectors
+                  for p in newpop
+                      write(plotvectorio, "$(gen-1) $(p.x)\n$gen $(p.x)\n\n")
+                  end
+              end
           else
               newpop = Point[]
           end
@@ -631,6 +637,9 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
               if !elite
                   # if no elitism, we ensure selected members remain in population
                   push!(newpop, selected)
+                  if plotvectors
+                      write(plotvectorio, "$(gen-1) $(selected.x)\n$gen $(selected.x)\n\n")
+                  end
               end
               # number of runners to generate, function of fitness
               nr = ceil(fit[s]*nrmax*rand())
