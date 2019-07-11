@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-07-11 11:47]"
+  version = "[2019-07-11 12:35]"
   using Dates
   using Distributed
   using Printf
@@ -970,7 +970,7 @@ This example is also used, for the moment, to test out the parallel implementati
       y :: Int32
   end
   import Base
-  Base.show(io::IO, m::MI) = print(io, m.x, ",", m.y)
+  Base.show(io::IO, m::MI) = print(io, m.x, " ", m.y)
   f = s -> (3s.y - 5s.x,
             max(2s.y + 3s.x - 24,
                 3s.x - 2s.y - 8,
@@ -999,6 +999,18 @@ This example is also used, for the moment, to test out the parallel implementati
   best, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100)
   println("Population: $pop")
   println("Best: f($(best.x)) = $(best.z), $(best.g)")
+#+end_src 
+
+Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
+
+#+name: testminlp
+#+begin_src julia :tangle testminlp.jl
+  point = best;
+  while point != Some(nothing) && typeof(point) != Nothing
+      global point
+      println("$(point.x)")
+      point = point.ancestor
+  end
 #+end_src 
 
 ** multi-objective test
