@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-07-11 11:09]"
+  version = "[2019-07-11 11:47]"
   using Dates
   using Distributed
   using Printf
@@ -115,7 +115,7 @@ As ~Fresa~ is an evolutionary procedure, every point in the search space conside
       x :: Any                    # decision point
       z :: Array{Float64}         # objective function values
       g :: Float64                # constraint violation
-      ancestor :: Point           # the parent of this point
+      ancestor :: Union{Point,Nothing} # the parent of this point
       function Point(x, f, parameters, ancestor)
           if typeof(parameters) == Nothing
               (z, g) = f(x)
@@ -543,7 +543,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                  tolerance = 0.001) # tolerance for similarity detection
       println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
-      p0 = Point(x0,f,parameters)
+      p0 = Point(x0, f, parameters, nothing)
       nf = 1                      # number of function evaluations
       npruned = 0                 # number solutions pruned from population
       nz = length(p0.z)           # number of criteria
@@ -996,9 +996,9 @@ This example is also used, for the moment, to test out the parallel implementati
       y = y < a.y ? a.y : (y > b.y ? b.y : y)
       return MI(x,y)
   end
-  bestx, bestz, bestg, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100)
+  best, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100)
   println("Population: $pop")
-  println("Best: f($bestx) = $bestz, $bestg")
+  println("Best: f($(best.x)) = $(best.z), $(best.g)")
 #+end_src 
 
 ** multi-objective test
