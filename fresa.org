@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-06-11 17:55]"
+  version = "[2019-07-11 10:51]"
   using Dates
   using Distributed
   using Printf
@@ -98,7 +98,9 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+end_src
 ** types
 *** Point
-Fresa uses one type, =Point=, which is a point in the search space.  It includes the variable =x=, of indeterminate type to allow for a wide range of applications (e.g. integer versus real values), =z=, the value of the objective function, and =g=, the constraint violation (feasible with ≤0 and infeasible otherwise).
+Fresa uses one type, =Point=, which is a point in the search space.  It includes the variable =x=, of indeterminate type to allow for a wide range of applications (e.g. integer versus real values), =z=, the value of the objective function, and =g=, the constraint violation (feasible with ≤0 and infeasible otherwise).  An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.
+
+As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
 #+name: pointtype
 #+begin_src julia
   """
@@ -113,7 +115,8 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
       x :: Any                    # decision point
       z :: Array{Float64}         # objective function values
       g :: Float64                # constraint violation
-      function Point(x, f, parameters)
+      ancestor :: Point           # the parent of this point
+      function Point(x, f, parameters, ancestor)
           if typeof(parameters) == Nothing
               (z, g) = f(x)
           else
@@ -131,9 +134,9 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
               end
           end
           if typeof(z) == Array{Float64} || typeof(z) == Array{Float64,1}
-              new(x,z,g)
+              new(x,z,g,ancestor)
           elseif typeof(z) == Float64
-              new(x,[z],g)
+              new(x,[z],g,ancestor)
           else
               error("Objective function values should be Float64 values, not $(typeof(z))")
           end
@@ -180,8 +183,8 @@ These are variables that are global to the module.
 ** create a point
 A trivial function that simply creates a new =Point= object.  This is needed for the =remotecall= functionality when using parallel computing because the =remotecall= function has to be given a function and not just a constructor (for some obscure reason that means that a constructor is transformed to a conversion operation... don't ask me).  The optional parameters argument is passed through: it is the =Point= creation method that checks to see if these are defined or not.
 #+begin_src julia
-  function createpoint(x,f,parameters)
-      return Point(x,f,parameters)
+  function createpoint(x,f,parameters,ancestor)
+      return Point(x,f,parameters,ancestor)
   end
 #+end_src 
 ** fitness
@@ -623,8 +626,11 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           end
           if parallel
               # create array to store all new points; we evaluate them
-              # later hopefully in parallel
+              # later hopefully in parallel.  Also keep track of the
+              # points from which new points are derived to provide the
+              # backward link through the evolution
               x = typeof(newpop[1].x)[]
+              points = Point[]
           end
           # now loop through population, applying selection and then
           # generating neighbours
@@ -655,8 +661,9 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # immediately and save the resulting point
                   if parallel
                       push!(x, newx)
+                      push!(points, pop[s])
                   else
-                      push!(newpop, Point(newx, f, parameters))
+                      push!(newpop, Point(newx, f, parameters, pop[s]))
                       if plotvectors
                           write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                       end
@@ -676,7 +683,8 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # issue remote evaluation call
                   for j=1:nprocs()
                       if i+j <= length(x) 
-                          results[j] = @spawn createpoint(x[i+j],f,parameters)
+                          results[j] = @spawn createpoint(x[i+j],f,parameters,
+                                                          points[i+j])
                           nf += 1
                       end
                   end
