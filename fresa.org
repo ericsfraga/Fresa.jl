@@ -86,7 +86,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-07-11 12:45]"
+  version = "[2019-07-11 12:50]"
   using Dates
   using Distributed
   using Printf
@@ -938,10 +938,9 @@ and plot out the resulting Pareto set in objective function space:
 
 *** solve the single objective version
 #+begin_src julia
-  bestx, bestz, bestg, pop = Fresa.solve(fsingle, x0, a, b;
-                                         ngen = 100)
+  best, pop = Fresa.solve(fsingle, x0, a, b; ngen = 100)
   println("Population: $pop")
-  println("Best: f($bestx) = $bestz, $bestg")
+  println("Best: f($(best.x)) = $(best.z), $( best.g )")
 #+end_src
 
 *** COMMENT test GAMS example objective function 
@@ -1120,9 +1119,9 @@ Some code to play with the generation of a random population so as to learn how 
   b = 10*ones(nx)
   rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  bestx, bestz, bestg, pop = Fresa.solve(rosenbrock, x0, a, b)
+  best, pop = Fresa.solve(rosenbrock, x0, a, b)
   println("Population at end: $pop")
-  println("Best solution is f($bestx)=$bestz with g=$bestg")
+  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src
 ** simple objective function
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
@@ -1134,9 +1133,9 @@ This test uses a simple quadratic objective function, defined within.  All point
   a = zeros(nx)
   b = 10*ones(nx)
   f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
-  @time bestx, bestz, bestg, pop = Fresa.solve(f, x0, a, b)
+  @time best, pop = Fresa.solve(f, x0, a, b)
   println("Population at end: $pop")
-  println("Best solution is f($bestx)=$bestz with g=$bestg")
+  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src 
 * Recent change history
 #+name: changehistoryshellblock
