@@ -85,7 +85,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-07-11 10:51]"
+  version = "[2019-07-11 11:09]"
   using Dates
   using Distributed
   using Printf
@@ -711,7 +711,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           fit = fitness(pop, fitnesstype)
           index = sortperm(fit)
           best = pop[index[end]]
-          return best.x, best.z, best.g, pop
+          return best, pop
       else
           return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
       end
