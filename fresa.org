@@ -86,7 +86,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-07-11 12:38]"
+  version = "[2019-07-11 12:45]"
   using Dates
   using Distributed
   using Printf
@@ -495,7 +495,7 @@ Used to set some of the module global variables used by many of the functions in
 #+end_src
 ** solve -- use the PPA to solve the optimisation problem
 The function expects the objective function, ~f~, an initial guess, ~x0~, and lower, ~a~, and upper, ~b~, bounds.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.  The actual return values and data structures depends on the number of criteria:
-- 1 :: returns best point, the objective function value, the constraint value and the full population;
+- 1 :: returns best point as a ~Fresa.Point~ object (which includes the decision variable values, the objective function value, and the constraint value) and also the full population;
 - >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
      
 The objective function, =f=, should return two results: =z=, the objective function value(s) which must be of type =Float64=, single or array, and =g=, the constraint violation.  If =g≤0=, the point is feasible; any value =g>0= means an infeasible point.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter.
@@ -518,8 +518,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
   and `b` are *bounds* on the search space.
 
   The return values for the solution of a single criterion problem are
-  the best point, the objective function value at that point, the
-  feasibility indication for that point and the full population. 
+  the best point and the full population at the end of the search. 
 
   For a multi-objective problem, the returned values are the set of
   indices for the points within the full population (the second returned
