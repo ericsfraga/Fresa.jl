@@ -86,7 +86,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-08-15 15:39]"
+  version = "[2019-08-15 16:47]"
   using Dates
   using Distributed
   using Printf
@@ -359,7 +359,7 @@ Select a set consisting of those solutions in a population that are not dominate
 To cater for generic comparisons between points in the objective function space (e.g. distributions instead of single values for each objective function), we introduce an operator used to determine /dominance/.  The community differs on the symbol to use for /dominates/.  Some[fn:4:https://oklahomaanalytics.com/data-science-techniques/nsga-ii-explained/] use ≼ (~\preceq~); others[fn:5:https://stackoverflow.com/questions/28406878/about-correct-notation-of-pareto-dominance-in-optimization] use ≻ (~\succ~).  I have decide to use the latter as it gives the impression of dominating.
 #+name: dominates
 #+begin_src julia
-  function ≻(a :: Vector{T}, b :: Vector{T}) where T <: Number
+  function ≻(a :: Vector{T}, b :: Vector{T}) where T <: Real
       all(a .<= b) && any(a .< b)
   end
 #+end_src 
@@ -367,7 +367,7 @@ This operator will be extended by other packages that wish to make comparisons b
 *** find Pareto set
 The following code splits a population into those points that are non-dominated (i.e. would be considered an approximation to a Pareto frontier) and those that are dominated.  The function returns indices into the population passed to it.
 #+begin_src julia
-  function paretoindices(z :: Vector{Vector{T}}) where T <: Number
+  function paretoindices(z :: Vector{Vector{T}}) where T <: Real
       n = length(z)
       dominance = [reduce(&, [!(z[i] ≻ z[j]) for i ∈ 1:n]) for j ∈ 1:n]
       paretoindices = filter(j -> dominance[j], 1:n)
