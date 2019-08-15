@@ -86,7 +86,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-08-15 15:33]"
+  version = "[2019-08-15 15:39]"
   using Dates
   using Distributed
   using Printf
@@ -399,7 +399,7 @@ Given a population of ~Point~ objects, this function identifies those that are n
 #+begin_src julia
   # indices of non-dominated and dominated points from the population of
   # Point objects
-  function pareto(pop :: Vector{Point})
+  function pareto(pop :: Vector{Point{T}}) where T <: Any
       l = length(pop)
       indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
       indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
