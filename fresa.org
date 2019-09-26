@@ -3,11 +3,12 @@
 #+title: Fresa, a plant propagation algorithm
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
-#+options: num:t ^:nil toc:t tex:imagemagick
+#+options: num:nil ^:nil toc:t tex:imagemagick
 
 # add extra meta information when tangling the code
 #+property: header-args :comments yes
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
+#+HTML_HEAD: <link href="http://taopeng-notes.css" rel="stylesheet" type="text/css" />
 # +html: <style>pre.src:before { display: inline; }</style>
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
@@ -86,14 +87,14 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-08-15 16:47]"
+  version = "[2019-09-26 13:54]"
   using Dates
   using Distributed
   using Printf
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
-          println("* Fresa PPA version $version")
+          println(": Fresa PPA version $version")
       end
   end
 #+end_src
