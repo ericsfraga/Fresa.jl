@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-09-30 16:47]"
+  version = "[2019-09-30 17:46]"
   using Dates
   using Distributed
   using Printf
@@ -119,9 +119,9 @@ As ~Fresa~ is an evolutionary procedure, every point in the search space conside
   length 1.
 
   """
-  struct Point{T}
+  struct Point
       x :: Any                    # decision point
-      z :: Vector{T}              # objective function values
+      z :: Vector                 # objective function values
       g :: Float64                # constraint violation
       ancestor :: Union{Point,Nothing} # the parent of this point
   end
@@ -402,7 +402,7 @@ Given a population of ~Point~ objects, this function identifies those that are n
 #+begin_src julia
   # indices of non-dominated and dominated points from the population of
   # Point objects
-  function pareto(pop :: Vector{Point{T}}) where T <: Any
+  function pareto(pop :: Vector{Point})
       l = length(pop)
       indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
       indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
