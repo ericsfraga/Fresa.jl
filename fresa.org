@@ -7,8 +7,10 @@
 
 # add extra meta information when tangling the code
 #+property: header-args :comments yes
+
+# +HTML_HEAD: <link href=\"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css\" rel=\"stylesheet\">
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
-#+HTML_HEAD: <link href="http://taopeng-notes.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="taopeng-notes.css" rel="stylesheet" type="text/css" />
 # +html: <style>pre.src:before { display: inline; }</style>
 
 | *Author*        | {{{author}}} ({{{email}}})                   |
@@ -88,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-12-02 11:19]"
+  version = "[2019-12-02 11:30]"
   using Dates
   using Distributed
   using Printf
@@ -1240,7 +1242,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 # org-confirm-babel-evaluate: nil
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
-# time-stamp-format: "[%04y-%02m-%02d %02H:%02M]"
+# time-stamp-format: "[%Y-%m-%d %H:%M]"
 # time-stamp-active: t
 # time-stamp-start: "version = \""
 # time-stamp-end: "\""
