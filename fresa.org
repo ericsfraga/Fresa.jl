@@ -70,6 +70,7 @@ Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below
 ** Version information
 Major version log:
 
+- September 2019 :: The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
 - July 2019 :: The returned values for ~Fresa.solve~ in the single objective case have changed.  Instead of separate returned values for the decision variables, the objective function value, etc., a single ~Fresa.Point~ value is returned for the best point found, along with the full final population as an array of ~Fresa.point~ values.
 - June 2019 :: The calling interface for using the =Fresa.solve= method has changed.  Specifically, when the search space is defined by data structures that are not a vector of =Float64= values, the user must create a =Fresa.neighbour= function definition for the specific data structure type.
 - September 2017 :: moved to an object representation for points in the search space and allowed for parallel evaluation of the objective function when multiple processors are available.
@@ -87,7 +88,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-09-30 17:46]"
+  version = "[2019-12-02 11:19]"
   using Dates
   using Distributed
   using Printf
