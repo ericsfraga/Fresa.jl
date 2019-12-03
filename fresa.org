@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-12-02 11:30]"
+  version = "[2019-12-03 09:26]"
   using Dates
   using Distributed
   using Printf
@@ -105,11 +105,11 @@ Fresa depends on a number of packages that should be available in any Julia inst
 *** Point
 Fresa uses one type, =Point=, which is a point in the search space.  It includes these entries:
 - ~x~ :: of indeterminate type to allow for a wide range of applications (e.g. integer versus real values),
-- =z= :: the value of the objective function, which may also be of any type (type ~T~ in the parametric definition of the type) but will always be stored as a ~Vector~,
+- =z= :: the value of the objective function, as a vector, where the entries in the vector can be of any type that can be /compared/ and sorted by =sortperm= [fn:1:https://docs.julialang.org/en/v1/base/sort/index.html],
 - ~g~ :: the constraint violation (feasible with ≤0 and infeasible otherwise) always of type ~Float64~ (for now), and
 - ~ancestor~ :: another point in the search space that led to the creation of this point.
 
-An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.
+An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.  For multi-criteria problems, =Fresa= must be able to determine whether one solution dominates another or not.
 
 As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
 #+name: pointtype
@@ -360,7 +360,7 @@ There is also a version that expects single valued =Float64= arguments.
 Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248).
-*** determine dominance
+*** <<<dominates>>>: determine dominance
 To cater for generic comparisons between points in the objective function space (e.g. distributions instead of single values for each objective function), we introduce an operator used to determine /dominance/.  The community differs on the symbol to use for /dominates/.  Some[fn:4:https://oklahomaanalytics.com/data-science-techniques/nsga-ii-explained/] use ≼ (~\preceq~); others[fn:5:https://stackoverflow.com/questions/28406878/about-correct-notation-of-pareto-dominance-in-optimization] use ≻ (~\succ~).  I have decide to use the latter as it gives the impression of dominating.
 #+name: dominates
 #+begin_src julia
@@ -369,7 +369,7 @@ To cater for generic comparisons between points in the objective function space 
   end
   ≻(a,b) = dominates(a,b)
 #+end_src 
-This operator will be extended by other packages that wish to make comparisons between non-scalar values of each objective function.
+This operator will be extended by other packages that wish to make comparisons between non-scalar values of each objective function.  The easiest way may often be to ensure that \leq and < operators are defined for the individual entries in the vector of objective function values.
 *** find Pareto set
 The following code splits a population into those points that are non-dominated (i.e. would be considered an approximation to a Pareto frontier) and those that are dominated.  The function returns indices into the population passed to it.
 #+begin_src julia
