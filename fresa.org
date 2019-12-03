@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-12-03 09:26]"
+  version = "[2019-12-03 09:32]"
   using Dates
   using Distributed
   using Printf
@@ -105,11 +105,11 @@ Fresa depends on a number of packages that should be available in any Julia inst
 *** Point
 Fresa uses one type, =Point=, which is a point in the search space.  It includes these entries:
 - ~x~ :: of indeterminate type to allow for a wide range of applications (e.g. integer versus real values),
-- =z= :: the value of the objective function, as a vector, where the entries in the vector can be of any type that can be /compared/ and sorted by =sortperm= [fn:1:https://docs.julialang.org/en/v1/base/sort/index.html],
+- =z= :: the value of the objective function, as a vector, where the entries in the vector can be of any type that can be /compared/ and sorted by =sortperm= [fn:1:https://docs.julialang.org/en/v1/base/sort/index.html] or, in the case of multiple criteria, where it can be determined whether one point dominates another,
 - ~g~ :: the constraint violation (feasible with ≤0 and infeasible otherwise) always of type ~Float64~ (for now), and
 - ~ancestor~ :: another point in the search space that led to the creation of this point.
 
-An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.  For multi-criteria problems, =Fresa= must be able to determine whether one solution dominates another or not.
+An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.  
 
 As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
 #+name: pointtype
