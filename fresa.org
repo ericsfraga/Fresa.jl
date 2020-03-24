@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2019-12-03 09:32]"
+  version = "[2020-03-24 12:55]"
   using Dates
   using Distributed
   using Printf
@@ -463,40 +463,83 @@ Given a population of ~Point~ objects, this function identifies those that are n
 Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population.
 #+name: prune
 #+begin_src julia
-  function prune(pop :: AbstractArray, tolerance)
-      npruned = 0
-      z = map(p->p.z, pop)
-      # println("typeof(z)=$(typeof(z))")
-      l = length(z)
-      # println("typeof(z[1])=$(typeof(z[1]))")
-      n = length(z[1])
-      zmin = zeros(n)
-      zmax = zeros(n)
-      for i=1:n
-          row = [z[j][i] for j=1:l]
-          zmin[i] = minimum(row)
-          zmax[i] = maximum(row)
-          if zmax[i] - zmin[i] < 100*eps()
-              zmax[i] = zmin[i]+100*eps()
-          end
-      end
-      pruned = [pop[1]]
-      for i=2:l
-          similar = false
-          for j=1:length(pruned)
-              if all(abs.(z[i]-pruned[j].z) .< tolerance*(zmax-zmin))
-                  similar = true;
-                  break;
-              end
-          end
-          if !similar
-              push!(pruned,pop[i])
-          else
-              npruned += 1
-          end
-      end
-      (pruned, npruned)
-  end
+    function prune(pop :: AbstractArray, tolerance)
+        npruned = 0
+        z = map(p->p.z, pop)
+        # println("typeof(z)=$(typeof(z))")
+        l = length(z)
+        # println("typeof(z[1])=$(typeof(z[1]))")
+        n = length(z[1])
+        zmin = zeros(n)
+        zmax = zeros(n)
+        try 
+            for i=1:n
+                row = [z[j][i] for j=1:l]
+                zmin[i] = minimum(row)
+                zmax[i] = maximum(row)
+                if zmax[i] - zmin[i] < 100*eps()
+                    zmax[i] = zmin[i]+100*eps()
+                end
+            end
+            pruned = [pop[1]]
+            for i=2:l
+                similar = false
+                for j=1:length(pruned)
+                    if all(abs.(z[i]-pruned[j].z) .< tolerance*(zmax-zmin))
+                        similar = true;
+                        break;
+                    end
+                end
+                if !similar
+                    push!(pruned,pop[i])
+                else
+                    npruned += 1
+                end
+            end
+            (pruned, npruned)
+        catch e
+            if isa(e, MethodError)
+                # probably (possibly) due to objective function type not
+                # being a number.  In this case, we try again but looking
+                # at the decision variable values instead.
+                x = map(p->p.x, pop)
+                # println("typeof(z)=$(typeof(z))")
+                l = length(x)
+                # start building up the population that remains after
+                # pruning.  The first entry will always be there as any
+                # similar solutions will not be included by the search
+                # that follows.
+                pruned = [pop[1]]
+                try
+                    for i=2:l
+                        similar = false
+                        # now check this solution against all those already in
+                        # the list we are collating
+                        for j=1:length(pruned)
+                            if all(Float64.(abs.(x[i]-pruned[j].x)) .< tolerance)
+                                similar = true;
+                                break;
+                            end
+                        end
+                        if !similar
+                            push!(pruned,pop[i])
+                        else
+                            npruned += 1
+                        end
+                    end
+                    (pruned, npruned)        
+                catch e
+                    if isa(e, MethodError)
+                        # this is now probably/possibly due to not being
+                        # to find the difference between two decision
+                        # points.  In that case, return the whole
+                        # original population
+                        (pop, 0)
+                    end
+                end
+            end
+        end
+    end
 #+end_src 
 ** COMMENT randompopulation -- for testing other methods
 Create a random population of size ~n~ evaluated using ~f~.
@@ -612,7 +655,8 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           println(": output of vectors for subsequent plotting")
       end
       # we use parallel computing if we have more than one processor
-      parallel = nprocs() > 1
+      # parallel = nprocs() > 1
+      parallel = false
       println(": function evaluations performed ",
               parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
       println("*** initial population")
@@ -1203,7 +1247,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 * Recent change history
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
-  hg log --template "{date|shortdate} {desc|firstline}\n" --limit 10 fresa.org
+  hg log --template "{date|shortdate} {desc|firstline}\n" --limit 20 fresa.org
 #+end_src
 * settings                                                    :noexport:
 ** latex settings
