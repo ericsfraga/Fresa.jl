@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-03-24 12:55]"
+  version = "[2020-03-24 13:02]"
   using Dates
   using Distributed
   using Printf
@@ -460,7 +460,9 @@ Given a population of ~Point~ objects, this function identifies those that are n
   end
 #+end_src
 ** prune - control population diversity
-Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population.
+Due to the stochastic nature of the method and also the likely duplication of points when elitism is used, there is a need to prune the population.  We wish to remove members that have objective function values (or alternatively decision variable values) that are too close to each other.  The main difficulty is the definition of /too close/.  We use a tolerance based on the range of values present in the population for the objective function pruning and the tolerance directly for decision variable pruning.
+
+Previously, pruning was done on objective function values.  In the case where that is not possible (e.g. cannot find difference of values), we consider the decision variables as well.  The latter assume that we have a -(subtraction) operator for the decision variable type; if not, we do no pruning at all.
 #+name: prune
 #+begin_src julia
     function prune(pop :: AbstractArray, tolerance)
