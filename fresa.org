@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-03-24 13:02]"
+  version = "[2020-03-30 14:30]"
   using Dates
   using Distributed
   using Printf
@@ -158,6 +158,12 @@ Customise how a Point is displayed:
           print(io,"empty")
       end
   end
+#+end_src 
+and also indicate that a =Point= is atomic in a sense:
+#+name: pointsize
+#+begin_src julia
+  import Base.size
+  Base.size(p :: Point) = ()
 #+end_src 
 ** COMMENT variables
 These are variables that are global to the module.
@@ -848,6 +854,7 @@ Some functions that are not necessary for Fresa but provide some useful features
 #+end_src 
 *** rank -- dimension of a variable
 Sometimes, we need to determine whether a variable (e.g. the objective function value returned by the evaluation of the model) is a scalar or a vector.
+#+name: rank
 #+begin_src julia
   rank(x :: Any) = length(size(x))
 #+end_src 
