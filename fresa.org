@@ -33,6 +33,11 @@
 - [X] add counters to be able to display number of function evaluations etc.
 - [X] allow for user specified /neighbour/ function
 - [X] implement MINLP example
+
+* notes for me (not exported)                                 :noexport:
+Creating a new package: https://www.juliabloggers.com/package-development-in-julia-1-0-using-the-repl/
+- main thing was using =dev ~/s/research/julia/Fresa.jl= command from the =Pkg= REPL.
+- need to specify dependencies in the =Project.toml= file as well.  The =uuid= for each project can be found in the =~/.julia/environments/Project.toml= file.  But I don't understand how these are updated.
 * Overview and introduction
 #+begin_quote
 *Update*: Fresa now works with Julia version 1.0.0. 
@@ -90,7 +95,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-03-30 14:30]"
+  version = "[2020-03-31 15:28]"
   using Dates
   using Distributed
   using Printf
@@ -668,12 +673,14 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
       println(": function evaluations performed ",
               parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
       println("*** initial population")
+      println("#+name: $(f)initial")
       println(pop)
       if parallel
           # will be used to collect results from worker processors
           results = Array{Future,1}(nprocs())
       end
       println("*** evolution")
+      println("#+name: $(f)evolution")
       @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
               (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
       for i in 1:nz
