@@ -1,5 +1,4 @@
 name = "Fresa"
-uuid = "0602c6cc-0835-49fc-8a87-5af3aea9e000"
-version = "2020.03.31"
-[compat]
-julia = "1"
+uuid = "35d66a44-7359-11ea-387b-f94ed747d8e0"
+authors = ["Eric S Fraga <e.fraga@ucl.ac.uk>"]
+version = "0.1.0"
