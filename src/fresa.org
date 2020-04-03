@@ -18,27 +18,6 @@
 
 # +toc: headlines 1
 
-* TODO bugs and new features [8/14]                           :noexport:
-- [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
-- [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
-- [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
-- [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
-- [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
-- [ ] use constraint information in fitness calculations
-- [X] Pareto set should not include infeasible points (unless all are infeasible?)
-- [X] keep Pareto set as elite
-- [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
-- [X] consider splicing out the selected member from the population
-- [X] parallelise the evaluation of the new members of the population
-- [X] add counters to be able to display number of function evaluations etc.
-- [X] allow for user specified /neighbour/ function
-- [X] implement MINLP example
-
-* notes for me (not exported)                                 :noexport:
-Creating a new package: https://www.juliabloggers.com/package-development-in-julia-1-0-using-the-repl/
-- *main thing* was using =dev ~/s/research/julia/Fresa.jl= command from the =Pkg= REPL.
-- need to specify dependencies in the =Project.toml= file as well.  The =uuid= for each project can be found in the =~/.julia/environments/Project.toml= file.  But I don't understand how these are updated.
-There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Julia packages]].
 * Overview and introduction
 #+begin_quote
 *Update*: Fresa now works with Julia version 1.0.0. 
@@ -96,7 +75,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-03 13:25]"
+  version = "[2020-04-03 14:38]"
   using Dates
   using Distributed
   using Printf
@@ -1266,6 +1245,27 @@ This test uses a simple quadratic objective function, defined within.  All point
 #+begin_src shell :exports results :results output
   hg log --template "{date|shortdate} {desc|firstline}\n" --limit 20 fresa.org
 #+end_src
+* TODO bugs and new features [8/14]                           :noexport:
+- [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
+- [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
+- [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
+- [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
+- [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+- [ ] use constraint information in fitness calculations
+- [X] Pareto set should not include infeasible points (unless all are infeasible?)
+- [X] keep Pareto set as elite
+- [X] current version requires =f= to return a vector for objective function value.  A single objective function should not require this so need to catch this case.
+- [X] consider splicing out the selected member from the population
+- [X] parallelise the evaluation of the new members of the population
+- [X] add counters to be able to display number of function evaluations etc.
+- [X] allow for user specified /neighbour/ function
+- [X] implement MINLP example
+
+* notes for me (not exported)                                 :noexport:
+Creating a new package: https://www.juliabloggers.com/package-development-in-julia-1-0-using-the-repl/
+- *main thing* was using =dev ~/s/research/julia/Fresa.jl= command from the =Pkg= REPL.
+- need to specify dependencies in the =Project.toml= file as well.  The =uuid= for each project can be found in the =~/.julia/environments/Project.toml= file.  But I don't understand how these are updated.
+There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Julia packages]].
 * settings                                                    :noexport:
 ** latex settings
 #+begin_export latex
