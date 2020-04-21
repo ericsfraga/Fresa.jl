@@ -19,6 +19,7 @@
 # +toc: headlines 1
 
 * TODO bugs and new features [8/14]                           :noexport:
+- consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
 - [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
 - [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
 - [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
@@ -36,8 +37,9 @@
 
 * notes for me (not exported)                                 :noexport:
 Creating a new package: https://www.juliabloggers.com/package-development-in-julia-1-0-using-the-repl/
-- main thing was using =dev ~/s/research/julia/Fresa.jl= command from the =Pkg= REPL.
+- *main thing* was using =dev ~/s/research/julia/Fresa.jl= command from the =Pkg= REPL.
 - need to specify dependencies in the =Project.toml= file as well.  The =uuid= for each project can be found in the =~/.julia/environments/Project.toml= file.  But I don't understand how these are updated.
+There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Julia packages]].
 * Overview and introduction
 #+begin_quote
 *Update*: Fresa now works with Julia version 1.0.0. 
@@ -95,7 +97,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-03-31 15:28]"
+  version = "[2020-04-20 10:03]"
   using Dates
   using Distributed
   using Printf
@@ -668,8 +670,8 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           println(": output of vectors for subsequent plotting")
       end
       # we use parallel computing if we have more than one processor
-      # parallel = nprocs() > 1
-      parallel = false
+      parallel = nprocs() > 1
+      # parallel = false
       println(": function evaluations performed ",
               parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
       println("*** initial population")
@@ -677,7 +679,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
       println(pop)
       if parallel
           # will be used to collect results from worker processors
-          results = Array{Future,1}(nprocs())
+          results = Array{Future,1}(undef, nprocs())
       end
       println("*** evolution")
       println("#+name: $(f)evolution")
