@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-22 14:37]"
+  version = "[2020-04-22 14:46]"
   using Dates
   using Distributed
   using Printf
@@ -1250,7 +1250,7 @@ This test uses a simple quadratic objective function, defined within.  All point
 * Recent change history
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
-  hg log --template "{date|shortdate} {desc|firstline}\n" --limit 20 fresa.org
+  git log --pretty=reference -20 fresa.org
 #+end_src
 * settings                                                    :noexport:
 ** latex settings
