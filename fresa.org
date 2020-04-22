@@ -52,33 +52,18 @@ All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga, all righ
 Please let [[mailto:e.fraga@ucl.ac.uk?subject=The%20Strawberry%20code][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  Feedback, including bug reports, is most welcome.
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found here: call_distribution().  To use this code, you could add this to your =~/.julia/config/startup.jl= file (for Linux; for MS Windows, check the [[http://www.julialang.org/][Julia]] documentation):
-#+begin_src julia
-  push!(LOAD_PATH,"/directory/where/Fresa/was/saved")
-#+end_src 
-Alternatively, you can =include= the code directly before =using= it:
-#+begin_src julia
-  include("Fresa.jl")
-  using Fresa
-#+end_src 
-The test examples that are described below all assume that the load path has been set as shown in the first code snippet above, i.e. in the configuration startup file.
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].
 
-Although ~Fresa~ has no external dependencies, the [[*Tests][test problems below]] may require one or more of the following packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+~Fresa~ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[*Tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
-  scp -r fresa.org fresa.html Fresa.jl \
-      testgams.jl gamsdeclarations.gms \
-      ltximg socrates.ucl.ac.uk:html.pub
+  scp -r fresa.html ltximg socrates.ucl.ac.uk:html.pub
 #+end_src
-** Code for creating a distribution                          :noexport:
-#+name: distribution
-#+begin_src shell :results output raw :exports results
-  echo [[file:./Fresa.jl][Fresa.jl]]
-#+end_src 
 ** Version information
 Major version log:
 
+- April 2020 :: moved all code to [[https://github.com/ericsfraga/Fresa.jl][github]].  This should make it easier to others to use the code.
 - September 2019 :: The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
 - July 2019 :: The returned values for ~Fresa.solve~ in the single objective case have changed.  Instead of separate returned values for the decision variables, the objective function value, etc., a single ~Fresa.Point~ value is returned for the best point found, along with the full final population as an array of ~Fresa.point~ values.
 - June 2019 :: The calling interface for using the =Fresa.solve= method has changed.  Specifically, when the search space is defined by data structures that are not a vector of =Float64= values, the user must create a =Fresa.neighbour= function definition for the specific data structure type.
@@ -88,7 +73,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
 :PROPERTIES:
-:header-args: :tangle "Fresa.jl" :comments yes
+:header-args: :tangle "src/Fresa.jl" :comments yes
 :END:
 # +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
@@ -97,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-20 10:03]"
+  version = "[2020-04-22 14:37]"
   using Dates
   using Distributed
   using Printf
@@ -877,7 +862,7 @@ The following are simple tests for either the Fresa optimiser or just individual
 # +toc: headlines 2 local
 ** COMMENT neighbour
 #+name: testneighbour
-#+begin_src julia :tangle testneighbour.jl
+#+begin_src julia :tangle test/neighbour.jl
   using Fresa
   nx = 5
   a = -5*ones(nx,1)
@@ -894,7 +879,7 @@ The following are simple tests for either the Fresa optimiser or just individual
 ** COMMENT fitness test
 This test uses a simple quadratic objective function to test out the fitness evaluation.
 #+name: testfitness
-#+begin_src julia :tangle testfitness.jl
+#+begin_src julia :tangle test/fitness.jl
   using Fresa
   nx = 2
   x0 = 0.5*ones(nx)
@@ -924,7 +909,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
 #+end_src
 ** a GAMS interface example
 :PROPERTIES:
-:header-args:julia: :tangle "testgams.jl"
+:header-args:julia: :tangle "test/gams.jl"
 :END:
 [[https://www.gams.com/][The GAMS]] modelling system is used by many to write and solve optimization problems and many different solvers are available, including both local and global optimizers.  However, there are some problems for which the solvers may not be able to find good solutions.  Fresa may provide a suitable alternative solver for such problems.  However, one of the best features of GAMS is that the model can be represented purely by the equations without the need to determine an evaluation sequence for these equations given a decision vector.  It is therefore desirable to consider using Fresa with GAMS models.
 
@@ -935,7 +920,7 @@ The files for this example can be downloaded: [[file:testgams.jl][Julia code]] a
 We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, Ravindran and Ragsdell (1983).  This problem seeks to minimise the square of the decision variables while minimising a residual value =res=.  We treat this as a multi-objective problem which cannot be done directly in GAMS.  By looking at it as a multi-objective problem, we can gain insight into the trade-offs between the residual and the primary objective function.
 
 #+name: gamsmodel
-#+begin_src gams :tangle "gamsdeclarations.gms"
+#+begin_src gams :tangle "test/gamsdeclarations.gms"
   $TITLE Test Problem 
   $OFFDIGIT
   $OFFSYMXREF 
@@ -1083,7 +1068,7 @@ The aims of this example are to test the use of a non-default /neighbour/ functi
 This example is also used, for the moment, to test out the parallel implementation of Fresa.  The important aspects are that Fresa as well as the =MI= type be available on all worker processes.  This is not a good example in that the parallel version takes longer than the sequential version.
 
 #+name: testminlp
-#+begin_src julia :tangle testminlp.jl
+#+begin_src julia :tangle test/minlp.jl
   using Distributed
   using Printf
   @everywhere using Fresa
@@ -1128,7 +1113,7 @@ This example is also used, for the moment, to test out the parallel implementati
 Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
 
 #+name: testminlp
-#+begin_src julia :tangle testminlp.jl
+#+begin_src julia :tangle test/minlp.jl
   point = best;
   while point != Some(nothing) && typeof(point) != Nothing
       global point
@@ -1139,7 +1124,7 @@ Using the results obtained above, we use the linking information for all the poi
 
 ** multi-objective test
 #+name: testmultiobjective
-#+begin_src julia :tangle testmultiobjective.jl
+#+begin_src julia :tangle test/multiobjective.jl
   using Fresa
   nx = 2
   a = zeros(nx)
@@ -1169,7 +1154,7 @@ Using the results obtained above, we use the linking information for all the poi
 #+end_src 
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
-#+begin_src julia :tangle testmultiobjective3.jl
+#+begin_src julia :tangle test/multiobjective3.jl
   using Fresa
   using Profile
   nx = 5
@@ -1204,7 +1189,7 @@ Using the results obtained above, we use the linking information for all the poi
 
 ** COMMENT parallel test
 Some code to play with the generation of a random population so as to learn how to parallelise a loop in Julia.
-#+begin_src julia :tangle testparallel.jl
+#+begin_src julia :tangle test/parallel.jl
   using Fresa
   m = 10000;
   n = 1;
@@ -1215,7 +1200,7 @@ Some code to play with the generation of a random population so as to learn how 
 #+end_src 
 ** COMMENT pareto test
 #+name: testpareto
-#+begin_src julia :tangle testpareto.jl
+#+begin_src julia :tangle test/pareto.jl
   using Fresa
   nx = 2
   a = zeros(nx,1)
@@ -1236,7 +1221,7 @@ Some code to play with the generation of a random population so as to learn how 
 #+end_src 
 ** rosenbrock
 #+name: testrosenbrock
-#+begin_src julia :tangle testrosenbrock.jl
+#+begin_src julia :tangle test/rosenbrock.jl
   using Fresa
   nx = 2
   x0 = 0.5*ones(nx)
@@ -1251,7 +1236,7 @@ Some code to play with the generation of a random population so as to learn how 
 ** simple objective function
 This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
 #+name: testsimple
-#+begin_src julia :tangle testsimple.jl
+#+begin_src julia :tangle test/simple.jl
   using Fresa
   nx = 2
   x0 = 0.5*ones(nx)
