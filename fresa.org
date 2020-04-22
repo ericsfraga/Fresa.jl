@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-22 14:46]"
+  version = "[2020-04-22 14:53]"
   using Dates
   using Distributed
   using Printf
@@ -1248,10 +1248,12 @@ This test uses a simple quadratic objective function, defined within.  All point
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src 
 * Recent change history
+Summary of the most recent changes to the package:
 #+name: changehistoryshellblock
 #+begin_src shell :exports results :results output
-  git log --pretty=reference -20 fresa.org
+  git log --date=format:"%Y-%m-%d %H:%M" --pretty=format:"%ad %s" -20 fresa.org
 #+end_src
+A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]].
 * settings                                                    :noexport:
 ** latex settings
 #+begin_export latex
