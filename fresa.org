@@ -58,7 +58,7 @@ This document has been written using [[http://orgmode.org/][org mode]] in the [[
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
-  scp -r fresa.html ltximg socrates.ucl.ac.uk:html.pub
+  scp -r fresa.html socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information
 Major version log:
@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-22 14:53]"
+  version = "[2020-04-22 14:56]"
   using Dates
   using Distributed
   using Printf
