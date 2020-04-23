@@ -1,0 +1,3 @@
+#+title: The Fresa plant propagation algorithm
+
+The Fresa package implements a plant propagation algorithm for black-box optimization.  A full description of the package can be found on [[http://www.ucl.ac.uk/~ucecesf/fresa.html][the author's home pages at UCL (University College London)]].
