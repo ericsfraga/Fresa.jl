@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-22 14:56]"
+  version = "[2020-04-22 15:37]"
   using Dates
   using Distributed
   using Printf
@@ -604,6 +604,8 @@ The calling sequence for =f= is a point in the search space plus, optionally, th
 If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example.
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
+
+The population may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size.
 #+name: solve
 #+begin_src julia
   """
@@ -632,7 +634,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                  elite = true,    # elitism by default
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                  ngen = 100,      # number of generations
-                 npop = 10,       # population size
+                 npop = 10,       # population size: fixed (single value) or dynamic (tuple)
                  nrmax = 5,       # number of runners maximum
                  ns = 100,        # number of stable solutions for stopping
                  output = 5,      # how often to output information
@@ -653,6 +655,24 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
       if plotvectors
           plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
           println(": output of vectors for subsequent plotting")
+      end
+      # if npop was given as a tuple, we are to have a dynamic
+      # population size.  This only makes sense for multi-objective
+      # optimization problems so a warning will be given otherwise.
+      npopmin = npop
+      npopmax = npop
+      if isa(npop, Tuple)
+          if nz > 1
+              npopmin = npop[1]
+              npopmax = npop[2]
+              if npopmin > npopmax
+                  error("Dynamic population sizing requires min <= max; you specified $npop")
+              end
+              npop = npopmin      # start with minimum possible
+          else
+              println("*Warning*: you have specified a tuple for population size: $npop")
+              println("This only makes sense for multi-objective optimization problems.")
+          end
       end
       # we use parallel computing if we have more than one processor
       parallel = nprocs() > 1
@@ -691,6 +711,15 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
                   # big. Recall that the pareto function returns the set
                   # of indices into the population
                   wholepareto = pareto(pop)[1]
+                  # if using dynamic population sizing, adjust the population
+                  npop = 2 * length(wholepareto)
+                  if npop < npopmin
+                      npop = npopmin
+                  end
+                  if npop > npopmax
+                      npop = npopmax
+                  end
+                  # now check that the pareto is not too big.  if it is, thin it out
                   if length(wholepareto) > ceil(npop/2)
                       newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
                       if archiveelite
@@ -713,7 +742,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
           else
               newpop = Point[]
           end
-          print(stderr, ": $gen np=$(length(newpop))",
+          print(stderr, ": $gen np=$(length(newpop))/$npop",
                 archiveelite ? " na=$(length(archive))" : "",
                 " with most fit z=$(best.z)           \r")
           if gen%output == 0

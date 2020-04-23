@@ -1,6 +1,6 @@
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::modulestart][modulestart]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2020-04-03 13:25]"
+version = "[2020-04-22 15:31]"
 using Dates
 using Distributed
 using Printf
@@ -12,7 +12,7 @@ function __init__()
 end
 # modulestart ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::pointtype][pointtype]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::pointtype][pointtype]]
 """
 
 Point (`x`) in the search space along with objective function values
@@ -29,7 +29,7 @@ struct Point
 end
 # pointtype ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::showpoint][showpoint]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::showpoint][showpoint]]
 import Base
 Base.show(io::IO, p::Fresa.Point) = print(io, "f(", p.x, ")=", p.z, " g=", p.g)
 # and also an array of points
@@ -58,12 +58,12 @@ function Base.show(io::IO, p::Array{Point,1})
 end
 # showpoint ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::pointsize][pointsize]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::pointsize][pointsize]]
 import Base.size
 Base.size(p :: Point) = ()
 # pointsize ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::createpoint][createpoint]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters,ancestor)
     z = 0
     g = 0
@@ -87,7 +87,7 @@ function createpoint(x,f,parameters,ancestor)
 end
 # createpoint ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::fitness][fitness]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::fitness][fitness]]
 function fitness(pop, fitnesstype)
     l = length(pop)
     indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
@@ -117,7 +117,7 @@ function fitness(pop, fitnesstype)
 end
 # fitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::vectorfitness][vectorfitness]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::vectorfitness][vectorfitness]]
 """
 For single objective problems, the fitness is simply the normalised
 objective function value.
@@ -190,7 +190,7 @@ function vectorfitness(v,fitnesstype)
 end
 # vectorfitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::assigndominancefitness][assigndominancefitness]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::assigndominancefitness][assigndominancefitness]]
 function assigndominancefitness!(f,v,l)
     # assign value l to all members of v which dominate rest and then
     # recurse on those which are dominated
@@ -205,7 +205,7 @@ function assigndominancefitness!(f,v,l)
 end
 # assigndominancefitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::neighbourarray][neighbourarray]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::neighbourarray][neighbourarray]]
 function neighbour(x :: Array{Float64,1},
                    a :: Array{Float64,1},
                    b :: Array{Float64,1},
@@ -218,7 +218,7 @@ function neighbour(x :: Array{Float64,1},
 end
 # neighbourarray ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::neighbourfloat][neighbourfloat]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::neighbourfloat][neighbourfloat]]
 function neighbour(x :: Float64,
                    a :: Float64,
                    b :: Float64,
@@ -236,14 +236,14 @@ function neighbour(x :: Float64,
 end
 # neighbourfloat ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::dominates][dominates]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::dominates][dominates]]
 function dominates(a, b)
     all(a .<= b) && any(a .< b)
 end
 ≻(a,b) = dominates(a,b)
 # dominates ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::*find Pareto set][find Pareto set:1]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::*find Pareto set][find Pareto set:1]]
 function paretoindices(z)
     n = length(z)
     dominance = [reduce(&, [!(z[i] ≻ z[j]) for i ∈ 1:n]) for j ∈ 1:n]
@@ -253,7 +253,7 @@ function paretoindices(z)
 end
 # find Pareto set:1 ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::pareto][pareto]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::pareto][pareto]]
 # indices of non-dominated and dominated points from the population of
 # Point objects
 function pareto(pop :: Vector{Point})
@@ -277,7 +277,7 @@ function pareto(pop :: Vector{Point})
 end
 # pareto ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::prune][prune]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::prune][prune]]
 function prune(pop :: AbstractArray, tolerance)
     npruned = 0
     z = map(p->p.z, pop)
@@ -357,7 +357,7 @@ function prune(pop :: AbstractArray, tolerance)
 end
 # prune ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::select][select]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::select][select]]
 function select(f)
     l = length(f)
     ind1 = rand(1:l)
@@ -374,7 +374,7 @@ function select(f)
 end
 # select ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::solve][solve]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::solve][solve]]
 """
 Solve an optimisation problem, defined as the minimization of the
 values returned by the objective function, `f`.  `f` returns not only
@@ -401,7 +401,7 @@ function solve(f, x0, a, b;     # required arguments
                elite = true,    # elitism by default
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                ngen = 100,      # number of generations
-               npop = 10,       # population size
+               npop = 10,       # population size: fixed (single value) or dynamic (tuple)
                nrmax = 5,       # number of runners maximum
                ns = 100,        # number of stable solutions for stopping
                output = 5,      # how often to output information
@@ -422,6 +422,24 @@ function solve(f, x0, a, b;     # required arguments
     if plotvectors
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
         println(": output of vectors for subsequent plotting")
+    end
+    # if npop was given as a tuple, we are to have a dynamic
+    # population size.  This only makes sense for multi-objective
+    # optimization problems so a warning will be given otherwise.
+    npopmin = npop
+    npopmax = npop
+    if isa(npop, Tuple)
+        if nz > 1
+            npopmin = npop[1]
+            npopmax = npop[2]
+            if npopmin > npopmax
+                error("Dynamic population sizing requires min <= max; you specified $npop")
+            end
+            npop = npopmin      # start with minimum possible
+        else
+            println("*Warning*: you have specified a tuple for population size: $npop")
+            println("This only makes sense for multi-objective optimization problems.")
+        end
     end
     # we use parallel computing if we have more than one processor
     parallel = nprocs() > 1
@@ -460,6 +478,15 @@ function solve(f, x0, a, b;     # required arguments
                 # big. Recall that the pareto function returns the set
                 # of indices into the population
                 wholepareto = pareto(pop)[1]
+                # if using dynamic population sizing, adjust the population
+                npop = 2 * length(wholepareto)
+                if npop < npopmin
+                    npop = npopmin
+                end
+                if npop > npopmax
+                    npop = npopmax
+                end
+                # now check that the pareto is not too big.  if it is, thin it out
                 if length(wholepareto) > ceil(npop/2)
                     newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
                     if archiveelite
@@ -482,7 +509,7 @@ function solve(f, x0, a, b;     # required arguments
         else
             newpop = Point[]
         end
-        print(stderr, ": $gen np=$(length(newpop))",
+        print(stderr, ": $gen np=$(length(newpop))/$npop",
               archiveelite ? " na=$(length(archive))" : "",
               " with most fit z=$(best.z)           \r")
         if gen%output == 0
@@ -591,14 +618,14 @@ function solve(f, x0, a, b;     # required arguments
 end
 # solve ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::thinout][thinout]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::thinout][thinout]]
 function thinout(pop, fit, pareto, n::Int)
     indices = sortperm(fit[pareto])
     return pop[pareto[indices[end-n+1:end]]], pop[pareto[indices[1:end-n]]]
 end
 # thinout ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::orgtimestamp][orgtimestamp]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::orgtimestamp][orgtimestamp]]
 function orgtimestamp(dt::DateTime)
     return @sprintf("[%d-%02d-%02d %02d:%02d]",
                     Dates.year(dt),
@@ -609,10 +636,10 @@ function orgtimestamp(dt::DateTime)
 end
 # orgtimestamp ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::rank][rank]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::rank][rank]]
 rank(x :: Any) = length(size(x))
 # rank ends here
 
-# [[file:~/s/research/julia/Fresa.jl/src/fresa.org::moduleend][moduleend]]
+# [[file:~/s/research/julia/Fresa.jl/fresa.org::moduleend][moduleend]]
 end
 # moduleend ends here
