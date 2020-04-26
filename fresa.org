@@ -82,7 +82,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-04-22 15:37]"
+  version = "[2020-04-26 17:23]"
   using Dates
   using Distributed
   using Printf
@@ -605,7 +605,7 @@ If the decision vector is not an array of =Float64=, a type specific =Fresa.neig
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
 
-The population may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size.
+The size of the population, =npop=, may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size.
 #+name: solve
 #+begin_src julia
   """
