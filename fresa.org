@@ -639,7 +639,8 @@ The size of the population, =npop=, may be a single integer value or a =Tuple= o
                  ns = 100,        # number of stable solutions for stopping
                  output = 5,      # how often to output information
                  plotvectors = false, # generate output file for search plot
-                 tolerance = 0.001) # tolerance for similarity detection
+                 tolerance = 0.001, # tolerance for similarity detection
+                 usemultiproc = false) # parallel processing by Fresa itself?
       println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
       p0 = createpoint(x0, f, parameters, nothing)
