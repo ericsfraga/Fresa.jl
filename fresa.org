@@ -673,10 +673,12 @@ The size of the population, =npop=, may be a single integer value or a =Tuple= o
           else
               println("*Warning*: you have specified a tuple for population size: $npop")
               println("This only makes sense for multi-objective optimization problems.")
+              println("npop will be set to $(npop[1]).")
+              npop = npop[1]      # be optimistic and use minimum given
           end
       end
       # we use parallel computing if we have more than one processor
-      parallel = nprocs() > 1
+      parallel = usemultiproc && nprocs() > 1
       # parallel = false
       println(": function evaluations performed ",
               parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
