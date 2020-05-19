@@ -696,6 +696,7 @@ The size of the population, =npop=, may be a single integer value or a =Tuple= o
       for i in 1:nz
           @printf(" z%-8d |", i)
       end
+      @printf(" %9s |", "g")
       @printf("\n|-\n")
       # now evolve the population for a predetermined number of generations
       for gen in 1:ngen
@@ -754,6 +755,7 @@ The size of the population, =npop=, may be a single integer value or a =Tuple= o
               for i = 1:length(best.z)
                   print(" $(best.z[i]) |")
               end
+              print(" $(best.g) |")
               println()
           end
           if parallel
