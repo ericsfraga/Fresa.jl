@@ -1,6 +1,6 @@
 # [[file:~/s/research/julia/Fresa.jl/fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2020-04-22 15:31]"
+version = "[2020-05-20 10:25]"
 using Dates
 using Distributed
 using Printf
@@ -406,7 +406,8 @@ function solve(f, x0, a, b;     # required arguments
                ns = 100,        # number of stable solutions for stopping
                output = 5,      # how often to output information
                plotvectors = false, # generate output file for search plot
-               tolerance = 0.001) # tolerance for similarity detection
+               tolerance = 0.001, # tolerance for similarity detection
+               usemultiproc = false) # parallel processing by Fresa itself?
     println("** solve $f $(orgtimestamp(now()))")
     tstart = time()
     p0 = createpoint(x0, f, parameters, nothing)
@@ -439,10 +440,12 @@ function solve(f, x0, a, b;     # required arguments
         else
             println("*Warning*: you have specified a tuple for population size: $npop")
             println("This only makes sense for multi-objective optimization problems.")
+            println("npop will be set to $(npop[1]).")
+            npop = npop[1]      # be optimistic and use minimum given
         end
     end
     # we use parallel computing if we have more than one processor
-    parallel = nprocs() > 1
+    parallel = usemultiproc && nprocs() > 1
     # parallel = false
     println(": function evaluations performed ",
             parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
@@ -460,6 +463,7 @@ function solve(f, x0, a, b;     # required arguments
     for i in 1:nz
         @printf(" z%-8d |", i)
     end
+    @printf(" %9s |", "g")
     @printf("\n|-\n")
     # now evolve the population for a predetermined number of generations
     for gen in 1:ngen
@@ -518,6 +522,7 @@ function solve(f, x0, a, b;     # required arguments
             for i = 1:length(best.z)
                 print(" $(best.z[i]) |")
             end
+            print(" $(best.g) |")
             println()
         end
         if parallel
