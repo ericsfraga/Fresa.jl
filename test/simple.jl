@@ -1,4 +1,4 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::testsimple][testsimple]]
+# [[file:../fresa.org::testsimple][testsimple]]
 using Fresa
 nx = 2
 x0 = 0.5*ones(nx)

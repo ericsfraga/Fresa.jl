@@ -1,6 +1,6 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::modulestart][modulestart]]
+# [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2020-05-20 10:25]"
+version = "[2020-07-31 12:06]"
 using Dates
 using Distributed
 using Printf
@@ -12,7 +12,7 @@ function __init__()
 end
 # modulestart ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::pointtype][pointtype]]
+# [[file:../fresa.org::pointtype][pointtype]]
 """
 
 Point (`x`) in the search space along with objective function values
@@ -29,7 +29,7 @@ struct Point
 end
 # pointtype ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::showpoint][showpoint]]
+# [[file:../fresa.org::showpoint][showpoint]]
 import Base
 Base.show(io::IO, p::Fresa.Point) = print(io, "f(", p.x, ")=", p.z, " g=", p.g)
 # and also an array of points
@@ -58,12 +58,12 @@ function Base.show(io::IO, p::Array{Point,1})
 end
 # showpoint ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::pointsize][pointsize]]
+# [[file:../fresa.org::pointsize][pointsize]]
 import Base.size
 Base.size(p :: Point) = ()
 # pointsize ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::createpoint][createpoint]]
+# [[file:../fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters,ancestor)
     z = 0
     g = 0
@@ -87,7 +87,7 @@ function createpoint(x,f,parameters,ancestor)
 end
 # createpoint ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::fitness][fitness]]
+# [[file:../fresa.org::fitness][fitness]]
 function fitness(pop, fitnesstype)
     l = length(pop)
     indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
@@ -117,7 +117,7 @@ function fitness(pop, fitnesstype)
 end
 # fitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::vectorfitness][vectorfitness]]
+# [[file:../fresa.org::vectorfitness][vectorfitness]]
 """
 For single objective problems, the fitness is simply the normalised
 objective function value.
@@ -190,7 +190,7 @@ function vectorfitness(v,fitnesstype)
 end
 # vectorfitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::assigndominancefitness][assigndominancefitness]]
+# [[file:../fresa.org::assigndominancefitness][assigndominancefitness]]
 function assigndominancefitness!(f,v,l)
     # assign value l to all members of v which dominate rest and then
     # recurse on those which are dominated
@@ -205,7 +205,7 @@ function assigndominancefitness!(f,v,l)
 end
 # assigndominancefitness ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::neighbourarray][neighbourarray]]
+# [[file:../fresa.org::neighbourarray][neighbourarray]]
 function neighbour(x :: Array{Float64,1},
                    a :: Array{Float64,1},
                    b :: Array{Float64,1},
@@ -218,7 +218,7 @@ function neighbour(x :: Array{Float64,1},
 end
 # neighbourarray ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::neighbourfloat][neighbourfloat]]
+# [[file:../fresa.org::neighbourfloat][neighbourfloat]]
 function neighbour(x :: Float64,
                    a :: Float64,
                    b :: Float64,
@@ -236,14 +236,14 @@ function neighbour(x :: Float64,
 end
 # neighbourfloat ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::dominates][dominates]]
+# [[file:../fresa.org::dominates][dominates]]
 function dominates(a, b)
     all(a .<= b) && any(a .< b)
 end
 ≻(a,b) = dominates(a,b)
 # dominates ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::*find Pareto set][find Pareto set:1]]
+# [[file:../fresa.org::*find Pareto set][find Pareto set:1]]
 function paretoindices(z)
     n = length(z)
     dominance = [reduce(&, [!(z[i] ≻ z[j]) for i ∈ 1:n]) for j ∈ 1:n]
@@ -253,7 +253,7 @@ function paretoindices(z)
 end
 # find Pareto set:1 ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::pareto][pareto]]
+# [[file:../fresa.org::pareto][pareto]]
 # indices of non-dominated and dominated points from the population of
 # Point objects
 function pareto(pop :: Vector{Point})
@@ -277,7 +277,7 @@ function pareto(pop :: Vector{Point})
 end
 # pareto ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::prune][prune]]
+# [[file:../fresa.org::prune][prune]]
 function prune(pop :: AbstractArray, tolerance)
     npruned = 0
     z = map(p->p.z, pop)
@@ -357,7 +357,7 @@ function prune(pop :: AbstractArray, tolerance)
 end
 # prune ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::select][select]]
+# [[file:../fresa.org::select][select]]
 function select(f)
     l = length(f)
     ind1 = rand(1:l)
@@ -374,7 +374,7 @@ function select(f)
 end
 # select ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::solve][solve]]
+# [[file:../fresa.org::solve][solve]]
 """
 Solve an optimisation problem, defined as the minimization of the
 values returned by the objective function, `f`.  `f` returns not only
@@ -408,7 +408,7 @@ function solve(f, x0, a, b;     # required arguments
                plotvectors = false, # generate output file for search plot
                tolerance = 0.001, # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
-    println("** solve $f $(orgtimestamp(now()))")
+    output != 0 && println("** solve $f $(orgtimestamp(now()))")
     tstart = time()
     p0 = createpoint(x0, f, parameters, nothing)
     nf = 1                      # number of function evaluations
@@ -418,11 +418,11 @@ function solve(f, x0, a, b;     # required arguments
     if archiveelite
         archive = Point[]
     end
-    println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
-    println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
+    output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
+    output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
     if plotvectors
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
-        println(": output of vectors for subsequent plotting")
+        output != 0 && println(": output of vectors for subsequent plotting")
     end
     # if npop was given as a tuple, we are to have a dynamic
     # population size.  This only makes sense for multi-objective
@@ -447,24 +447,28 @@ function solve(f, x0, a, b;     # required arguments
     # we use parallel computing if we have more than one processor
     parallel = usemultiproc && nprocs() > 1
     # parallel = false
-    println(": function evaluations performed ",
-            parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
-    println("*** initial population")
-    println("#+name: $(f)initial")
-    println(pop)
+    if output != 0
+        println(": function evaluations performed ",
+                parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
+        println("*** initial population")
+        println("#+name: $(f)initial")
+        println(pop)
+    end
     if parallel
         # will be used to collect results from worker processors
         results = Array{Future,1}(undef, nprocs())
     end
-    println("*** evolution")
-    println("#+name: $(f)evolution")
-    @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
-            (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
-    for i in 1:nz
-        @printf(" z%-8d |", i)
+    if output != 0
+        println("*** evolution")
+        println("#+name: $(f)evolution")
+        @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
+                (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
+        for i in 1:nz
+            @printf(" z%-8d |", i)
+        end
+        @printf(" %9s |", "g")
+        @printf("\n|-\n")
     end
-    @printf(" %9s |", "g")
-    @printf("\n|-\n")
     # now evolve the population for a predetermined number of generations
     for gen in 1:ngen
         # evaluate fitness
@@ -516,7 +520,7 @@ function solve(f, x0, a, b;     # required arguments
         print(stderr, ": $gen np=$(length(newpop))/$npop",
               archiveelite ? " na=$(length(archive))" : "",
               " with most fit z=$(best.z)           \r")
-        if gen%output == 0
+        if output != 0 && gen%output == 0
             @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
                     (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
             for i = 1:length(best.z)
@@ -608,7 +612,7 @@ function solve(f, x0, a, b;     # required arguments
             pop = newpop
         end
     end
-    println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+    output != 0 && println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
     if plotvectors
         close(plotvectorio)
     end
@@ -623,14 +627,14 @@ function solve(f, x0, a, b;     # required arguments
 end
 # solve ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::thinout][thinout]]
+# [[file:../fresa.org::thinout][thinout]]
 function thinout(pop, fit, pareto, n::Int)
     indices = sortperm(fit[pareto])
     return pop[pareto[indices[end-n+1:end]]], pop[pareto[indices[1:end-n]]]
 end
 # thinout ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::orgtimestamp][orgtimestamp]]
+# [[file:../fresa.org::orgtimestamp][orgtimestamp]]
 function orgtimestamp(dt::DateTime)
     return @sprintf("[%d-%02d-%02d %02d:%02d]",
                     Dates.year(dt),
@@ -641,10 +645,10 @@ function orgtimestamp(dt::DateTime)
 end
 # orgtimestamp ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::rank][rank]]
+# [[file:../fresa.org::rank][rank]]
 rank(x :: Any) = length(size(x))
 # rank ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::moduleend][moduleend]]
+# [[file:../fresa.org::moduleend][moduleend]]
 end
 # moduleend ends here

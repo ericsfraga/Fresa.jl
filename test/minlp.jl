@@ -1,4 +1,4 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::testminlp][testminlp]]
+# [[file:../fresa.org::testminlp][testminlp]]
 using Distributed
 using Printf
 @everywhere using Fresa
@@ -40,7 +40,7 @@ println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # testminlp ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::testminlp][testminlp]]
+# [[file:../fresa.org::testminlp][testminlp]]
 point = best;
 while point != Some(nothing) && typeof(point) != Nothing
     global point

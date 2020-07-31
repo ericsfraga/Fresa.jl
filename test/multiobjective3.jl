@@ -1,4 +1,4 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::testmultiobjective3][testmultiobjective3]]
+# [[file:../fresa.org::testmultiobjective3][testmultiobjective3]]
 using Fresa
 using Profile
 nx = 5

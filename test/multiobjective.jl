@@ -1,4 +1,4 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::testmultiobjective][testmultiobjective]]
+# [[file:../fresa.org::testmultiobjective][testmultiobjective]]
 using Fresa
 nx = 2
 a = zeros(nx)

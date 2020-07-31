@@ -1,4 +1,4 @@
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::gamsf][gamsf]]
+# [[file:../fresa.org::gamsf][gamsf]]
 function fmo(x::Array{Float64,1})
     open("gamsexample.gms", "w") do f
         write(f, "\$include gamsdeclarations.gms\n")
@@ -31,7 +31,7 @@ function fmo(x::Array{Float64,1})
 end
 # gamsf ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::gamsf][gamsf]]
+# [[file:../fresa.org::gamsf][gamsf]]
 function fsingle(x::Array{Float64,1})
     open("gamsexample.gms", "w") do f
         write(f, "\$include gamsdeclarations.gms\n")
@@ -64,7 +64,7 @@ function fsingle(x::Array{Float64,1})
 end
 # gamsf ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:1]]
+# [[file:../fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:1]]
 using Fresa
 a = [0.0;0.0;0.0]
 b = [5.0;3.0;3.0]
@@ -76,7 +76,7 @@ println("Pareto front:")
 println(population[pareto])
 # solve the multi-objective problem using Fresa:1 ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:2]]
+# [[file:../fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:2]]
 using PyPlot
 z = [population[pareto[i]].z for i in 1:length(pareto)];
 PyPlot.plot([z[i][1] for i=1:length(z)],
@@ -85,7 +85,7 @@ PyPlot.plot([z[i][1] for i=1:length(z)],
 PyPlot.savefig("gamsmo.pdf")
 # solve the multi-objective problem using Fresa:2 ends here
 
-# [[file:~/s/research/julia/Fresa.jl/fresa.org::*solve the single objective version][solve the single objective version:1]]
+# [[file:../fresa.org::*solve the single objective version][solve the single objective version:1]]
 best, pop = Fresa.solve(fsingle, x0, a, b; ngen = 100)
 println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $( best.g )")

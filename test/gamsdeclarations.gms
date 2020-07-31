@@ -1,4 +1,4 @@
-* [[file:~/s/research/julia/Fresa.jl/fresa.org::gamsmodel][gamsmodel]]
+* [[file:../fresa.org::gamsmodel][gamsmodel]]
 $TITLE Test Problem 
 $OFFDIGIT
 $OFFSYMXREF 
