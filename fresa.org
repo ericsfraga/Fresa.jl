@@ -86,7 +86,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2020-07-31 12:10]"
+  version = "[2020-11-24 12:01]"
   using Dates
   using Distributed
   using Printf
@@ -609,7 +609,7 @@ If the decision vector is not an array of =Float64=, a type specific =Fresa.neig
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
 
-The size of the population, =npop=, may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size.
+The size of the population, =npop=, may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size: there is [[https://www.youtube.com/watch?v=kfDrQhhswLk][an interesting video]] by Marleen de Jonge & Daan van den Berg discussing the robustness of the plant propagation algorithm with respect to the parameters for the algorithm, using a slightly different version of the algorithm which does not use tournament selection but instead selects the top =npop= members of the population for propagation.
 
 The output of progress during the search is controlled by the ~output~ optional argument.  This should be an integer value that indicates how often a summary of the current population is generated and sent to standard output.  The default is 5 for every 5th generation.  A value of 0 will eliminate all output from the solve method.
 #+name: solve
