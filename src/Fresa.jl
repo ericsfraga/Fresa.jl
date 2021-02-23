@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2020-07-31 12:06]"
+version = "[2021-02-23 12:00]"
 using Dates
 using Distributed
 using Printf
@@ -122,10 +122,14 @@ end
 For single objective problems, the fitness is simply the normalised
 objective function value.
 
-For multi-objective cases, there are two types of fitness ranking that
-we are interested in.  The first is based on the Hadamard product of
-the rank of each member of population accoring to each criterion.  The
-second is based on a weighted Borda ranking.
+For multi-objective cases, there are three alternative measures of
+fitness ranking possible.  The first is based on the Hadamard product
+of the rank of each member of population accoring to each
+criterion.  The second is based on a weighted Borda ranking based on
+each criterion ranking.  Finally, a measure based on dominance,
+similar to that used by the popular NSGA-II genetic algorithm, is
+available.
+
 """
 function vectorfitness(v,fitnesstype)
     # determine number of objectives (or pseudo-objectives) to consider in
