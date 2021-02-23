@@ -84,7 +84,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-01-15 16:10]"
+  version = "[2021-02-23 12:00]"
   using Dates
   using Distributed
   using Printf
@@ -238,10 +238,14 @@ The helper function works with a single vector of objective function values whic
   For single objective problems, the fitness is simply the normalised
   objective function value.
 
-  For multi-objective cases, there are two types of fitness ranking that
-  we are interested in.  The first is based on the Hadamard product of
-  the rank of each member of population accoring to each criterion.  The
-  second is based on a weighted Borda ranking.
+  For multi-objective cases, there are three alternative measures of
+  fitness ranking possible.  The first is based on the Hadamard product
+  of the rank of each member of population accoring to each
+  criterion.  The second is based on a weighted Borda ranking based on
+  each criterion ranking.  Finally, a measure based on dominance,
+  similar to that used by the popular NSGA-II genetic algorithm, is
+  available.
+
   """
   function vectorfitness(v,fitnesstype)
       # determine number of objectives (or pseudo-objectives) to consider in
@@ -605,7 +609,7 @@ The calling sequence for =f= is a point in the search space plus, optionally, th
 
 If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example.
 
-The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  The alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.
+The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  One alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.  There is also the option ~fitnesstype=:nondominated~ which bases the fitness on levels of dominance, as used by the =NSGA-II= genetic algorithm.
 
 The size of the population, =npop=, may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size: there is [[https://www.youtube.com/watch?v=kfDrQhhswLk][an interesting video]] by Marleen de Jonge & Daan van den Berg discussing the robustness of the plant propagation algorithm with respect to the parameters for the algorithm, using a slightly different version of the algorithm which does not use tournament selection but instead selects the top =npop= members of the population for propagation.
 
@@ -940,7 +944,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
   println(pop)
   z = [map(p->p.z, pop)]
   println("Objective function values: $z")
-  for t in [:hadamard :borda]
+  for t in [:hadamard :borda :nondominated]
       fit = Fresa.fitness(pop, t)
       println("Fitness($(repr(t))): $fit")
       for i in 1:5
