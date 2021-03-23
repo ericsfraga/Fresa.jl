@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 17:30]"
+version = "[2021-03-23 18:42]"
 using Dates
 using Distributed
 using Printf
@@ -430,7 +430,6 @@ function solve(f, p0, a, b;     # required arguments
                plotvectors = false, # generate output file for search plot
                tolerance = 0.001, # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
-    println("Using the initial population method.")
     output != 0 && println("** solve $f $(orgtimestamp(now()))")
     tstart = time()
     nf = 1                   # number of function evaluations
