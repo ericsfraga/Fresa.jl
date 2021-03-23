@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 16:28]"
+version = "[2021-03-23 16:34]"
 using Dates
 using Distributed
 using Printf
@@ -650,18 +650,18 @@ function solve(f, p0, a, b;     # required arguments
     println("Using the single point solve method")
     point = createpoint(x0, f, parameters, nothing)
     solve(f, [point], a, b;     # required arguments
-          parameters,
-          archiveelite,
-          elite,
-          fitnesstype,
-          ngen,
-          npop,
-          nrmax,
-          ns,
-          output,
-          plotvectors,
-          tolerance,
-          usemultiproc)
+          parameters = parameters,
+          archiveelite = archiveelite,
+          elite = elite,
+          fitnesstype = fitnesstype,
+          ngen = ngen,
+          npop = npop,
+          nrmax = nrmax,
+          ns = ns,
+          output = output,
+          plotvectors = plotvectors,
+          tolerance = tolerance,
+          usemultiproc = usemultiproc)
 end
 # solvewithsingleinitialpoint ends here
 
