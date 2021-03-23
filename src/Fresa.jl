@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 16:34]"
+version = "[2021-03-23 16:40]"
 using Dates
 using Distributed
 using Printf
@@ -632,38 +632,6 @@ function solve(f, p0, a, b;     # required arguments
     end
 end
 # solve ends here
-
-# [[file:../fresa.org::solvewithsingleinitialpoint][solvewithsingleinitialpoint]]
-function solve(f, p0, a, b;     # required arguments
-               parameters = nothing, # allow parameters for objective function 
-               archiveelite = false,  # save thinned out elite members
-               elite = true,    # elitism by default
-               fitnesstype = :hadamard, # how to rank solutions in multi-objective case
-               ngen = 100,      # number of generations
-               npop = 10,       # population size: fixed (single value) or dynamic (tuple)
-               nrmax = 5,       # number of runners maximum
-               ns = 100,        # number of stable solutions for stopping
-               output = 5,      # how often to output information
-               plotvectors = false, # generate output file for search plot
-               tolerance = 0.001, # tolerance for similarity detection
-               usemultiproc = false) # parallel processing by Fresa itself?
-    println("Using the single point solve method")
-    point = createpoint(x0, f, parameters, nothing)
-    solve(f, [point], a, b;     # required arguments
-          parameters = parameters,
-          archiveelite = archiveelite,
-          elite = elite,
-          fitnesstype = fitnesstype,
-          ngen = ngen,
-          npop = npop,
-          nrmax = nrmax,
-          ns = ns,
-          output = output,
-          plotvectors = plotvectors,
-          tolerance = tolerance,
-          usemultiproc = usemultiproc)
-end
-# solvewithsingleinitialpoint ends here
 
 # [[file:../fresa.org::thinout][thinout]]
 function thinout(pop, fit, pareto, n::Int)

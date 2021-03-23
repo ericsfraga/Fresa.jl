@@ -84,7 +84,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-23 16:34]"
+  version = "[2021-03-23 16:40]"
   using Dates
   using Distributed
   using Printf
@@ -869,7 +869,7 @@ The output of progress during the search is controlled by the ~output~ optional 
       end
   end
 #+end_src 
-
+*** COMMENT previous solve
 To keep backwards compatibility, this is a version of the =solve= method where the initial population is a single point represented by the decision variables.  A population vector of =Point= members is created from this initial point and the real method (above) invoked.
 
 #+name: solvewithsingleinitialpoint
