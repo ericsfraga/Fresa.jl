@@ -84,7 +84,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-23 16:40]"
+  version = "[2021-03-23 17:04]"
   using Dates
   using Distributed
   using Printf
@@ -547,7 +547,7 @@ Previously, pruning was done on objective function values.  In the case where th
       end
   end
 #+end_src 
-** COMMENT randompopulation -- for testing other methods
+** randompopulation -- for testing other methods
 Create a random population of size ~n~ evaluated using ~f~.
 #+name: randompopulation
 #+begin_src julia

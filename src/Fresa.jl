@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 16:40]"
+version = "[2021-03-23 17:04]"
 using Dates
 using Distributed
 using Printf
@@ -360,6 +360,22 @@ function prune(pop :: AbstractArray, tolerance)
     end
 end
 # prune ends here
+
+# [[file:../fresa.org::randompopulation][randompopulation]]
+function randompopulation(n,f,parameters,a,b)
+    p = Point[]                 # population object
+    for j in 1:n
+        push!(p, createpoint(randompoint(a,b), f, parameters))
+    end
+    p
+end
+# randompopulation ends here
+
+# [[file:../fresa.org::randompoint][randompoint]]
+function randompoint(a,b)
+    x = a + rand(length(a)).*b
+end
+# randompoint ends here
 
 # [[file:../fresa.org::select][select]]
 function select(f)
