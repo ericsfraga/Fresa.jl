@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-02-23 12:00]"
+version = "[2021-03-23 16:28]"
 using Dates
 using Distributed
 using Printf
@@ -379,13 +379,15 @@ end
 # select ends here
 
 # [[file:../fresa.org::solve][solve]]
-"""
+""" 
+
 Solve an optimisation problem, defined as the minimization of the
 values returned by the objective function, `f`.  `f` returns not only
 the objective function values, an array of `Float64` values, but also
 a measure of feasibility (≤0) or infeasibility (>0).  The problem is
-solved using the Fresa algorithm.  `x0` is the initial guess and `a`
-and `b` are *bounds* on the search space.
+solved using the Fresa algorithm.  `p0` is the initial population
+which has to have at least one member, a `Point`, and `a` and `b` are
+*bounds* on the search space.
 
 The return values for the solution of a single criterion problem are
 the best point and the full population at the end of the search. 
@@ -399,7 +401,7 @@ of which will have the point in the search space, the objective
 function value and the feasibility measure.
 
 """
-function solve(f, x0, a, b;     # required arguments
+function solve(f, p0, a, b;     # required arguments
                parameters = nothing, # allow parameters for objective function 
                archiveelite = false,  # save thinned out elite members
                elite = true,    # elitism by default
@@ -412,13 +414,13 @@ function solve(f, x0, a, b;     # required arguments
                plotvectors = false, # generate output file for search plot
                tolerance = 0.001, # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
+    println("Using the initial population method.")
     output != 0 && println("** solve $f $(orgtimestamp(now()))")
     tstart = time()
-    p0 = createpoint(x0, f, parameters, nothing)
-    nf = 1                      # number of function evaluations
-    npruned = 0                 # number solutions pruned from population
-    nz = length(p0.z)           # number of criteria
-    pop = [p0];                 # create/initialise the population object
+    nf = 1                   # number of function evaluations
+    npruned = 0              # number solutions pruned from population
+    nz = length(p0[1].z)     # number of criteria
+    pop = copy(p0);          # create/initialise the population object
     if archiveelite
         archive = Point[]
     end
@@ -630,6 +632,38 @@ function solve(f, x0, a, b;     # required arguments
     end
 end
 # solve ends here
+
+# [[file:../fresa.org::solvewithsingleinitialpoint][solvewithsingleinitialpoint]]
+function solve(f, p0, a, b;     # required arguments
+               parameters = nothing, # allow parameters for objective function 
+               archiveelite = false,  # save thinned out elite members
+               elite = true,    # elitism by default
+               fitnesstype = :hadamard, # how to rank solutions in multi-objective case
+               ngen = 100,      # number of generations
+               npop = 10,       # population size: fixed (single value) or dynamic (tuple)
+               nrmax = 5,       # number of runners maximum
+               ns = 100,        # number of stable solutions for stopping
+               output = 5,      # how often to output information
+               plotvectors = false, # generate output file for search plot
+               tolerance = 0.001, # tolerance for similarity detection
+               usemultiproc = false) # parallel processing by Fresa itself?
+    println("Using the single point solve method")
+    point = createpoint(x0, f, parameters, nothing)
+    solve(f, [point], a, b;     # required arguments
+          parameters,
+          archiveelite,
+          elite,
+          fitnesstype,
+          ngen,
+          npop,
+          nrmax,
+          ns,
+          output,
+          plotvectors,
+          tolerance,
+          usemultiproc)
+end
+# solvewithsingleinitialpoint ends here
 
 # [[file:../fresa.org::thinout][thinout]]
 function thinout(pop, fit, pareto, n::Int)
