@@ -84,7 +84,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-23 16:28]"
+  version = "[2021-03-23 16:34]"
   using Dates
   using Distributed
   using Printf
@@ -890,18 +890,18 @@ To keep backwards compatibility, this is a version of the =solve= method where t
       println("Using the single point solve method")
       point = createpoint(x0, f, parameters, nothing)
       solve(f, [point], a, b;     # required arguments
-            parameters,
-            archiveelite,
-            elite,
-            fitnesstype,
-            ngen,
-            npop,
-            nrmax,
-            ns,
-            output,
-            plotvectors,
-            tolerance,
-            usemultiproc)
+            parameters = parameters,
+            archiveelite = archiveelite,
+            elite = elite,
+            fitnesstype = fitnesstype,
+            ngen = ngen,
+            npop = npop,
+            nrmax = nrmax,
+            ns = ns,
+            output = output,
+            plotvectors = plotvectors,
+            tolerance = tolerance,
+            usemultiproc = usemultiproc)
   end
 #+end_src
 ** thinout -- make Pareto set smaller
