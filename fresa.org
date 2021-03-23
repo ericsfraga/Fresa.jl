@@ -84,7 +84,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-23 17:04]"
+  version = "[2021-03-23 17:30]"
   using Dates
   using Distributed
   using Printf
@@ -554,7 +554,7 @@ Create a random population of size ~n~ evaluated using ~f~.
   function randompopulation(n,f,parameters,a,b)
       p = Point[]                 # population object
       for j in 1:n
-          push!(p, createpoint(randompoint(a,b), f, parameters))
+          push!(p, createpoint(randompoint(a,b), f, parameters, nothing))
       end
       p
   end

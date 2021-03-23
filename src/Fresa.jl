@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 17:04]"
+version = "[2021-03-23 17:30]"
 using Dates
 using Distributed
 using Printf
@@ -365,7 +365,7 @@ end
 function randompopulation(n,f,parameters,a,b)
     p = Point[]                 # population object
     for j in 1:n
-        push!(p, createpoint(randompoint(a,b), f, parameters))
+        push!(p, createpoint(randompoint(a,b), f, parameters, nothing))
     end
     p
 end
