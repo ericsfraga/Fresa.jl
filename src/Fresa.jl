@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-23 18:42]"
+version = "[2021-03-24 23:06]"
 using Dates
 using Distributed
 using Printf
@@ -439,8 +439,21 @@ function solve(f, p0, a, b;     # required arguments
     if archiveelite
         archive = Point[]
     end
-    output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
-    output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
+    if output != 0
+        println("#+name: $(f)settings")
+        println("| variable | value |")
+        println("|-")
+        println("| ngen | $ngen |")
+        println("| npop | $npop |")
+        println("| nrmax | $nrmax |")
+        println("| ns | $ns |")
+        println("| elite | $elite |")
+        println("| archive | $archiveelite |")
+        println("| fitness | $fitnesstype |")
+        println("|-")
+        # output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
+        # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
+    end
     if plotvectors
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
         output != 0 && println(": output of vectors for subsequent plotting")
