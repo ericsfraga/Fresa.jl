@@ -35,7 +35,10 @@ function Fresa.neighbour(s :: MI,
     y = y < a.y ? a.y : (y > b.y ? b.y : y)
     return MI(x,y)
 end
-best, pop = Fresa.solve(f, MI(1.0, 1), a, b; ngen=100)
+# create the initial population consisting of a single MI point
+p0 = [Fresa.createpoint(MI(1.0, 1),f,nothing,nothing)]
+# now invoke Fresa to solve the problem
+best, pop = Fresa.solve(f, p0, a, b; ngen=100)
 println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # testminlp ends here
