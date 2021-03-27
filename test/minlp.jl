@@ -43,11 +43,11 @@ println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # testminlp ends here
 
-# [[file:../fresa.org::testminlp][testminlp]]
+# [[file:../fresa.org::testminlpsupplement][testminlpsupplement]]
 point = best;
 while point != Some(nothing) && typeof(point) != Nothing
     global point
     println("$(point.x)")
     point = point.ancestor
 end
-# testminlp ends here
+# testminlpsupplement ends here

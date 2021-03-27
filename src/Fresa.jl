@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-26 15:17]"
+version = "[2021-03-26 15:28]"
 using Dates
 using Distributed
 using Printf

@@ -1,4 +1,4 @@
-# [[file:../fresa.org::gamsf][gamsf]]
+# [[file:../fresa.org::gamsfmo][gamsfmo]]
 function fmo(x::Array{Float64,1})
     open("gamsexample.gms", "w") do f
         write(f, "\$include gamsdeclarations.gms\n")
@@ -29,9 +29,9 @@ function fmo(x::Array{Float64,1})
     # return results
     ( z, g )
 end
-# gamsf ends here
+# gamsfmo ends here
 
-# [[file:../fresa.org::gamsf][gamsf]]
+# [[file:../fresa.org::gamsfsingle][gamsfsingle]]
 function fsingle(x::Array{Float64,1})
     open("gamsexample.gms", "w") do f
         write(f, "\$include gamsdeclarations.gms\n")
@@ -62,7 +62,7 @@ function fsingle(x::Array{Float64,1})
     # return results
     ( z, g )
 end
-# gamsf ends here
+# gamsfsingle ends here
 
 # [[file:../fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:1]]
 using Fresa

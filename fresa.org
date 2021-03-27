@@ -58,7 +58,7 @@ This document has been written using [[http://orgmode.org/][org mode]] in the [[
 
 to install =Fresa=.  You exit the Julia package manager by hitting your =Backspace= key.
 
-~Fresa~ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[*Tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+~Fresa~ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-26 15:17]"
+  version = "[2021-03-26 15:28]"
   using Dates
   using Distributed
   using Printf
@@ -1013,7 +1013,7 @@ This test uses a simple quadratic objective function to test out the fitness eva
 
 This example implements an objective function which invokes GAMS to solve the model given values for some decision variables.  This interface to GAMS requires writing and reading from files so will not be appropriate for small models due to the overheads in file access.
 
-The files for this example can be downloaded: [[file:testgams.jl][Julia code]] and [[file:gamsdeclarations.gms][GAMS model]].
+The files for this example can be downloaded: [[file:test/gams.jl][Julia code]] and [[file:test/gamsdeclarations.gms][GAMS model]].
 *** the GAMS model
 We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, Ravindran and Ragsdell (1983).  This problem seeks to minimise the square of the decision variables while minimising a residual value =res=.  We treat this as a multi-objective problem which cannot be done directly in GAMS.  By looking at it as a multi-objective problem, we can gain insight into the trade-offs between the residual and the primary objective function.
 
@@ -1052,7 +1052,7 @@ We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, 
 
 *** a multi-objective function with interface to GAMS 
 The objective function for Fresa takes the decision variables, ~x~, and uses these to set the GAMS model variables ~X1~, ~X2~, and ~X3~.  After solving the GAMS model, the results, consisting of the objective function value ~Z~ and the residual, ~res~, are output to a file for subsequent reading into the Julia code.  The absolute value of the residual is used as a second criterion.
-#+name: gamsf
+#+name: gamsfmo
 #+begin_src julia
   function fmo(x::Array{Float64,1})
       open("gamsexample.gms", "w") do f
@@ -1088,7 +1088,7 @@ The objective function for Fresa takes the decision variables, ~x~, and uses the
 
 *** a single objective function with interface to GAMS 
 In this case, the value of the residual, in absolute sense, is a measure of feasibility.  We have a single criterion, the value of the GAMS objective function.
-#+name: gamsf
+#+name: gamsfsingle
 #+begin_src julia
   function fsingle(x::Array{Float64,1})
       open("gamsexample.gms", "w") do f
@@ -1216,7 +1216,7 @@ This example is also used, for the moment, to test out the parallel implementati
 
 Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
 
-#+name: testminlp
+#+name: testminlpsupplement
 #+begin_src julia :tangle test/minlp.jl
   point = best;
   while point != Some(nothing) && typeof(point) != Nothing
