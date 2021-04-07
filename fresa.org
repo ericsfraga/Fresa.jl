@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-07 17:15]"
+  version = "[2021-04-07 17:19]"
   using Dates
   using Distributed
   using Printf
@@ -110,7 +110,7 @@ An instance of a point is defined by the variable in the search space, the objec
 
 As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
 
-An issue in Julia (as of 2021, at least) is that you cannot define two data structures that mutually refer to each other.  Therefore, the type of the =ancestor= entry in the =Point= data structure has to be defined later (see [[ancestor]] below).  This is discussed in the [[https://github.com/JuliaLang/julia/issues/269][issue for Julia on github]].
+An issue in Julia (as of 2021, at least) is that you cannot define two data structures that mutually refer to each other.  Therefore, the type of the =ancestor= entry in the =Point= data structure has to be defined later (see [[ancestor][=Ancestor= definition]] below).  This is discussed in the [[https://github.com/JuliaLang/julia/issues/269][issue for Julia on github]].
 
 #+name: pointtype
 #+begin_src julia
