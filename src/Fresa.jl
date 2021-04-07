@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-07 16:08]"
+version = "[2021-04-07 17:15]"
 using Dates
 using Distributed
 using Printf
@@ -25,7 +25,7 @@ struct Point
     x :: Any                    # decision point
     z :: Vector                 # objective function values
     g :: Float64                # constraint violation
-    ancestor :: Union{Point,Nothing} # the parent of this point
+    ancestor                    # the parent of this point
 end
 # pointtype ends here
 
@@ -62,6 +62,18 @@ end
 import Base.size
 Base.size(p :: Point) = ()
 # pointsize ends here
+
+# [[file:../fresa.org::ancestortype][ancestortype]]
+struct Ancestor
+    point :: Point        # the actual ancestor point
+    fitness :: Float64    # the fitness of the ancestor
+    generation :: Int32   # the generation when this point was created
+end
+# ancestortype ends here
+
+# [[file:../fresa.org::*Ancestor <<ancestor>>][Ancestor <<ancestor>>:2]]
+ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing}
+# Ancestor <<ancestor>>:2 ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters,ancestor)
@@ -611,7 +623,7 @@ function solve(f, p0, a, b;     # required arguments
                     push!(x, newx)
                     push!(points, pop[s])
                 else
-                    push!(newpop, createpoint(newx, f, parameters, pop[s]))
+                    push!(newpop, createpoint(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
                     if plotvectors
                         write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                     end
@@ -631,8 +643,9 @@ function solve(f, p0, a, b;     # required arguments
                 # issue remote evaluation call
                 for j=1:nprocs()
                     if i+j <= length(x) 
-                        results[j] = @spawn createpoint(x[i+j],f,parameters,
-                                                        points[i+j])
+                        # TODO: the information about the ancestor is
+                        # not available; this needs to be stored above
+                        results[j] = @spawn createpoint(x[i+j],f,parameters)
                         nf += 1
                     end
                 end

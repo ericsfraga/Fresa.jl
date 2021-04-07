@@ -44,10 +44,11 @@ println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # testminlp ends here
 
 # [[file:../fresa.org::testminlpsupplement][testminlpsupplement]]
-point = best;
-while point != Some(nothing) && typeof(point) != Nothing
-    global point
-    println("$(point.x)")
-    point = point.ancestor
+println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
+ancestor = best.ancestor;
+while ancestor != Some(nothing) && typeof(ancestor) != Nothing
+    global ancestor
+    println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
+    ancestor = ancestor.point.ancestor
 end
 # testminlpsupplement ends here
