@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-03-26 15:28]"
+  version = "[2021-04-07 16:08]"
   using Dates
   using Distributed
   using Printf
@@ -196,6 +196,15 @@ The optional =parameters= and =ancestor= arguments are passed through to their r
           error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
       end
       return p
+  end
+#+end_src 
+and we provide two versions with simple calling sequences:
+#+begin_src julia
+  function createpoint(x,f)
+      return createpoint(x,f,nothing,nothing)
+  end
+  function createpoint(x,f,parameters)
+      return createpoint(x,f,parameters,nothing)
   end
 #+end_src 
 ** fitness
@@ -399,7 +408,7 @@ The following code splits a population into those points that are non-dominated 
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   pop = Fresa.Point[]
   for i=1:10
-      push!(pop, Fresa.createpoint(Fresa.randompoint(a,b), f, nothing, nothing))
+      push!(pop, Fresa.createpoint(Fresa.randompoint(a,b), f))
   end
   z = map(p->p.z, pop)
   # (p, d) = Fresa.paretoindices(z)
@@ -557,7 +566,7 @@ Create a random population of size ~n~ evaluated using ~f~.
   function randompopulation(n,f,parameters,a,b)
       p = Point[]                 # population object
       for j in 1:n
-          push!(p, createpoint(randompoint(a,b), f, parameters, nothing))
+          push!(p, createpoint(randompoint(a,b), f, parameters))
       end
       p
   end
@@ -1129,7 +1138,7 @@ In this case, the value of the residual, in absolute sense, is a measure of feas
   b = [5.0;3.0;3.0]
   x0 = [4.0;2.0;2.0]
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,fmo,nothing,nothing)]
+  p0 = [Fresa.createpoint(x0,fmo)]
   # now invoke Fresa to solve the problem
   pareto, population = Fresa.solve(fmo, p0, a, b;
                                    fitnesstype = :borda,
@@ -1207,7 +1216,7 @@ This example is also used, for the moment, to test out the parallel implementati
       return MI(x,y)
   end
   # create the initial population consisting of a single MI point
-  p0 = [Fresa.createpoint(MI(1.0, 1),f,nothing,nothing)]
+  p0 = [Fresa.createpoint(MI(1.0, 1),f)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(f, p0, a, b; ngen=100)
   println("Population: $pop")
@@ -1236,7 +1245,7 @@ Using the results obtained above, we use the linking information for all the poi
   x = rand(nx)
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f,nothing,nothing)]
+  p0 = [Fresa.createpoint(x,f)]
   # now invoke Fresa to solve the problem
   pareto, population = Fresa.solve(f, p0, a, b;
                                    #fitnesstype = :hadamard,
@@ -1273,7 +1282,7 @@ Using the results obtained above, we use the linking information for all the poi
               sum(sin.(x))],
             0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f,nothing,nothing)]
+  p0 = [Fresa.createpoint(x,f)]
   # now invoke Fresa to solve the problem
   @profile for i=1
       pareto, population = Fresa.solve(f, p0, a, b;
@@ -1340,7 +1349,7 @@ Some code to play with the generation of a random population so as to learn how 
   rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,rosenbrock,nothing,nothing)]
+  p0 = [Fresa.createpoint(x0,rosenbrock)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(rosenbrock, p0, a, b)
   println("Population at end: $pop")
@@ -1357,7 +1366,7 @@ This test uses a simple quadratic objective function, defined within.  All point
   b = 10*ones(nx)
   f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,f,nothing,nothing)]
+  p0 = [Fresa.createpoint(x0,f)]
   # now invoke Fresa to solve the problem
   @time best, pop = Fresa.solve(f, p0, a, b)
   println("Population at end: $pop")

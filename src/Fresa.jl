@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-03-26 15:28]"
+version = "[2021-04-07 16:08]"
 using Dates
 using Distributed
 using Printf
@@ -86,6 +86,15 @@ function createpoint(x,f,parameters,ancestor)
     return p
 end
 # createpoint ends here
+
+# [[file:../fresa.org::*create a point][create a point:2]]
+function createpoint(x,f)
+    return createpoint(x,f,nothing,nothing)
+end
+function createpoint(x,f,parameters)
+    return createpoint(x,f,parameters,nothing)
+end
+# create a point:2 ends here
 
 # [[file:../fresa.org::fitness][fitness]]
 function fitness(pop, fitnesstype)
@@ -365,7 +374,7 @@ end
 function randompopulation(n,f,parameters,a,b)
     p = Point[]                 # population object
     for j in 1:n
-        push!(p, createpoint(randompoint(a,b), f, parameters, nothing))
+        push!(p, createpoint(randompoint(a,b), f, parameters))
     end
     p
 end

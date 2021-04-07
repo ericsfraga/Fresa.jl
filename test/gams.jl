@@ -70,7 +70,7 @@ a = [0.0;0.0;0.0]
 b = [5.0;3.0;3.0]
 x0 = [4.0;2.0;2.0]
 # create the initial population consisting of this single point
-p0 = [Fresa.createpoint(x0,fmo,nothing,nothing)]
+p0 = [Fresa.createpoint(x0,fmo)]
 # now invoke Fresa to solve the problem
 pareto, population = Fresa.solve(fmo, p0, a, b;
                                  fitnesstype = :borda,

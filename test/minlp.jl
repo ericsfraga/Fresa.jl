@@ -36,7 +36,7 @@ function Fresa.neighbour(s :: MI,
     return MI(x,y)
 end
 # create the initial population consisting of a single MI point
-p0 = [Fresa.createpoint(MI(1.0, 1),f,nothing,nothing)]
+p0 = [Fresa.createpoint(MI(1.0, 1),f)]
 # now invoke Fresa to solve the problem
 best, pop = Fresa.solve(f, p0, a, b; ngen=100)
 println("Population: $pop")

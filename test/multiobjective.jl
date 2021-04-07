@@ -6,7 +6,7 @@ b = ones(nx)
 x = rand(nx)
 f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
 # create the initial population consisting of this single point
-p0 = [Fresa.createpoint(x,f,nothing,nothing)]
+p0 = [Fresa.createpoint(x,f)]
 # now invoke Fresa to solve the problem
 pareto, population = Fresa.solve(f, p0, a, b;
                                  #fitnesstype = :hadamard,
