@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-07 16:08]"
+  version = "[2021-04-07 17:15]"
   using Dates
   using Distributed
   using Printf
@@ -104,11 +104,14 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
 - ~x~ :: of indeterminate type to allow for a wide range of applications (e.g. integer versus real values),
 - =z= :: the value of the objective function, as a vector, where the entries in the vector can be of any type that can be /compared/ and sorted by =sortperm= [fn:1:https://docs.julialang.org/en/v1/base/sort/index.html] or, in the case of multiple criteria, where it can be determined whether one point dominates another,
 - ~g~ :: the constraint violation (feasible with ≤0 and infeasible otherwise) always of type ~Float64~ (for now), and
-- ~ancestor~ :: another point in the search space that led to the creation of this point.
+- ~ancestor~ :: another point in the search space, along with some extra information, that led to the creation of this point.
 
 An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.  
 
 As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
+
+An issue in Julia (as of 2021, at least) is that you cannot define two data structures that mutually refer to each other.  Therefore, the type of the =ancestor= entry in the =Point= data structure has to be defined later (see [[ancestor]] below).  This is discussed in the [[https://github.com/JuliaLang/julia/issues/269][issue for Julia on github]].
+
 #+name: pointtype
 #+begin_src julia
   """
@@ -123,7 +126,7 @@ As ~Fresa~ is an evolutionary procedure, every point in the search space conside
       x :: Any                    # decision point
       z :: Vector                 # objective function values
       g :: Float64                # constraint violation
-      ancestor :: Union{Point,Nothing} # the parent of this point
+      ancestor                    # the parent of this point
   end
 #+end_src 
 Customise how a Point is displayed:
@@ -161,6 +164,20 @@ and also indicate that a =Point= is atomic in a sense:
 #+begin_src julia
   import Base.size
   Base.size(p :: Point) = ()
+#+end_src 
+*** Ancestor <<ancestor>>
+The creation of any point in the search is based on one of the existing points in the population.  This existing point is known as the /ancestor/ of the new point.  The ~Ancestor~ data structure is used to connect points to their ancestors and collect information about when and how the new point was created.
+#+name: ancestortype
+#+begin_src julia
+  struct Ancestor
+      point :: Point        # the actual ancestor point
+      fitness :: Float64    # the fitness of the ancestor
+      generation :: Int32   # the generation when this point was created
+  end
+#+end_src 
+Once the =Ancestor= data structure has been defined, we can now use an /access constructor/ to define the type for the =ancestor= field in the =Point= object:
+#+begin_src julia
+  ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing} 
 #+end_src 
 ** COMMENT variables
 These are variables that are global to the module.
@@ -835,7 +852,7 @@ The output of progress during the search is controlled by the ~output~ optional 
                       push!(x, newx)
                       push!(points, pop[s])
                   else
-                      push!(newpop, createpoint(newx, f, parameters, pop[s]))
+                      push!(newpop, createpoint(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
                       if plotvectors
                           write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                       end
@@ -855,8 +872,9 @@ The output of progress during the search is controlled by the ~output~ optional 
                   # issue remote evaluation call
                   for j=1:nprocs()
                       if i+j <= length(x) 
-                          results[j] = @spawn createpoint(x[i+j],f,parameters,
-                                                          points[i+j])
+                          # TODO: the information about the ancestor is
+                          # not available; this needs to be stored above
+                          results[j] = @spawn createpoint(x[i+j],f,parameters)
                           nf += 1
                       end
                   end
@@ -1227,11 +1245,12 @@ Using the results obtained above, we use the linking information for all the poi
 
 #+name: testminlpsupplement
 #+begin_src julia :tangle test/minlp.jl
-  point = best;
-  while point != Some(nothing) && typeof(point) != Nothing
-      global point
-      println("$(point.x)")
-      point = point.ancestor
+  println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
+  ancestor = best.ancestor;
+  while ancestor != Some(nothing) && typeof(ancestor) != Nothing
+      global ancestor
+      println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
+      ancestor = ancestor.point.ancestor
   end
 #+end_src 
 
