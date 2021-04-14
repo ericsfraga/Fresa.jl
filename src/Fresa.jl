@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-13 15:43]"
+version = "[2021-04-14 15:27]"
 using Dates
 using Distributed
 using Printf
@@ -303,6 +303,16 @@ function pareto(pop :: Vector{Point})
     (indices[p], indices[d])
 end
 # pareto ends here
+
+# [[file:../fresa.org::*printHistoryTrace - show history of a given solution][printHistoryTrace - show history of a given solution:1]]
+function printHistoryTrace(p :: Point)
+    a = p.ancestor
+    while typeof(a) != Nothing
+        println("| $(a.generation) | $(a.fitness) |")
+        a = a.point.ancestor
+    end
+end
+# printHistoryTrace - show history of a given solution:1 ends here
 
 # [[file:../fresa.org::prune][prune]]
 function prune(pop :: AbstractArray, tolerance)

@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-14 15:08]"
+  version = "[2021-04-14 15:27]"
   using Dates
   using Distributed
   using Printf
@@ -497,6 +497,17 @@ Given a population of ~Point~ objects, this function identifies those that are n
           end
       end
       (p, d)
+  end
+#+end_src
+** printHistoryTrace - show history of a given solution
+Each point encountered in the search, other than points in the initial population, is the result of propagating another point.  When a new point is created, a link back to its /parent/ point is created.  This allows us to explore the history of all points in the search.  This function prints out the historical trace of a given point, using an =org= table for formatting.
+#+begin_src julia
+  function printHistoryTrace(p :: Point)
+      a = p.ancestor
+      while typeof(a) != Nothing
+          println("| $(a.generation) | $(a.fitness) |")
+          a = a.point.ancestor
+      end
   end
 #+end_src
 ** prune - control population diversity
@@ -1405,6 +1416,12 @@ This test uses a simple quadratic objective function, defined within.  All point
   println("Population at end: $pop")
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src 
+One of the features that =Fresa= provides is a trace of how each solution has been created.  That is, each solution has a link back to the ancestor solution that led to its creation, along with information about when this happened (the generation) and how /fit/ the ancestor solution was.  There is a function defined in =Fresa= for outputting a history trace.  The output is in form of an =org mode= table but is simple text that can be imported into a spreadsheet program, for instance.
+#+begin_src julia :tangle test/simple.jl
+  ,#+plot: ind:1 deps:(2) with:"linespoints lt 3 pt 7 ps 0.25" set:nokey set:"yrange [0:1]" set:"xrange [0:*]"
+  println("#+plot: ind:1 deps:(2) with:\"linespoints pt 7 ps 0.25\" set:nokey set:\"yrange [0:1]\" set:\"xrange [0:*]\" set:\"xlabel 'Generation'\" set:\"ylabel 'fitness'\"")
+  Fresa.printHistoryTrace(best)
+#+end_src
 * Recent change history
 Summary of the most recent changes to the package:
 #+name: changehistoryshellblock
