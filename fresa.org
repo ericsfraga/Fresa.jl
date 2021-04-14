@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-14 16:16]"
+  version = "[2021-04-14 16:48]"
   using Dates
   using Distributed
   using Printf
@@ -316,7 +316,7 @@ The helper function works with a single vector of objective function values whic
           # extreme 0,1 values using the hyperbolic tangent
           fit = adjustfitness(fitness)
           # println(":  scaled fitness: $fit")
-          @debug "Fitness calculations" z=v f=fitness adjust=fit
+          @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
       end
       fit
   end
