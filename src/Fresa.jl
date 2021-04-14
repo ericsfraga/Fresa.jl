@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-14 15:27]"
+version = "[2021-04-14 15:30]"
 using Dates
 using Distributed
 using Printf
@@ -528,6 +528,7 @@ function solve(f, p0, a, b;     # required arguments
     if output != 0
         println("*** evolution")
         println("#+name: $(f)evolution")
+        println("#+plot: ind:1 deps:(6)")
         @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
                 (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
         for i in 1:nz
