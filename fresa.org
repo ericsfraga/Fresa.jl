@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-14 15:30]"
+  version = "[2021-04-14 16:08]"
   using Dates
   using Distributed
   using Printf
@@ -501,6 +501,7 @@ Given a population of ~Point~ objects, this function identifies those that are n
 #+end_src
 ** printHistoryTrace - show history of a given solution
 Each point encountered in the search, other than points in the initial population, is the result of propagating another point.  When a new point is created, a link back to its /parent/ point is created.  This allows us to explore the history of all points in the search.  This function prints out the historical trace of a given point, using an =org= table for formatting.
+#+name: printhistorytrace
 #+begin_src julia
   function printHistoryTrace(p :: Point)
       a = p.ancestor
