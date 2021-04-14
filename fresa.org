@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-07 17:19]"
+  version = "[2021-04-14 15:08]"
   using Dates
   using Distributed
   using Printf
@@ -225,8 +225,8 @@ and we provide two versions with simple calling sequences:
   end
 #+end_src 
 ** fitness
-The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[http://www.springer.com/gb/ook/9783319299730][Fraga & Amusat, 2016]].
-
+The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[http://www.springer.com/gb/ook/9783319299730][Fraga & Amusat, 2016]] with the same properties: best solutions have fitness values closer to 1 than less fit solutions.
+*** main entry point for fitness calculations          :ignoreheading:
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
 #+begin_src julia
@@ -258,7 +258,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       fit
   end
 #+end_src 
-
+*** calculate fitness for a vector of values           :ignoreheading:
 The helper function works with a single vector of objective function values which may consist of single or multiple objectives.
 
 #+name: vectorfitness
@@ -288,56 +288,63 @@ The helper function works with a single vector of objective function values whic
           # println("VF: v=$v")
           # println("  : of size $(size(v))")
           if m == 1                   # single objective 
-              v = [v[i][1] for i=1:l]
-              s = sortperm(v)
-              zmin = v[s[1]]
-              zmax = v[s[l]]
-              if abs(zmax-zmin) < eps()
-                  fit = 0.5*ones(l)
-              else
-                  # avoid extreme 0,1 values
-                  fit = tanh.((zmax .- v) ./ (zmax .- zmin) .- 0.5).+0.5
-              end
+              fitness = [v[i][1] for i=1:l]
           else                  # multi-objective
               rank = ones(m,l); #rank of each solution for each objective function 
               if fitnesstype == :hadamard
                   for i=1:m
-                      rank[i,sortperm([v[j][i] for j=1:l])] = 1:l;
+                      rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                   end
                   # hadamard product of ranks
                   fitness = map(x->prod(x), rank[:,i] for i=1:l)
-                  # normalise and reverse meaning (1=best, 0=worst) while avoiding
-                  # extreme 0,1 values using the hyperbolic tangent
-                  fit = tanh.(0.5 .- fitness ./ maximum(fitness)) .+ 0.5
               elseif fitnesstype == :borda
                   for i=1:m
-                      rank[i,sortperm([v[j][i] for j=1:l])] = l:-1:1;
+                      rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                   end
-                  # hadamard product of ranks
+                  # borda sum of ranks
                   fitness = map(x->sum(x), rank[:,i] for i=1:l)
-                  # normalise (1=best, 0=worst) while avoiding
-                  # extreme 0,1 values using the hyperbolic tangent
-                  if (maximum(fitness)-minimum(fitness)) > eps()
-                      fit = tanh.((fitness .- minimum(fitness)) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
-                  else
-                      fit = 0.5*ones(l)
-                  end
               elseif fitnesstype == :nondominated
                   # similar to that used by NSGA-II (Deb 2000)
                   fitness = zeros(l)
                   maxl = assigndominancefitness!(fitness,v,1)
                   # println("Resulting fitness: $fitness")
-                  fit = tanh.((maxl.-fitness)./maxl .- 0.5) .+ 0.5
-                  # println(":  scaled fitness: $fit")
               else
                   throw(ArgumentError("Type of fitness evaluation must be either :borda, :nondominated, or :hadamard, not $(repr(fitnesstype))."))
               end
           end
+          # normalise (1=best, 0=worst) while avoiding
+          # extreme 0,1 values using the hyperbolic tangent
+          fit = adjustfitness(fitness)
+          # println(":  scaled fitness: $fit")
       end
-      # println("VF: fit=$fit")
+      if false
+          # println("VF: fit=$fit")
+          println("Fitness debug output:")
+          println("| z | fitness | fit adjusted |")
+          println("|-")
+          for i = 1:l
+              println("| $(v[i]) | $(fitness[i]) | $(fit[i]) |")
+          end
+      end
       fit
   end
 #+end_src
+*** adjust the fitness to avoid boundaries of [0,1]    :ignoreheading:
+The fitness should be a value \in (0,1), i.e. not including the bounds themselves as those values cause some silly behaviour in the definition of individual neighbouring solutions (i.e. the runners) and the number of runners.  Therefore, we adjust the fitness values to ensure that the bounds are not included.
+
+#+name: adjustfitness
+#+begin_src julia
+  function adjustfitness(fitness)
+      if (maximum(fitness)-minimum(fitness)) > eps()
+          fit = tanh.((maximum(fitness) .- fitness) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
+      else
+          fit = 0.5*ones(l)
+      end
+      fit
+  end
+#+end_src
+This function takes, as an argument, the =steepness= of the transition from poor fitness to good fitness.  Some plots are useful for comparison.
+*** dominance based fitness calculations               :ignoreheading:
 The following function is used by the vector fitness evaluation to recurse through the levels of non-dominance to assign fitness based on those levels.
 #+name: assigndominancefitness
 #+begin_src julia
@@ -757,6 +764,13 @@ The output of progress during the search is controlled by the ~output~ optional 
       for gen in 1:ngen
           # evaluate fitness
           fit = fitness(pop, fitnesstype)
+          if false
+              # for debugging, print out initial fitness
+              if gen == 1
+                  println("Initial fitness:")
+                  println(fit)
+              end
+          end
           # sort
           index = sortperm(fit)
           # and remember best which really only makes sense in single

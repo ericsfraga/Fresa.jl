@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-07 17:15]"
+version = "[2021-04-13 15:43]"
 using Dates
 using Distributed
 using Printf
@@ -164,56 +164,58 @@ function vectorfitness(v,fitnesstype)
         # println("VF: v=$v")
         # println("  : of size $(size(v))")
         if m == 1                   # single objective 
-            v = [v[i][1] for i=1:l]
-            s = sortperm(v)
-            zmin = v[s[1]]
-            zmax = v[s[l]]
-            if abs(zmax-zmin) < eps()
-                fit = 0.5*ones(l)
-            else
-                # avoid extreme 0,1 values
-                fit = tanh.((zmax .- v) ./ (zmax .- zmin) .- 0.5).+0.5
-            end
+            fitness = [v[i][1] for i=1:l]
         else                  # multi-objective
             rank = ones(m,l); #rank of each solution for each objective function 
             if fitnesstype == :hadamard
                 for i=1:m
-                    rank[i,sortperm([v[j][i] for j=1:l])] = 1:l;
+                    rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                 end
                 # hadamard product of ranks
                 fitness = map(x->prod(x), rank[:,i] for i=1:l)
-                # normalise and reverse meaning (1=best, 0=worst) while avoiding
-                # extreme 0,1 values using the hyperbolic tangent
-                fit = tanh.(0.5 .- fitness ./ maximum(fitness)) .+ 0.5
             elseif fitnesstype == :borda
                 for i=1:m
-                    rank[i,sortperm([v[j][i] for j=1:l])] = l:-1:1;
+                    rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                 end
-                # hadamard product of ranks
+                # borda sum of ranks
                 fitness = map(x->sum(x), rank[:,i] for i=1:l)
-                # normalise (1=best, 0=worst) while avoiding
-                # extreme 0,1 values using the hyperbolic tangent
-                if (maximum(fitness)-minimum(fitness)) > eps()
-                    fit = tanh.((fitness .- minimum(fitness)) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
-                else
-                    fit = 0.5*ones(l)
-                end
             elseif fitnesstype == :nondominated
                 # similar to that used by NSGA-II (Deb 2000)
                 fitness = zeros(l)
                 maxl = assigndominancefitness!(fitness,v,1)
                 # println("Resulting fitness: $fitness")
-                fit = tanh.((maxl.-fitness)./maxl .- 0.5) .+ 0.5
-                # println(":  scaled fitness: $fit")
             else
                 throw(ArgumentError("Type of fitness evaluation must be either :borda, :nondominated, or :hadamard, not $(repr(fitnesstype))."))
             end
         end
+        # normalise (1=best, 0=worst) while avoiding
+        # extreme 0,1 values using the hyperbolic tangent
+        fit = adjustfitness(fitness)
+        # println(":  scaled fitness: $fit")
     end
-    # println("VF: fit=$fit")
+    if false
+        # println("VF: fit=$fit")
+        println("Fitness debug output:")
+        println("| z | fitness | fit adjusted |")
+        println("|-")
+        for i = 1:l
+            println("| $(v[i]) | $(fitness[i]) | $(fit[i]) |")
+        end
+    end
     fit
 end
 # vectorfitness ends here
+
+# [[file:../fresa.org::adjustfitness][adjustfitness]]
+function adjustfitness(fitness)
+    if (maximum(fitness)-minimum(fitness)) > eps()
+        fit = tanh.((maximum(fitness) .- fitness) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
+    else
+        fit = 0.5*ones(l)
+    end
+    fit
+end
+# adjustfitness ends here
 
 # [[file:../fresa.org::assigndominancefitness][assigndominancefitness]]
 function assigndominancefitness!(f,v,l)
@@ -528,6 +530,13 @@ function solve(f, p0, a, b;     # required arguments
     for gen in 1:ngen
         # evaluate fitness
         fit = fitness(pop, fitnesstype)
+        if false
+            # for debugging, print out initial fitness
+            if gen == 1
+                println("Initial fitness:")
+                println(fit)
+            end
+        end
         # sort
         index = sortperm(fit)
         # and remember best which really only makes sense in single
