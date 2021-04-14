@@ -777,12 +777,8 @@ The output of progress during the search is controlled by the ~output~ optional 
       for gen in 1:ngen
           # evaluate fitness
           fit = fitness(pop, fitnesstype)
-          if false
-              # for debugging, print out initial fitness
-              if gen == 1
-                  println("Initial fitness:")
-                  println(fit)
-              end
+          if gen == 1
+              @debug "Initial fitness" f=fit
           end
           # sort
           index = sortperm(fit)
