@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-14 16:08]"
+version = "[2021-04-14 16:16]"
 using Dates
 using Distributed
 using Printf
@@ -192,15 +192,7 @@ function vectorfitness(v,fitnesstype)
         # extreme 0,1 values using the hyperbolic tangent
         fit = adjustfitness(fitness)
         # println(":  scaled fitness: $fit")
-    end
-    if false
-        # println("VF: fit=$fit")
-        println("Fitness debug output:")
-        println("| z | fitness | fit adjusted |")
-        println("|-")
-        for i = 1:l
-            println("| $(v[i]) | $(fitness[i]) | $(fit[i]) |")
-        end
+        @debug "Fitness calculations" z=v f=fitness adjust=fit
     end
     fit
 end
