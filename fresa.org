@@ -67,6 +67,7 @@ to install =Fresa=.  You exit the Julia package manager by hitting your =Backspa
 ** Version information <<version>>
 Major version log:
 
+- April 2021 :: allow setting the steepness of the [[adjustfitness][fitness adjustment function]].  This is an outcome of the presentation by Wouter Vrielink at the PPA mini-zoomposium I organised in March 2021 to discuss the impact of PPA parameters on the effectiveness of the search procedure.
 - March 2021 :: one of the required arguments to the =solve= function has been changed.  Specifically, the initial guess must now be a population of =Point= objects and not a single decision variable.  See [[examples][examples]] below for how to create this initial population easily.
 - April 2020 :: moved all code to [[https://github.com/ericsfraga/Fresa.jl][github]].  This should make it easier for others to use the code.
 - September 2019 :: The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
@@ -87,7 +88,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-19 17:03]"
+  version = "[2021-04-19 17:26]"
   using Dates
   using Distributed
   using Printf
