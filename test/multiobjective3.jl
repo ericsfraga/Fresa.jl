@@ -15,21 +15,14 @@ p0 = [Fresa.createpoint(x,f)]
 @profile for i=1
     pareto, population = Fresa.solve(f, p0, a, b;
                                      archiveelite = false,
-                                     npop=20, ngen=300,
-                                     #output=100,
+                                          npop=20, ngen=300,
+                                          #output=100,
                                      tolerance=0.01)
-    println("*** profile data")
-    Profile.print(format=:flat, sortedby=:count)
 
     println("*** Pareto front:")
     println(population[pareto])
-
-    using PyPlot
-    z = [population[pareto[i]].z for i in 1:length(pareto)];
-    PyPlot.plot3D([z[i][1] for i=1:length(z)],
-                  [z[i][2] for i=1:length(z)],
-                  [z[i][3] for i=1:length(z)],
-                  "ro")
-    PyPlot.savefig("x3.pdf")
 end
+println("*** profile data")
+println(": this may take some time so please wait")
+Profile.print(format=:flat, sortedby=:count)
 # testmultiobjective3 ends here

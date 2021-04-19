@@ -12,20 +12,14 @@ pareto, population = Fresa.solve(f, p0, a, b;
                                  #fitnesstype = :hadamard,
                                  #fitnesstype = :borda,
                                  fitnesstype = :nondominated,
-                                 ngen=100,
-                                 npop=10,
+                                 ngen=200,
+                                 npop=20,
                                  plotvectors=true,
                                  tolerance=0.01)
 
-println("Pareto front:")
+println("**** Pareto front:")
+println("#+plot: ind:2 deps:(3) with:points")
 println(population[pareto])
 #using BenchmarkTools
 #@benchmark
-
-using PyPlot
-z = [population[pareto[i]].z for i in 1:length(pareto)];
-PyPlot.plot([z[i][1] for i=1:length(z)],
-            [z[i][2] for i=1:length(z)],
-            "ro")
-PyPlot.savefig("x.pdf")
 # testmultiobjective ends here

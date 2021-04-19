@@ -62,7 +62,7 @@ to install =Fresa=.  You exit the Julia package manager by hitting your =Backspa
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
-  scp -r fresa.html socrates.ucl.ac.uk:html.pub
+  scp -r fresa.html defaultsteepness.png sharpersteepness.png socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information <<version>>
 Major version log:
@@ -78,7 +78,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
 :PROPERTIES:
-:header-args: :tangle "src/Fresa.jl" :comments yes
+:header-args:julia: :tangle "src/Fresa.jl" :comments yes
 :END:
 # +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-14 17:14]"
+  version = "[2021-04-19 17:03]"
   using Dates
   using Distributed
   using Printf
@@ -225,7 +225,7 @@ and we provide two versions with simple calling sequences:
   end
 #+end_src 
 ** fitness
-The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[http://www.springer.com/gb/ook/9783319299730][Fraga & Amusat, 2016]] with the same properties: best solutions have fitness values closer to 1 than less fit solutions.
+The fitness function used depends on the number of objectives.  For single criterion problems, the fitness is the objective function values normalised and reversed so that the minimum, /i.e./ the best solution, has a fitness of close to 1 and the worst a fitness close to 0.  For multi-criteria problems, a Hadamard product of individual criteria rankings is used to create a fitness value [[http://www.springer.com/gb/ook/9783319299730][(Fraga & Amusat, 2016)]] with the same properties: best solutions have fitness values closer to 1 than less fit solutions.
 *** main entry point for fitness calculations          :ignoreheading:
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
@@ -333,12 +333,31 @@ The fitness should be a value \in (0,1), i.e. not including the bounds themselve
                            / (maximum(fitness)-minimum(fitness))
                            .- 2*s) .+ 1)
       else
-          fit = 0.5*ones(l)
+          fit = 0.5*ones(length(fitness))
       end
       fit
   end
 #+end_src
-This function takes, as an argument, the =steepness= of the transition from poor fitness to good fitness.  Some plots are useful for comparison.
+This function takes, as an argument, the =steepness= of the transition from poor fitness to good fitness.  Some plots are useful for comparison.  This first plot shows the default fitness adjustment function which gives some emphasis to the extreme values but also ensures that the fitness values are quite some distance from the boundary of the fitness domain:
+#+begin_src gnuplot :exports results :file defaultsteepness.png :cache yes
+  set yrange [0:1]
+  unset key
+  plot [0:1] (tanh(4*1*x - 2*1)+1)/2
+#+end_src
+
+#+results[86cf821d5661c3f01cf6b928a35e41ed5b1e0aed]:
+[[file:defaultsteepness.png]]
+
+Making the fitness adjustment /steeper/, e.g. with a value of =steepness= of 2 instead of the default value of 1, the function has a more pronounced emphasis towards the boundaries and allows values closer to those boundaries:
+#+begin_src gnuplot :exports results :file sharpersteepness.png :cache yes
+  set yrange [0:1]
+  unset key
+  plot [0:1] (tanh(4*2*x - 2*2)+1)/2
+#+end_src
+
+#+results[4bec504a0916c6aa94715915022ca08d61cbeaa0]:
+[[file:sharpersteepness.png]]
+
 *** dominance based fitness calculations               :ignoreheading:
 The following function is used by the vector fitness evaluation to recurse through the levels of non-dominance to assign fitness based on those levels.
 #+name: assigndominancefitness
@@ -692,7 +711,7 @@ The output of progress during the search is controlled by the ~output~ optional 
                  ns = 100,             # number of stable solutions for stopping
                  output = 5,           # how often to output information
                  plotvectors = false,  # generate output file for search plot
-                 steepness = 0.25,     # show steep is the adjustment shape for fitness
+                 steepness = 1.0,      # show steep is the adjustment shape for fitness
                  tolerance = 0.001,    # tolerance for similarity detection
                  usemultiproc = false) # parallel processing by Fresa itself?
       output != 0 && println("** solve $f $(orgtimestamp(now()))")
@@ -1290,22 +1309,16 @@ Using the results obtained above, we use the linking information for all the poi
                                    #fitnesstype = :hadamard,
                                    #fitnesstype = :borda,
                                    fitnesstype = :nondominated,
-                                   ngen=100,
-                                   npop=10,
+                                   ngen=200,
+                                   npop=20,
                                    plotvectors=true,
                                    tolerance=0.01)
 
-  println("Pareto front:")
+  println("**** Pareto front:")
+  println("#+plot: ind:2 deps:(3) with:points")
   println(population[pareto])
   #using BenchmarkTools
   #@benchmark
-
-  using PyPlot
-  z = [population[pareto[i]].z for i in 1:length(pareto)];
-  PyPlot.plot([z[i][1] for i=1:length(z)],
-              [z[i][2] for i=1:length(z)],
-              "ro")
-  PyPlot.savefig("x.pdf")
 #+end_src 
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
@@ -1326,23 +1339,16 @@ Using the results obtained above, we use the linking information for all the poi
   @profile for i=1
       pareto, population = Fresa.solve(f, p0, a, b;
                                        archiveelite = false,
-                                       npop=20, ngen=300,
-                                       #output=100,
+                                            npop=20, ngen=300,
+                                            #output=100,
                                        tolerance=0.01)
-      println("*** profile data")
-      Profile.print(format=:flat, sortedby=:count)
 
       println("*** Pareto front:")
       println(population[pareto])
-
-      using PyPlot
-      z = [population[pareto[i]].z for i in 1:length(pareto)];
-      PyPlot.plot3D([z[i][1] for i=1:length(z)],
-                    [z[i][2] for i=1:length(z)],
-                    [z[i][3] for i=1:length(z)],
-                    "ro")
-      PyPlot.savefig("x3.pdf")
   end
+  println("*** profile data")
+  println(": this may take some time so please wait")
+  Profile.print(format=:flat, sortedby=:count)
 #+end_src 
 
 ** COMMENT parallel test

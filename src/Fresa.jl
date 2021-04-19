@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-14 17:14]"
+version = "[2021-04-19 17:03]"
 using Dates
 using Distributed
 using Printf
@@ -206,7 +206,7 @@ function adjustfitness(fitness, s)
                          / (maximum(fitness)-minimum(fitness))
                          .- 2*s) .+ 1)
     else
-        fit = 0.5*ones(l)
+        fit = 0.5*ones(length(fitness))
     end
     fit
 end
@@ -456,7 +456,7 @@ function solve(f, p0, a, b;     # required arguments
                ns = 100,             # number of stable solutions for stopping
                output = 5,           # how often to output information
                plotvectors = false,  # generate output file for search plot
-               steepness = 0.25,     # show steep is the adjustment shape for fitness
+               steepness = 1.0,      # show steep is the adjustment shape for fitness
                tolerance = 0.001,    # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
     output != 0 && println("** solve $f $(orgtimestamp(now()))")
