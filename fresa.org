@@ -87,7 +87,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-14 16:48]"
+  version = "[2021-04-14 17:14]"
   using Dates
   using Distributed
   using Printf
@@ -230,17 +230,17 @@ The fitness function used depends on the number of objectives.  For single crite
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
 #+begin_src julia
-  function fitness(pop, fitnesstype)
+  function fitness(pop, fitnesstype, steepness)
       l = length(pop)
       indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
       indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
-      # println("There are $(length(indexfeasible)) feasible entries and $(length(indexinfeasible)) infeasible")
+      @debug "Feasible/infeasible breakdown" indexfeasible indexinfeasible maxlog=3
       fit = zeros(l)
       factor = 1              # for placement in fitness interval (0,1)
       if length(indexfeasible) > 0
           feasible = view(pop,indexfeasible)
           # use objective function value(s) for ranking
-          feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype)
+          feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype, steepness)
           if length(indexinfeasible) > 0
               feasiblefit = feasiblefit./2 .+ 0.5 # upper half of fitness interval
               factor = 2                        # have both feasible & infeasible
@@ -253,7 +253,8 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           infeasible = view(pop,indexinfeasible)
           # use constraint violation for ranking as objective function values
           # may not make any sense given that points are infeasible
-          fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible), fitnesstype) / factor;
+          fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible), fitnesstype,
+                                               steepness) / factor;
       end
       fit
   end
@@ -276,7 +277,7 @@ The helper function works with a single vector of objective function values whic
   available.
 
   """
-  function vectorfitness(v,fitnesstype)
+  function vectorfitness(v,fitnesstype,steepness)
       # determine number of objectives (or pseudo-objectives) to consider in
       # ranking
       l = length(v)
@@ -314,7 +315,7 @@ The helper function works with a single vector of objective function values whic
           end
           # normalise (1=best, 0=worst) while avoiding
           # extreme 0,1 values using the hyperbolic tangent
-          fit = adjustfitness(fitness)
+          fit = adjustfitness(fitness, steepness)
           # println(":  scaled fitness: $fit")
           @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
       end
@@ -326,9 +327,11 @@ The fitness should be a value \in (0,1), i.e. not including the bounds themselve
 
 #+name: adjustfitness
 #+begin_src julia
-  function adjustfitness(fitness)
+  function adjustfitness(fitness, s)
       if (maximum(fitness)-minimum(fitness)) > eps()
-          fit = tanh.((maximum(fitness) .- fitness) / (maximum(fitness)-minimum(fitness)) .- 0.5) .+ 0.5
+          fit = 0.5*(tanh.(4*s*(maximum(fitness) .- fitness)
+                           / (maximum(fitness)-minimum(fitness))
+                           .- 2*s) .+ 1)
       else
           fit = 0.5*ones(l)
       end
@@ -683,13 +686,14 @@ The output of progress during the search is controlled by the ~output~ optional 
                  archiveelite = false,  # save thinned out elite members
                  elite = true,    # elitism by default
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
-                 ngen = 100,      # number of generations
-                 npop = 10,       # population size: fixed (single value) or dynamic (tuple)
-                 nrmax = 5,       # number of runners maximum
-                 ns = 100,        # number of stable solutions for stopping
-                 output = 5,      # how often to output information
-                 plotvectors = false, # generate output file for search plot
-                 tolerance = 0.001, # tolerance for similarity detection
+                 ngen = 100,           # number of generations
+                 npop = 10,            # population size: fixed (single value) or dynamic (tuple)
+                 nrmax = 5,            # number of runners maximum
+                 ns = 100,             # number of stable solutions for stopping
+                 output = 5,           # how often to output information
+                 plotvectors = false,  # generate output file for search plot
+                 steepness = 0.25,     # show steep is the adjustment shape for fitness
+                 tolerance = 0.001,    # tolerance for similarity detection
                  usemultiproc = false) # parallel processing by Fresa itself?
       output != 0 && println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
@@ -711,6 +715,7 @@ The output of progress during the search is controlled by the ~output~ optional 
           println("| elite | $elite |")
           println("| archive | $archiveelite |")
           println("| fitness | $fitnesstype |")
+          println("| steepness | $steepness |")
           println("|-")
           # output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
           # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
@@ -768,7 +773,7 @@ The output of progress during the search is controlled by the ~output~ optional 
       # now evolve the population for a predetermined number of generations
       for gen in 1:ngen
           # evaluate fitness
-          fit = fitness(pop, fitnesstype)
+          fit = fitness(pop, fitnesstype, steepness)
           if gen == 1
               @debug "Initial fitness" f=fit
           end
@@ -917,7 +922,7 @@ The output of progress during the search is controlled by the ~output~ optional 
           close(plotvectorio)
       end
       if nz == 1
-          fit = fitness(pop, fitnesstype)
+          fit = fitness(pop, fitnesstype, steepness)
           index = sortperm(fit)
           best = pop[index[end]]
           return best, pop
