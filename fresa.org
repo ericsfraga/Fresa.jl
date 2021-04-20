@@ -88,7 +88,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-19 17:26]"
+  version = "[2021-04-20 16:30]"
   using Dates
   using Distributed
   using Printf
@@ -231,7 +231,7 @@ The fitness function used depends on the number of objectives.  For single crite
 This function uses a helper function, defined below, to assign a fitness to a vector of objective function values.
 #+name: fitness
 #+begin_src julia
-  function fitness(pop, fitnesstype, steepness)
+  function fitness(pop, fitnesstype, steepness, generation, ngen)
       l = length(pop)
       indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
       indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
@@ -241,7 +241,7 @@ This function uses a helper function, defined below, to assign a fitness to a ve
       if length(indexfeasible) > 0
           feasible = view(pop,indexfeasible)
           # use objective function value(s) for ranking
-          feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype, steepness)
+          feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype, steepness, generation, ngen)
           if length(indexinfeasible) > 0
               feasiblefit = feasiblefit./2 .+ 0.5 # upper half of fitness interval
               factor = 2                        # have both feasible & infeasible
@@ -254,8 +254,12 @@ This function uses a helper function, defined below, to assign a fitness to a ve
           infeasible = view(pop,indexinfeasible)
           # use constraint violation for ranking as objective function values
           # may not make any sense given that points are infeasible
-          fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible), fitnesstype,
-                                               steepness) / factor;
+          fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible),
+                                               fitnesstype,
+                                               steepness,
+                                               generation,
+                                               ngen
+                                               ) / factor;
       end
       fit
   end
@@ -278,7 +282,7 @@ The helper function works with a single vector of objective function values whic
   available.
 
   """
-  function vectorfitness(v,fitnesstype,steepness)
+  function vectorfitness(v, fitnesstype, steepness, generation, ngen)
       # determine number of objectives (or pseudo-objectives) to consider in
       # ranking
       l = length(v)
@@ -316,7 +320,7 @@ The helper function works with a single vector of objective function values whic
           end
           # normalise (1=best, 0=worst) while avoiding
           # extreme 0,1 values using the hyperbolic tangent
-          fit = adjustfitness(fitness, steepness)
+          fit = adjustfitness(fitness, steepness, generation, ngen)
           # println(":  scaled fitness: $fit")
           @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
       end
@@ -326,14 +330,24 @@ The helper function works with a single vector of objective function values whic
 *** adjust the fitness to avoid boundaries of [0,1]    :ignoreheading:
 The fitness should be a value \in (0,1), i.e. not including the bounds themselves as those values cause some silly behaviour in the definition of individual neighbouring solutions (i.e. the runners) and the number of runners.  Therefore, we adjust the fitness values to ensure that the bounds are not included.
 
+See below for a discussion about the second function argument, =steepness=, and how the value =s= is calculated if =steepness= is a tuple and not a single value.
 #+name: adjustfitness
 #+begin_src julia
-  function adjustfitness(fitness, s)
+  function adjustfitness(fitness, steepness, generation, ngen)
       if (maximum(fitness)-minimum(fitness)) > eps()
+          s = steepness
+          if isa(steepness, Tuple)
+              a = (2*steepness[1]-2*steepness[2])/3
+              b = - (3*steepness[1] - 3*steepness[2])/ngen^2
+              d = steepness[1]
+              s = a*generation^3 + b*generation^2 + c*generation + d
+              @debug "Steepness " s "at generation" g
+          end  
           fit = 0.5*(tanh.(4*s*(maximum(fitness) .- fitness)
                            / (maximum(fitness)-minimum(fitness))
                            .- 2*s) .+ 1)
       else
+          # only one solution (or all solutions the same) in population
           fit = 0.5*ones(length(fitness))
       end
       fit
@@ -358,6 +372,32 @@ Making the fitness adjustment /steeper/, e.g. with a value of =steepness= of 2 i
 
 #+results[4bec504a0916c6aa94715915022ca08d61cbeaa0]:
 [[file:sharpersteepness.png]]
+
+The steepness may be specified as a /tuple/ in which case it represents the initial value for the steepness and the final value.  The evolution of the steepness is based on a cubic with 0 slope at the start and at the end.  The following =maxima= code is the solution of the that cubic given the need to pass through the points \((0,s_1)\) and \((n_g,s_2)\) where \(s_1\) and \(s_2\) are the two values of the tuple and \(n_g\) is the number of generations:
+#+begin_src maxima :exports both :results output
+  c(g) := a*g^3 + b*g^2 + c*g + d;
+  define(d(g), diff(c(g),g));
+  equations: [c(0) = s1,
+  d(0) = 0,
+  c(n) = s2,
+  d(n) = 0];
+  solution: solve(equations, [a, b, c, d]);
+  for i: 1 thru length(solution[1]) do print(solution[1][i])$
+#+end_src
+
+#+results:
+#+begin_example
+    2 s1 - 2 s2
+a = ----------- 
+         3
+        n
+      3 s1 - 3 s2
+b = - ----------- 
+           2
+          n
+c = 0 
+d = s1 
+#+end_example
 
 *** dominance based fitness calculations               :ignoreheading:
 The following function is used by the vector fitness evaluation to recurse through the levels of non-dominance to assign fitness based on those levels.
@@ -792,8 +832,9 @@ The output of progress during the search is controlled by the ~output~ optional 
       end
       # now evolve the population for a predetermined number of generations
       for gen in 1:ngen
-          # evaluate fitness
-          fit = fitness(pop, fitnesstype, steepness)
+          # evaluate fitness which is adjusted depending on value of
+          # steepness, a value that may depend on the generation
+          fit = fitness(pop, fitnesstype, steepness, gen, ngen)
           if gen == 1
               @debug "Initial fitness" f=fit
           end
@@ -942,7 +983,7 @@ The output of progress during the search is controlled by the ~output~ optional 
           close(plotvectorio)
       end
       if nz == 1
-          fit = fitness(pop, fitnesstype, steepness)
+          fit = fitness(pop, fitnesstype, steepness, ngen, ngen)
           index = sortperm(fit)
           best = pop[index[end]]
           return best, pop

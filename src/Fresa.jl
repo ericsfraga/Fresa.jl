@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-19 17:03]"
+version = "[2021-04-20 16:30]"
 using Dates
 using Distributed
 using Printf
@@ -109,7 +109,7 @@ end
 # create a point:2 ends here
 
 # [[file:../fresa.org::fitness][fitness]]
-function fitness(pop, fitnesstype, steepness)
+function fitness(pop, fitnesstype, steepness, generation, ngen)
     l = length(pop)
     indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
     indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
@@ -119,7 +119,7 @@ function fitness(pop, fitnesstype, steepness)
     if length(indexfeasible) > 0
         feasible = view(pop,indexfeasible)
         # use objective function value(s) for ranking
-        feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype, steepness)
+        feasiblefit = vectorfitness(map(p->p.z,feasible), fitnesstype, steepness, generation, ngen)
         if length(indexinfeasible) > 0
             feasiblefit = feasiblefit./2 .+ 0.5 # upper half of fitness interval
             factor = 2                        # have both feasible & infeasible
@@ -132,8 +132,12 @@ function fitness(pop, fitnesstype, steepness)
         infeasible = view(pop,indexinfeasible)
         # use constraint violation for ranking as objective function values
         # may not make any sense given that points are infeasible
-        fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible), fitnesstype,
-                                             steepness) / factor;
+        fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible),
+                                             fitnesstype,
+                                             steepness,
+                                             generation,
+                                             ngen
+                                             ) / factor;
     end
     fit
 end
@@ -153,7 +157,7 @@ similar to that used by the popular NSGA-II genetic algorithm, is
 available.
 
 """
-function vectorfitness(v,fitnesstype,steepness)
+function vectorfitness(v, fitnesstype, steepness, generation, ngen)
     # determine number of objectives (or pseudo-objectives) to consider in
     # ranking
     l = length(v)
@@ -191,7 +195,7 @@ function vectorfitness(v,fitnesstype,steepness)
         end
         # normalise (1=best, 0=worst) while avoiding
         # extreme 0,1 values using the hyperbolic tangent
-        fit = adjustfitness(fitness, steepness)
+        fit = adjustfitness(fitness, steepness, generation, ngen)
         # println(":  scaled fitness: $fit")
         @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
     end
@@ -200,12 +204,21 @@ end
 # vectorfitness ends here
 
 # [[file:../fresa.org::adjustfitness][adjustfitness]]
-function adjustfitness(fitness, s)
+function adjustfitness(fitness, steepness, generation, ngen)
     if (maximum(fitness)-minimum(fitness)) > eps()
+        s = steepness
+        if isa(steepness, Tuple)
+            a = (2*steepness[1]-2*steepness[2])/3
+            b = - (3*steepness[1] - 3*steepness[2])/ngen^2
+            d = steepness[1]
+            s = a*generation^3 + b*generation^2 + c*generation + d
+            @debug "Steepness " s "at generation" g
+        end  
         fit = 0.5*(tanh.(4*s*(maximum(fitness) .- fitness)
                          / (maximum(fitness)-minimum(fitness))
                          .- 2*s) .+ 1)
     else
+        # only one solution (or all solutions the same) in population
         fit = 0.5*ones(length(fitness))
     end
     fit
@@ -536,8 +549,9 @@ function solve(f, p0, a, b;     # required arguments
     end
     # now evolve the population for a predetermined number of generations
     for gen in 1:ngen
-        # evaluate fitness
-        fit = fitness(pop, fitnesstype, steepness)
+        # evaluate fitness which is adjusted depending on value of
+        # steepness, a value that may depend on the generation
+        fit = fitness(pop, fitnesstype, steepness, gen, ngen)
         if gen == 1
             @debug "Initial fitness" f=fit
         end
@@ -686,7 +700,7 @@ function solve(f, p0, a, b;     # required arguments
         close(plotvectorio)
     end
     if nz == 1
-        fit = fitness(pop, fitnesstype, steepness)
+        fit = fitness(pop, fitnesstype, steepness, ngen, ngen)
         index = sortperm(fit)
         best = pop[index[end]]
         return best, pop
