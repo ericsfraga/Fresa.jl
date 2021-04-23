@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-23 13:50]"
+version = "[2021-04-23 14:53]"
 using Dates
 using Distributed
 using Printf
@@ -75,12 +75,12 @@ end
 ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing}
 # Ancestor <<ancestor>>:2 ends here
 
-# [[file:../fresa.org::*Domain][Domain:1]]
+# [[file:../fresa.org::*Domain <<domain>>][Domain <<domain>>:1]]
 struct Domain
     lower                       # function which returns lower bound on search variable(s)
     upper                       # function which returns upper bound on search variable(s)
 end
-# Domain:1 ends here
+# Domain <<domain>>:1 ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters,ancestor)

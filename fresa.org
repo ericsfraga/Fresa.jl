@@ -3,7 +3,7 @@
 #+title: Fresa, a plant propagation algorithm
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
-#+options: num:nil ^:nil toc:t tex:imagemagick
+#+options: num:t ^:nil toc:t tex:imagemagick
 
 # add extra meta information when tangling the code
 #+property: header-args :comments yes
@@ -52,13 +52,13 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algori
 A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  Specifically, as =Fresa= is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  Specifically, as /Fresa/ is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
 
 : add http://github.com/ericsfraga/Fresa.jl
 
-to install =Fresa=.  You exit the Julia package manager by hitting your =Backspace= key.
+to install /Fresa/.  You exit the Julia package manager by hitting your =Backspace= key.
 
-~Fresa~ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+/Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
@@ -67,7 +67,9 @@ to install =Fresa=.  You exit the Julia package manager by hitting your =Backspa
 ** Version information <<version>>
 Major version log:
 
-- April 2021 :: allow setting the steepness of the [[adjustfitness][fitness adjustment function]].  This is an outcome of the presentation by Wouter Vrielink at the PPA mini-zoomposium I organised in March 2021 to discuss the impact of PPA parameters on the effectiveness of the search procedure.
+- April 2021 ::
+  1. the domain for the search, which has to be bounded, is now defined by [[domain][a =Domain= data structure]] which allows for different representations of solutions in the search space in a given population;
+  2. allow setting the steepness of the [[adjustfitness][fitness adjustment function]].  This is an outcome of the presentation by Wouter Vrielink at the PPA mini-zoomposium I organised in March 2021 to discuss the impact of PPA parameters on the effectiveness of the search procedure.
 - March 2021 :: one of the required arguments to the =solve= function has been changed.  Specifically, the initial guess must now be a population of =Point= objects and not a single decision variable.  See [[examples][examples]] below for how to create this initial population easily.
 - April 2020 :: moved all code to [[https://github.com/ericsfraga/Fresa.jl][github]].  This should make it easier for others to use the code.
 - September 2019 :: The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
@@ -88,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-23 13:50]"
+  version = "[2021-04-23 14:53]"
   using Dates
   using Distributed
   using Printf
@@ -109,9 +111,9 @@ Fresa uses one type, =Point=, which is a point in the search space.  It includes
 
 An instance of a point is defined by the variable in the search space, the objective function used to evaluate the point, the ancestor of this point (see below), and optional parameters to pass to that function.  
 
-As ~Fresa~ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes ~Fresa~.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by ~Fresa~ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
+As /Fresa/ is an evolutionary procedure, every point in the search space considered will be the descendent of a previously considered point.  The sole exception is the initial starting point given by the procedure which invokes /Fresa/.  The link between points is through a backward chain defined by the ancestor entry.  This is not used by /Fresa/ itself directly but provides extra meta-information that could be useful for post-optimization analysis, e.g. to see how effective the balance between exploration and exploitation may be for the given search parameter values.
 
-An issue in Julia (as of 2021, at least) is that you cannot define two data structures that mutually refer to each other.  Therefore, the type of the =ancestor= entry in the =Point= data structure has to be defined later (see [[ancestor][=Ancestor= definition]] below).  This is discussed in the [[https://github.com/JuliaLang/julia/issues/269][issue for Julia on github]].
+An issue in Julia (as of 2021, at least) is that you cannot define two data structures that mutually refer to each other.  Therefore, the type of the =ancestor= entry in the =Point= data structure has to be defined later (see [[ancestor][~Ancestor~ definition]] below).  This is discussed in the [[https://github.com/JuliaLang/julia/issues/269][issue for Julia on github]].
 
 #+name: pointtype
 #+begin_src julia
@@ -180,8 +182,8 @@ Once the =Ancestor= data structure has been defined, we can now use an /access c
 #+begin_src julia
   ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing} 
 #+end_src 
-*** Domain
-=Fresa= assumes a bounded domain for the search.  Each design variable will have a lower and upper bound.  To provide for domain specific design variable data structures, the =Domain= structure is used.  In this structure, the =lower= and =upper= variables are functions which will be evaluated with a point in the search space and are expected to return appropriate data that the =neighbour= function (see [[*neighbour ][below]]) will be able to use to ensure the domain bounds are respected in the creation of new search points.  
+*** Domain <<domain>>
+/Fresa/ assumes a bounded domain for the search.  Each design variable will have a lower and upper bound.  To provide for domain specific design variable data structures, the =Domain= structure is used.  In this structure, the =lower= and =upper= variables are functions which will be evaluated with a point in the search space and are expected to return appropriate data that the =neighbour= function (see [[neighbour][below]]) will be able to use to ensure the domain bounds are respected in the creation of new search points.  
 
 #+begin_src julia
   struct Domain
@@ -433,7 +435,7 @@ The following function is used by the vector fitness evaluation to recurse throu
       end
   end
 #+end_src 
-** neighbour -- generate random point
+** neighbour -- generate random point <<neighbour>>
 A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
 
 Fresa comes with two default methods for generating neighbouring solutions. The first is for a search space defined by vectors of =Float64= values:
@@ -1085,53 +1087,177 @@ Sometimes, we need to determine whether a variable (e.g. the objective function 
 * Tests <<examples>> <<tests>>
 The following are simple tests for either the Fresa optimiser or just individual functions in the module.  You can cut and paste these codes into your own editor and run them.
 # +toc: headlines 2 local
-** COMMENT neighbour
-#+name: testneighbour
-#+begin_src julia :tangle test/neighbour.jl
+** simple objective function
+This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
+#+name: testsimple
+#+begin_src julia :tangle test/simple.jl
+  # load in the Fresa optimization package
   using Fresa
-  nx = 5
-  a = -5*ones(nx,1)
-  b = 5*ones(nx,1)
-  x = a + (b-a) .* rand(nx)
-  println("$x")
-  for i in 1:10
-      print("$i: ")
-      n = Fresa.neighbour(x,nx,a,b,0.9)
-      println("$n")
-  end
+  # specify the dimension of the search space
+  nx = 2
+  # create an initial point in the search space
+  x0 = 0.5*ones(nx)
+  # specify the domain for the search, x ∈ [0,10]ⁿ
+  domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
+  # the actual objective function
+  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
+  # create the initial population consisting of this single point
+  p0 = [Fresa.createpoint(x0,f)]
+  # now invoke Fresa to solve the problem
+  @time best, pop = Fresa.solve(f, p0, domain)
+  # output the results
+  println("Population at end: $pop")
+  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
+#+end_src 
+One of the features that /Fresa/ provides is a trace of how each solution has been created.  That is, each solution has a link back to the ancestor solution that led to its creation, along with information about when this happened (the generation) and how /fit/ the ancestor solution was.  There is a function defined in /Fresa/ for outputting a history trace.  The output is in form of an =org mode= table but is simple text that can be imported into a spreadsheet program, for instance.
+#+begin_src julia :tangle test/simple.jl
+  ,#+plot: ind:1 deps:(2) with:"linespoints lt 3 pt 7 ps 0.25" set:nokey set:"yrange [0:1]" set:"xrange [0:*]"
+  println("#+plot: ind:1 deps:(2) with:\"linespoints pt 7 ps 0.25\" set:nokey set:\"yrange [0:1]\" set:\"xrange [0:*]\" set:\"xlabel 'Generation'\" set:\"ylabel 'fitness'\"")
+  Fresa.printHistoryTrace(best)
 #+end_src
-
-** COMMENT fitness test
-This test uses a simple quadratic objective function to test out the fitness evaluation.
-#+name: testfitness
-#+begin_src julia :tangle test/fitness.jl
+** rosenbrock
+#+name: testrosenbrock
+#+begin_src julia :tangle test/rosenbrock.jl
   using Fresa
   nx = 2
   x0 = 0.5*ones(nx)
-  a = zeros(nx)
-  b = 10*ones(nx)
-  # multi-objective test function 
-  f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
-  # single objective test function 
+  # specify the domain for the search, x ∈ [0,10]ⁿ
+  domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
+  rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  pop = [Fresa.createpoint(x0,f)]
-  for i in 1:5
-      x = Fresa.neighbour(x0,a,b,0.5)
-      push!(pop, Fresa.createpoint(x,f))
-      l = length(pop)
-  end
-  println(pop)
-  z = [map(p->p.z, pop)]
-  println("Objective function values: $z")
-  for t in [:hadamard :borda :nondominated]
-      fit = Fresa.fitness(pop, t)
-      println("Fitness($(repr(t))): $fit")
-      for i in 1:5
-          index = Fresa.select(fit)
-          println("$i selected $index")
-      end
-  end
+  # create the initial population consisting of this single point
+  p0 = [Fresa.createpoint(x0,rosenbrock)]
+  # now invoke Fresa to solve the problem
+  best, pop = Fresa.solve(rosenbrock, p0, domain)
+  println("Population at end: $pop")
+  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src
+** multi-objective test
+#+name: testmultiobjective
+#+begin_src julia :tangle test/multiobjective.jl
+  using Fresa
+  nx = 2
+  # specify the domain for the search, x ∈ [0,10]ⁿ
+  domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
+  # initial point in domain
+  x = rand(nx)
+  # objective function 
+  f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
+  # create the initial population consisting of this single point
+  p0 = [Fresa.createpoint(x,f)]
+  # now invoke Fresa to solve the problem
+  pareto, population = Fresa.solve(f, p0, domain;
+                                   #fitnesstype = :hadamard,
+                                   #fitnesstype = :borda,
+                                   fitnesstype = :nondominated,
+                                   ngen=200,
+                                   npop=20,
+                                   plotvectors=true,
+                                   tolerance=0.01)
+
+  println("**** Pareto front:")
+  println("#+plot: ind:2 deps:(3) with:points")
+  println(population[pareto])
+  #using BenchmarkTools
+  #@benchmark
+#+end_src 
+** multi-objective test with 3 objectives
+#+name: testmultiobjective3
+#+begin_src julia :tangle test/multiobjective3.jl
+  using Fresa
+  using Profile
+  nx = 5
+  # specify the domain for the search, x ∈ [0,1]ⁿ
+  domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
+  x = zeros(nx)
+  f = x -> ([ sum((x.-0.5).^2 .+ 1)
+              sum(cos.(x))
+              sum(sin.(x))],
+            0)
+  # create the initial population consisting of this single point
+  p0 = [Fresa.createpoint(x,f)]
+  # now invoke Fresa to solve the problem
+  @profile for i=1
+      pareto, population = Fresa.solve(f, p0, domain;
+                                       archiveelite = false,
+                                       npop=20, ngen=300,
+                                       #output=100,
+                                       tolerance=0.01)
+
+      println("*** Pareto front:")
+      println(population[pareto])
+  end
+  println("*** profile data")
+  println(": this may take some time so please wait")
+  Profile.print(format=:flat, sortedby=:count)
+#+end_src 
+
+** mixed integer nonlinear example
+The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
+
+The aims of this example are to test the use of a non-default /neighbour/ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
+
+This example is also used, for the moment, to test out the parallel implementation of Fresa.  The important aspects are that Fresa as well as the =MI= type be available on all worker processes.  This is not a good example in that the parallel version takes longer than the sequential version.
+
+#+name: testminlp
+#+begin_src julia :tangle test/minlp.jl
+  using Distributed
+  using Printf
+  @everywhere using Fresa
+  # define new type for mixed integer problems
+  # in general, this would be vectors of real and integer values
+  @everywhere struct MI
+      x :: Float64
+      y :: Int32
+  end
+  import Base
+  Base.show(io::IO, m::MI) = print(io, m.x, " ", m.y)
+  f = s -> (3s.y - 5s.x,
+            max(2s.y + 3s.x - 24,
+                3s.x - 2s.y - 8,
+                2s.y^2 - 2*√s.y + 11s.y + 8s.x - 39 - 2*√s.x*s.y^2))
+  # bounds
+  domain = Fresa.Domain(x -> MI(1.0, 1),
+                        x -> MI(6.0, 6))
+  # function to find a neighbouring solution for MI type decision points
+  function Fresa.neighbour(s :: MI,
+                           a :: MI,
+                           b :: MI,
+                           f :: Float64) :: MI
+      x = s.x + (b.x-a.x)*(1-f)*2*(rand()-0.5)
+      x = x < a.x ? a.x : (x > b.x ? b.x : x)
+      # for the integer variable, we move in one direction or the other
+      # a random number of places depending on fitness
+      positive = rand(Bool)
+      r = rand()
+      # @printf(": neighbour: f=%g r=%g\n", f, r)
+      inc = ceil(f*r*(b.y-a.y)/2)
+      # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
+      y = s.y + (positive ? inc : -inc)
+      y = y < a.y ? a.y : (y > b.y ? b.y : y)
+      return MI(x,y)
+  end
+  # create the initial population consisting of a single MI point
+  p0 = [Fresa.createpoint(MI(1.0, 1),f)]
+  # now invoke Fresa to solve the problem
+  best, pop = Fresa.solve(f, p0, domain; ngen=100)
+  println("Population: $pop")
+  println("Best: f($(best.x)) = $(best.z), $(best.g)")
+#+end_src 
+
+Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
+
+#+name: testminlpsupplement
+#+begin_src julia :tangle test/minlp.jl
+  println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
+  ancestor = best.ancestor;
+  while ancestor != Some(nothing) && typeof(ancestor) != Nothing
+      global ancestor
+      println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
+      ancestor = ancestor.point.ancestor
+  end
+#+end_src 
+
 ** a GAMS interface example
 :PROPERTIES:
 :header-args:julia: :tangle "test/gams.jl"
@@ -1286,133 +1412,53 @@ and plot out the resulting Pareto set in objective function space:
   (z, g) = f([0.0;0.0;0.0])
   println("z = $z and g = $g")
 #+end_src
-
-** mixed integer nonlinear example
-The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
-
-The aims of this example are to test the use of a non-default /neighbour/ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
-
-This example is also used, for the moment, to test out the parallel implementation of Fresa.  The important aspects are that Fresa as well as the =MI= type be available on all worker processes.  This is not a good example in that the parallel version takes longer than the sequential version.
-
-#+name: testminlp
-#+begin_src julia :tangle test/minlp.jl
-  using Distributed
-  using Printf
-  @everywhere using Fresa
-  # define new type for mixed integer problems
-  # in general, this would be vectors of real and integer values
-  @everywhere struct MI
-      x :: Float64
-      y :: Int32
+** COMMENT neighbour
+#+name: testneighbour
+#+begin_src julia :tangle test/neighbour.jl
+  using Fresa
+  nx = 5
+  a = -5*ones(nx,1)
+  b = 5*ones(nx,1)
+  x = a + (b-a) .* rand(nx)
+  println("$x")
+  for i in 1:10
+      print("$i: ")
+      n = Fresa.neighbour(x,nx,a,b,0.9)
+      println("$n")
   end
-  import Base
-  Base.show(io::IO, m::MI) = print(io, m.x, " ", m.y)
-  f = s -> (3s.y - 5s.x,
-            max(2s.y + 3s.x - 24,
-                3s.x - 2s.y - 8,
-                2s.y^2 - 2*√s.y + 11s.y + 8s.x - 39 - 2*√s.x*s.y^2))
-  # bounds
-  domain = Fresa.Domain(x -> MI(1.0, 1),
-                        x -> MI(6.0, 6))
-  # function to find a neighbouring solution for MI type decision points
-  function Fresa.neighbour(s :: MI,
-                           a :: MI,
-                           b :: MI,
-                           f :: Float64) :: MI
-      x = s.x + (b.x-a.x)*(1-f)*2*(rand()-0.5)
-      x = x < a.x ? a.x : (x > b.x ? b.x : x)
-      # for the integer variable, we move in one direction or the other
-      # a random number of places depending on fitness
-      positive = rand(Bool)
-      r = rand()
-      # @printf(": neighbour: f=%g r=%g\n", f, r)
-      inc = ceil(f*r*(b.y-a.y)/2)
-      # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
-      y = s.y + (positive ? inc : -inc)
-      y = y < a.y ? a.y : (y > b.y ? b.y : y)
-      return MI(x,y)
-  end
-  # create the initial population consisting of a single MI point
-  p0 = [Fresa.createpoint(MI(1.0, 1),f)]
-  # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(f, p0, domain; ngen=100)
-  println("Population: $pop")
-  println("Best: f($(best.x)) = $(best.z), $(best.g)")
-#+end_src 
+#+end_src
 
-Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
-
-#+name: testminlpsupplement
-#+begin_src julia :tangle test/minlp.jl
-  println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
-  ancestor = best.ancestor;
-  while ancestor != Some(nothing) && typeof(ancestor) != Nothing
-      global ancestor
-      println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
-      ancestor = ancestor.point.ancestor
-  end
-#+end_src 
-
-** multi-objective test
-#+name: testmultiobjective
-#+begin_src julia :tangle test/multiobjective.jl
+** COMMENT fitness test
+This test uses a simple quadratic objective function to test out the fitness evaluation.
+#+name: testfitness
+#+begin_src julia :tangle test/fitness.jl
   using Fresa
   nx = 2
-  # specify the domain for the search, x ∈ [0,10]ⁿ
-  domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
-  # initial point in domain
-  x = rand(nx)
-  # objective function 
+  x0 = 0.5*ones(nx)
+  a = zeros(nx)
+  b = 10*ones(nx)
+  # multi-objective test function 
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
-  # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f)]
-  # now invoke Fresa to solve the problem
-  pareto, population = Fresa.solve(f, p0, domain;
-                                   #fitnesstype = :hadamard,
-                                   #fitnesstype = :borda,
-                                   fitnesstype = :nondominated,
-                                   ngen=200,
-                                   npop=20,
-                                   plotvectors=true,
-                                   tolerance=0.01)
-
-  println("**** Pareto front:")
-  println("#+plot: ind:2 deps:(3) with:points")
-  println(population[pareto])
-  #using BenchmarkTools
-  #@benchmark
-#+end_src 
-** multi-objective test with 3 objectives
-#+name: testmultiobjective3
-#+begin_src julia :tangle test/multiobjective3.jl
-  using Fresa
-  using Profile
-  nx = 5
-  # specify the domain for the search, x ∈ [0,1]ⁿ
-  domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
-  x = zeros(nx)
-  f = x -> ([ sum((x.-0.5).^2 .+ 1)
-              sum(cos.(x))
-              sum(sin.(x))],
-            0)
-  # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f)]
-  # now invoke Fresa to solve the problem
-  @profile for i=1
-      pareto, population = Fresa.solve(f, p0, domain;
-                                       archiveelite = false,
-                                       npop=20, ngen=300,
-                                       #output=100,
-                                       tolerance=0.01)
-
-      println("*** Pareto front:")
-      println(population[pareto])
+  # single objective test function 
+  # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
+  pop = [Fresa.createpoint(x0,f)]
+  for i in 1:5
+      x = Fresa.neighbour(x0,a,b,0.5)
+      push!(pop, Fresa.createpoint(x,f))
+      l = length(pop)
   end
-  println("*** profile data")
-  println(": this may take some time so please wait")
-  Profile.print(format=:flat, sortedby=:count)
-#+end_src 
-
+  println(pop)
+  z = [map(p->p.z, pop)]
+  println("Objective function values: $z")
+  for t in [:hadamard :borda :nondominated]
+      fit = Fresa.fitness(pop, t)
+      println("Fitness($(repr(t))): $fit")
+      for i in 1:5
+          index = Fresa.select(fit)
+          println("$i selected $index")
+      end
+  end
+#+end_src
 ** COMMENT parallel test
 Some code to play with the generation of a random population so as to learn how to parallelise a loop in Julia.
 #+begin_src julia :tangle test/parallel.jl
@@ -1445,51 +1491,6 @@ Some code to play with the generation of a random population so as to learn how 
   println("Pareto set is $p")
   println("Dominated set is $d")
 #+end_src 
-** rosenbrock
-#+name: testrosenbrock
-#+begin_src julia :tangle test/rosenbrock.jl
-  using Fresa
-  nx = 2
-  x0 = 0.5*ones(nx)
-  # specify the domain for the search, x ∈ [0,10]ⁿ
-  domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-  rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
-  # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,rosenbrock)]
-  # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(rosenbrock, p0, domain)
-  println("Population at end: $pop")
-  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
-#+end_src
-** simple objective function
-This test uses a simple quadratic objective function, defined within.  All points are feasible within the domain defined by the lower and upper bounds.  All /Fresa/ settings are the defaults.
-#+name: testsimple
-#+begin_src julia :tangle test/simple.jl
-  # load in the Fresa optimization package
-  using Fresa
-  # specify the dimension of the search space
-  nx = 2
-  # create an initial point in the search space
-  x0 = 0.5*ones(nx)
-  # specify the domain for the search, x ∈ [0,10]ⁿ
-  domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-  # the actual objective function
-  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
-  # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,f)]
-  # now invoke Fresa to solve the problem
-  @time best, pop = Fresa.solve(f, p0, domain)
-  # output the results
-  println("Population at end: $pop")
-  println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
-#+end_src 
-One of the features that =Fresa= provides is a trace of how each solution has been created.  That is, each solution has a link back to the ancestor solution that led to its creation, along with information about when this happened (the generation) and how /fit/ the ancestor solution was.  There is a function defined in =Fresa= for outputting a history trace.  The output is in form of an =org mode= table but is simple text that can be imported into a spreadsheet program, for instance.
-#+begin_src julia :tangle test/simple.jl
-  ,#+plot: ind:1 deps:(2) with:"linespoints lt 3 pt 7 ps 0.25" set:nokey set:"yrange [0:1]" set:"xrange [0:*]"
-  println("#+plot: ind:1 deps:(2) with:\"linespoints pt 7 ps 0.25\" set:nokey set:\"yrange [0:1]\" set:\"xrange [0:*]\" set:\"xlabel 'Generation'\" set:\"ylabel 'fitness'\"")
-  Fresa.printHistoryTrace(best)
-#+end_src
 * Recent change history
 Summary of the most recent changes to the package:
 #+name: changehistoryshellblock
