@@ -2,8 +2,8 @@
 using Fresa
 using Profile
 nx = 5
-a = zeros(nx)
-b = ones(nx)
+# specify the domain for the search, x ∈ [0,1]ⁿ
+domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
 x = zeros(nx)
 f = x -> ([ sum((x.-0.5).^2 .+ 1)
             sum(cos.(x))
@@ -13,10 +13,10 @@ f = x -> ([ sum((x.-0.5).^2 .+ 1)
 p0 = [Fresa.createpoint(x,f)]
 # now invoke Fresa to solve the problem
 @profile for i=1
-    pareto, population = Fresa.solve(f, p0, a, b;
+    pareto, population = Fresa.solve(f, p0, domain;
                                      archiveelite = false,
-                                          npop=20, ngen=300,
-                                          #output=100,
+                                     npop=20, ngen=300,
+                                     #output=100,
                                      tolerance=0.01)
 
     println("*** Pareto front:")

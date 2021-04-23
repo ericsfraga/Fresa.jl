@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-20 16:30]"
+version = "[2021-04-23 13:50]"
 using Dates
 using Distributed
 using Printf
@@ -74,6 +74,13 @@ end
 # [[file:../fresa.org::*Ancestor <<ancestor>>][Ancestor <<ancestor>>:2]]
 ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing}
 # Ancestor <<ancestor>>:2 ends here
+
+# [[file:../fresa.org::*Domain][Domain:1]]
+struct Domain
+    lower                       # function which returns lower bound on search variable(s)
+    upper                       # function which returns upper bound on search variable(s)
+end
+# Domain:1 ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters,ancestor)
@@ -458,9 +465,9 @@ of which will have the point in the search space, the objective
 function value and the feasibility measure.
 
 """
-function solve(f, p0, a, b;     # required arguments
+function solve(f, p0, domain;        # required arguments
                parameters = nothing, # allow parameters for objective function 
-               archiveelite = false,  # save thinned out elite members
+               archiveelite = false, # save thinned out elite members
                elite = true,    # elitism by default
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                ngen = 100,           # number of generations
@@ -641,8 +648,10 @@ function solve(f, p0, a, b;     # required arguments
             end
             # println(": generating $nr runners")
             for r in 1:nr
-                # create a neighbour, also function of fitness
-                newx = neighbour(pop[s].x,a,b,fit[s])
+                # create a neighbour, also function of fitness,
+                # passing through the lower and upper bounds
+                # appropriate for the particular solution point
+                newx = neighbour(pop[s].x, domain.lower(pop[s].x), domain.upper(pop[s].x), fit[s])
                 # for parallel evaluation, we store the neighbours and
                 # evaluate them later; otherwise, we evaluate
                 # immediately and save the resulting point

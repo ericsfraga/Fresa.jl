@@ -66,13 +66,12 @@ end
 
 # [[file:../fresa.org::*solve the multi-objective problem using Fresa][solve the multi-objective problem using Fresa:1]]
 using Fresa
-a = [0.0;0.0;0.0]
-b = [5.0;3.0;3.0]
+domain = Fresa.Domain(x -> [0.0;0.0;0.0], x -> [5.0;3.0;3.0])
 x0 = [4.0;2.0;2.0]
 # create the initial population consisting of this single point
 p0 = [Fresa.createpoint(x0,fmo)]
 # now invoke Fresa to solve the problem
-pareto, population = Fresa.solve(fmo, p0, a, b;
+pareto, population = Fresa.solve(fmo, p0, domain;
                                  fitnesstype = :borda,
                                  ngen = 100)
 println("Pareto front:")
@@ -89,7 +88,7 @@ PyPlot.savefig("gamsmo.pdf")
 # solve the multi-objective problem using Fresa:2 ends here
 
 # [[file:../fresa.org::*solve the single objective version][solve the single objective version:1]]
-best, pop = Fresa.solve(fsingle, p0, a, b; ngen = 100)
+best, pop = Fresa.solve(fsingle, p0, domain; ngen = 100)
 println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $( best.g )")
 # solve the single objective version:1 ends here
