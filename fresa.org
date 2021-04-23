@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-23 14:53]"
+  version = "[2021-04-23 16:35]"
   using Dates
   using Distributed
   using Printf
@@ -132,7 +132,7 @@ An issue in Julia (as of 2021, at least) is that you cannot define two data stru
       ancestor                    # the parent of this point
   end
 #+end_src 
-Customise how a Point is displayed:
+Customise how a Point is displayed.  We display the objective function value(s) first and then the representation of the point.  This allows for a population to have different representations without causing problems with any data analysis on the columns representing the objective function values.
 #+name: showpoint
 #+begin_src julia
   import Base
@@ -143,18 +143,17 @@ Customise how a Point is displayed:
       if np > 0
           nz = length(p[1].z)
           println(io, "|-")
-          print(io,"| x |")
           for i=1:nz
-              print(io," z$(i) |")
+              print(io,"| z$(i) ")
           end
-          println(io, " g |")
+          println(io, "| g | x |")
           println(io,"|-")
           for i=1:length(p)
-              print(io, "| ", p[i].x, " |")
               for j=1:nz
-                  print(io," ", p[i].z[j], " |")
+                  print(io,"| ", p[i].z[j], " ")
               end
-              print(io, " ", p[i].g, " |\n")
+              print(io, "| ", p[i].g, " ")
+              print(io, "| ", p[i].x, " |\n")
           end
           println(io,"|-")
       else

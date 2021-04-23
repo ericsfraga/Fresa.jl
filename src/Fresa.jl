@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-23 14:53]"
+version = "[2021-04-23 16:35]"
 using Dates
 using Distributed
 using Printf
@@ -38,18 +38,17 @@ function Base.show(io::IO, p::Array{Point,1})
     if np > 0
         nz = length(p[1].z)
         println(io, "|-")
-        print(io,"| x |")
         for i=1:nz
-            print(io," z$(i) |")
+            print(io,"| z$(i) ")
         end
-        println(io, " g |")
+        println(io, "| g | x |")
         println(io,"|-")
         for i=1:length(p)
-            print(io, "| ", p[i].x, " |")
             for j=1:nz
-                print(io," ", p[i].z[j], " |")
+                print(io,"| ", p[i].z[j], " ")
             end
-            print(io, " ", p[i].g, " |\n")
+            print(io, "| ", p[i].g, " ")
+            print(io, "| ", p[i].x, " |\n")
         end
         println(io,"|-")
     else
