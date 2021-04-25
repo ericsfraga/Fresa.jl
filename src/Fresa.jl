@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-23 16:35]"
+version = "[2021-04-25 18:55]"
 using Dates
 using Distributed
 using Printf
@@ -473,7 +473,7 @@ function solve(f, p0, domain;        # required arguments
                npop = 10,            # population size: fixed (single value) or dynamic (tuple)
                nrmax = 5,            # number of runners maximum
                ns = 100,             # number of stable solutions for stopping
-               output = 5,           # how often to output information
+               output = 1,           # how often to output information
                plotvectors = false,  # generate output file for search plot
                steepness = 1.0,      # show steep is the adjustment shape for fitness
                tolerance = 0.001,    # tolerance for similarity detection
@@ -608,14 +608,22 @@ function solve(f, p0, domain;        # required arguments
         print(stderr, ": $gen np=$(length(newpop))/$npop",
               archiveelite ? " na=$(length(archive))" : "",
               " with most fit z=$(best.z)           \r")
-        if output != 0 && gen%output == 0
-            @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                    (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
-            for i = 1:length(best.z)
-                print(" $(best.z[i]) |")
+        # if output has been requested, check to see if output is
+        # required now and then also check to see if the frequency
+        # needs to be reduced.
+        if output != 0
+            if gen%output == 0
+                @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                        (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
+                for i = 1:length(best.z)
+                    print(" $(best.z[i]) |")
+                end
+                print(" $(best.g) |")
+                println()
             end
-            print(" $(best.g) |")
-            println()
+            if 10^(floor(log10(gen))) > output
+                output = 10^(Int(floor(log10(gen))))
+            end
         end
         if parallel
             # create array to store all new points; we evaluate them

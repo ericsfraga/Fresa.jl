@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-04-23 16:35]"
+  version = "[2021-04-25 18:55]"
   using Dates
   using Distributed
   using Printf
@@ -734,7 +734,7 @@ The =fitnesstype= is used for ranking members of a population for multi-objectiv
 
 The size of the population, =npop=, may be a single integer value or a =Tuple= of two integer values.  The latter, which is only for multi-objective optimization problems, gives a range of possible values for the population size.  This size will be chosen dynamically within this range depending on the size of the non-dominated set at the start of each generation.  Specifically, the population will be set to 2 times that size.  This allows for sufficient diversity in the population while minimizing computation time.  It has been seen that Fresa is largely insensitive to the population size: there is [[https://www.youtube.com/watch?v=kfDrQhhswLk][an interesting video]] by Marleen de Jonge & Daan van den Berg discussing the robustness of the plant propagation algorithm with respect to the parameters for the algorithm, using a slightly different version of the algorithm which does not use tournament selection but instead selects the top =npop= members of the population for propagation.
 
-The output of progress during the search is controlled by the ~output~ optional argument.  This should be an integer value that indicates how often a summary of the current population is generated and sent to standard output.  The default is 5 for every 5th generation.  A value of 0 will eliminate all output from the solve method.
+The output of progress during the search is controlled by the ~output~ optional argument.  This should be an integer value that indicates how often a summary of the current population is generated and sent to standard output.  It will be the initial value used.  The value will go up in powers of 10 as the generations proceed to ensure that there is sufficient granularity without overwhelming the output file.  The default is 1 to output every generation until the 10th, then 10 until the 100th, and so on.  A value of 0 will eliminate all output from the solve method.
 #+name: solve
 #+begin_src julia
   """ 
@@ -768,7 +768,7 @@ The output of progress during the search is controlled by the ~output~ optional 
                  npop = 10,            # population size: fixed (single value) or dynamic (tuple)
                  nrmax = 5,            # number of runners maximum
                  ns = 100,             # number of stable solutions for stopping
-                 output = 5,           # how often to output information
+                 output = 1,           # how often to output information
                  plotvectors = false,  # generate output file for search plot
                  steepness = 1.0,      # show steep is the adjustment shape for fitness
                  tolerance = 0.001,    # tolerance for similarity detection
@@ -903,14 +903,22 @@ The output of progress during the search is controlled by the ~output~ optional 
           print(stderr, ": $gen np=$(length(newpop))/$npop",
                 archiveelite ? " na=$(length(archive))" : "",
                 " with most fit z=$(best.z)           \r")
-          if output != 0 && gen%output == 0
-              @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                      (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
-              for i = 1:length(best.z)
-                  print(" $(best.z[i]) |")
+          # if output has been requested, check to see if output is
+          # required now and then also check to see if the frequency
+          # needs to be reduced.
+          if output != 0
+              if gen%output == 0
+                  @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                          (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
+                  for i = 1:length(best.z)
+                      print(" $(best.z[i]) |")
+                  end
+                  print(" $(best.g) |")
+                  println()
               end
-              print(" $(best.g) |")
-              println()
+              if 10^(floor(log10(gen))) > output
+                  output = 10^(Int(floor(log10(gen))))
+              end
           end
           if parallel
               # create array to store all new points; we evaluate them
