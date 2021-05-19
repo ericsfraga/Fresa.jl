@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-05-13 11:32]"
+  version = "[2021-05-17 11:00]"
   using Dates
   using Distributed
   using Printf
@@ -1535,13 +1535,13 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 #+begin_src emacs-lisp :results none
   (org-content 2)
   (setq-local htmlize-output-type 'inline-css)
-  (setq-local org-babel-pre-tangle-hook
-              (list
-               (lambda ()
-                 (with-current-buffer (find-file-noselect "Project.toml")
-                   (if (re-search-forward "version = \"[^\"]*\"")
-                       (replace-match (concat "version = \"" (format-time-string "%Y.%m.%d") "\"")))
-                   (save-buffer)))))
+  ;; (setq-local org-babel-pre-tangle-hook
+  ;;             (list
+  ;;              (lambda ()
+  ;;                (with-current-buffer (find-file-noselect "Project.toml")
+  ;;                  (if (re-search-forward "version = \"[^\"]*\"")
+  ;;                      (replace-match (concat "version = \"" (format-time-string "%Y.%m.%d") "\"")))
+  ;;                  (save-buffer)))))
 #+end_src
 ** emacs local variables
 
