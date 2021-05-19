@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-05-17 11:00]"
+  version = "[2021-05-19 11:21]"
   using Dates
   using Distributed
   using Printf
@@ -212,7 +212,7 @@ A trivial function that simply creates a new =Point= object.  This exists for tw
 The optional =parameters= and =ancestor= arguments are passed through to their respective destinations: the objective function for the parameters and the point creation for the ancestor linking.
 #+name: createpoint
 #+begin_src julia
-  function createpoint(x,f,parameters,ancestor)
+  function createpoint(x,f,parameters = nothing,ancestor = nothing)
       z = 0
       g = 0
       if typeof(parameters) != Nothing
@@ -234,8 +234,8 @@ The optional =parameters= and =ancestor= arguments are passed through to their r
       return p
   end
 #+end_src 
-and we provide two versions with simple calling sequences:
-#+begin_src julia
+(*deprecated*) and we provide two versions with simple calling sequences:
+#+begin_src julia :tangle no
   function createpoint(x,f)
       return createpoint(x,f,nothing,nothing)
   end

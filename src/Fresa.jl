@@ -1,6 +1,6 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 module Fresa
-version = "[2021-04-25 19:04]"
+version = "[2021-05-19 11:21]"
 using Dates
 using Distributed
 using Printf
@@ -82,7 +82,7 @@ end
 # Domain <<domain>>:1 ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
-function createpoint(x,f,parameters,ancestor)
+function createpoint(x,f,parameters = nothing,ancestor = nothing)
     z = 0
     g = 0
     if typeof(parameters) != Nothing
@@ -104,15 +104,6 @@ function createpoint(x,f,parameters,ancestor)
     return p
 end
 # createpoint ends here
-
-# [[file:../fresa.org::*create a point][create a point:2]]
-function createpoint(x,f)
-    return createpoint(x,f,nothing,nothing)
-end
-function createpoint(x,f,parameters)
-    return createpoint(x,f,parameters,nothing)
-end
-# create a point:2 ends here
 
 # [[file:../fresa.org::fitness][fitness]]
 function fitness(pop, fitnesstype, steepness, generation, ngen)
