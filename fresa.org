@@ -90,7 +90,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-05-19 11:21]"
+  version = "[2021-05-19 14:58]"
   using Dates
   using Distributed
   using Printf
@@ -773,7 +773,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                  steepness = 1.0,      # show steep is the adjustment shape for fitness
                  tolerance = 0.001,    # tolerance for similarity detection
                  usemultiproc = false) # parallel processing by Fresa itself?
-      output != 0 && println("** solve $f $(orgtimestamp(now()))")
+      output > 0 && println("** solve $f $(orgtimestamp(now()))")
       tstart = time()
       nf = 1                   # number of function evaluations
       npruned = 0              # number solutions pruned from population
@@ -782,7 +782,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       if archiveelite
           archive = Point[]
       end
-      if output != 0
+      if output > 0
           println("#+name: $(f)settings")
           println("| variable | value |")
           println("|-")
@@ -800,7 +800,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       end
       if plotvectors
           plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
-          output != 0 && println(": output of vectors for subsequent plotting")
+          output > 0 && println(": output of vectors for subsequent plotting")
       end
       # if npop was given as a tuple, we are to have a dynamic
       # population size.  This only makes sense for multi-objective
@@ -825,7 +825,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       # we use parallel computing if we have more than one processor
       parallel = usemultiproc && nprocs() > 1
       # parallel = false
-      if output != 0
+      if output > 0
           println(": function evaluations performed ",
                   parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
           println("*** initial population")
@@ -836,7 +836,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           # will be used to collect results from worker processors
           results = Array{Future,1}(undef, nprocs())
       end
-      if output != 0
+      if output > 0
           println("*** evolution")
           println("#+name: $(f)evolution")
           println("#+plot: ind:1 deps:(6) with:\"points pt 7\" set:\"logscale x\"")
@@ -900,24 +900,26 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           else
               newpop = Point[]
           end
-          print(stderr, ": $gen np=$(length(newpop))/$npop",
-                archiveelite ? " na=$(length(archive))" : "",
+          if output >= 0
+              print(stderr, ": $gen np=$(length(newpop))/$npop",
+                    archiveelite ? " na=$(length(archive))" : "",
                 " with most fit z=$(best.z)           \r")
-          # if output has been requested, check to see if output is
-          # required now and then also check to see if the frequency
-          # needs to be reduced.
-          if output != 0
-              if gen%output == 0
-                  @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                          (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
-                  for i = 1:length(best.z)
-                      print(" $(best.z[i]) |")
+              # if output has been requested, check to see if output is
+              # required now and then also check to see if the frequency
+              # needs to be reduced.
+              if output > 0
+                  if gen%output == 0
+                      @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                              (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
+                      for i = 1:length(best.z)
+                          print(" $(best.z[i]) |")
+                      end
+                      print(" $(best.g) |")
+                      println()
                   end
-                  print(" $(best.g) |")
-                  println()
-              end
-              if 10^(floor(log10(gen))) > output
-                  output = 10^(Int(floor(log10(gen))))
+                  if 10^(floor(log10(gen))) > output
+                      output = 10^(Int(floor(log10(gen))))
+                  end
               end
           end
           if parallel
@@ -1006,7 +1008,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
               pop = newpop
           end
       end
-      output != 0 && println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+      output > 0 && println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
       if plotvectors
           close(plotvectorio)
       end
