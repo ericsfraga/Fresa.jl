@@ -1,7 +1,7 @@
 name = "Fresa"
 uuid = "35d66a44-7359-11ea-387b-f94ed747d8e0"
 authors = ["Eric S Fraga <e.fraga@ucl.ac.uk>"]
-version = "2021.05.20"
+version = "2021.05.25"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

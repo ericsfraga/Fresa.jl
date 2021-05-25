@@ -1,6 +1,8 @@
 # [[file:../fresa.org::modulestart][modulestart]]
+# All code copyright © Eric S Fraga. 
+# Date of last change in version variable below.
 module Fresa
-version = "[2021-05-20 17:03]"
+version = "[2021-05-25 14:39]"
 using Dates
 using Distributed
 using Printf

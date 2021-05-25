@@ -91,8 +91,10 @@ The /Fresa/ method is a population based evolutionary algorithm which mimics the
 Fresa depends on a number of packages that should be available in any Julia installation.  These are packages for displaying output and using parallel computing capabilities when available on the actual hardware.
 #+name: modulestart
 #+begin_src julia
+  # All code copyright © Eric S Fraga. 
+  # Date of last change in version variable below.
   module Fresa
-  version = "[2021-05-25 13:42]"
+  version = "[2021-05-25 14:39]"
   using Dates
   using Distributed
   using Printf
