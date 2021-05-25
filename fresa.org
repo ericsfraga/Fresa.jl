@@ -43,7 +43,9 @@ Creating a new package: https://www.juliabloggers.com/package-development-in-jul
 - need to specify dependencies in the =Project.toml= file as well.  The =uuid= for each project can be found in the =~/.julia/environments/Project.toml= file.  But I don't understand how these are updated.
 There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Julia packages]].
 * Overview and introduction
-/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The move to Julia is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
+/Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The quite interesting story of the strawberry plant [[https://strawberryplants.org/strawberry-plant/][can be found elsewhere]].
+
+The move to using Julia for the implementation of this algorithm is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
 
@@ -90,7 +92,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: modulestart
 #+begin_src julia
   module Fresa
-  version = "[2021-05-19 14:58]"
+  version = "[2021-05-25 13:42]"
   using Dates
   using Distributed
   using Printf
