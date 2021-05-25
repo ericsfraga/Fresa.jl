@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-05-25 14:39]"
+version = "[2021-05-25 17:23]"
 using Dates
 using Distributed
 using Printf
@@ -462,6 +462,7 @@ function solve(f, p0, domain;        # required arguments
                archiveelite = false, # save thinned out elite members
                elite = true,    # elitism by default
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
+               multithreading = false, # use multiple threads for objective function evaluation
                ngen = 100,           # number of generations
                npop = 10,            # population size: fixed (single value) or dynamic (tuple)
                nrmax = 5,            # number of runners maximum
@@ -520,19 +521,22 @@ function solve(f, p0, domain;        # required arguments
             npop = npop[1]      # be optimistic and use minimum given
         end
     end
+    # we use multithreading if asked for *and* if we have more than
+    # one thread available
+    multithreading = multithreading && Threads.nthreads() > 1 
     # we use parallel computing if we have more than one processor
     parallel = usemultiproc && nprocs() > 1
     # parallel = false
     if output > 0
         println(": function evaluations performed ",
-                parallel ? "in parallel with $(nprocs()) processors." : "sequentially.")
+                parallel
+                ? "in parallel with $(nprocs()) processors."
+                : (multithreading
+                   ? "in parallel with $(Threads.nthreads()) threads."
+                   : "sequentially."))
         println("*** initial population")
         println("#+name: $(f)initial")
         println(pop)
-    end
-    if parallel
-        # will be used to collect results from worker processors
-        results = Array{Future,1}(undef, nprocs())
     end
     if output > 0
         println("*** evolution")
@@ -620,13 +624,16 @@ function solve(f, p0, domain;        # required arguments
                 end
             end
         end
-        if parallel
-            # create array to store all new points; we evaluate them
-            # later hopefully in parallel.  Also keep track of the
-            # points from which new points are derived to provide the
-            # backward link through the evolution
+        # if we are using any form of multiprocessing, either threads
+        # or multiple cores, create an array to store all new points
+        # which we evaluate later in parallel.  Ideally, also keep
+        # track of the points from which new points are derived to
+        # provide the backward link through the evolution but this is
+        # currently disabled as the creation of the Ancestor object
+        # requires more information than I am currently storing away.
+        if multithreading || parallel
             x = typeof(newpop[1].x)[]
-            points = Point[]
+            # points = Point[]
         end
         # now loop through population, applying selection and then
         # generating neighbours
@@ -657,9 +664,9 @@ function solve(f, p0, domain;        # required arguments
                 # for parallel evaluation, we store the neighbours and
                 # evaluate them later; otherwise, we evaluate
                 # immediately and save the resulting point
-                if parallel
+                if multithreading || parallel
                     push!(x, newx)
-                    push!(points, pop[s])
+                    # push!(points, pop[s])
                 else
                     push!(newpop, createpoint(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
                     if plotvectors
@@ -674,8 +681,19 @@ function solve(f, p0, domain;        # required arguments
             splice!(pop, s)
         end
         # if we are making use of parallel computing, we evaluate all
-        # points generated in previous loop.  
-        if parallel
+        # points generated in previous loop.  Parallel processing is
+        # done either via multithreading or with multiple
+        # processors.  The former is easier as it's based on shared
+        # memory.
+        if multithreading       # using threads and shared memory
+            results = Array{Point}(undef,length(x))
+            Threads.@threads for i ∈ 1:length(x)
+                results[i] = createpoint(x[i],f,parameters)
+            end
+            append!(newpop, results)
+        elseif parallel        # using multiple processors with remote calls
+            # will be used to collect results from worker processors
+            results = Array{Future,1}(undef, nprocs())
             i = 0;
             while i < length(x)
                 # issue remote evaluation call
