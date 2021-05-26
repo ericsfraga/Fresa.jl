@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-05-25 17:23]"
+version = "[2021-05-26 12:14]"
 using Dates
 using Distributed
 using Printf
@@ -632,7 +632,7 @@ function solve(f, p0, domain;        # required arguments
         # currently disabled as the creation of the Ancestor object
         # requires more information than I am currently storing away.
         if multithreading || parallel
-            x = typeof(newpop[1].x)[]
+            x = Any[] # typeof(newpop[1].x)[]
             # points = Point[]
         end
         # now loop through population, applying selection and then
