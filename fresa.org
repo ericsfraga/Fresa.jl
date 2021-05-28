@@ -1,6 +1,6 @@
 # Note: export to HTML using twbs (=,ewh=)
 
-#+title: Fresa, a plant propagation algorithm
+#+title: The Fresa plant propagation algorithm for optimization
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
 #+options: num:t ^:nil toc:t tex:imagemagick
