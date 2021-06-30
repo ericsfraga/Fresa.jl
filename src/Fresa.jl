@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-05-26 12:14]"
+version = "[2021-05-28 12:37]"
 using Dates
 using Distributed
 using Printf
@@ -325,10 +325,12 @@ end
 function prune(pop :: AbstractArray, tolerance)
     npruned = 0
     z = map(p->p.z, pop)
-    # println("typeof(z)=$(typeof(z))")
+    @show z[1]
+    println("typeof(z)=$(typeof(z))")
     l = length(z)
-    # println("typeof(z[1])=$(typeof(z[1]))")
+    println("typeof(z[1])=$(typeof(z[1]))")
     n = length(z[1])
+    @show n
     zmin = zeros(n)
     zmax = zeros(n)
     try 
@@ -357,6 +359,7 @@ function prune(pop :: AbstractArray, tolerance)
         end
         (pruned, npruned)
     catch e
+        println("prune method error: $e")
         if isa(e, MethodError)
             # probably (possibly) due to objective function type not
             # being a number.  In this case, we try again but looking
@@ -388,17 +391,22 @@ function prune(pop :: AbstractArray, tolerance)
                 end
                 (pruned, npruned)        
             catch e
+                println("prune method second error: $e")
                 if isa(e, MethodError)
                     # this is now probably/possibly due to not being
                     # to find the difference between two decision
                     # points.  In that case, return the whole
                     # original population
                     (pop, 0)
-                end
-            end
-        end
-    end
-end
+                else
+                    @error "Unexpected error in prune method for points" e
+                end             # if method error
+            end                 # try pruning on points
+        else
+            @error "Unexpected error in prune method for objective function values" e
+        end                     # if is a method error
+    end                         # try pruning on objective function values
+end                             # function
 # prune ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
@@ -469,6 +477,7 @@ function solve(f, p0, domain;        # required arguments
                ns = 100,             # number of stable solutions for stopping
                output = 1,           # how often to output information
                plotvectors = false,  # generate output file for search plot
+               populationoutput = false, # output population every generation?
                steepness = 1.0,      # show steep is the adjustment shape for fitness
                tolerance = 0.001,    # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
@@ -560,6 +569,11 @@ function solve(f, p0, domain;        # required arguments
         end
         # sort
         index = sortperm(fit)
+        if populationoutput
+            println("\nGeneration $gen full population is:")
+            println(pop)
+            println("Fitness vector: $fit")
+        end
         # and remember best which really only makes sense in single
         # criterion problems but is best in multi-objective case in
         # the ranking measure used by Fresa
