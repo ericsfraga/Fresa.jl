@@ -47,18 +47,26 @@ There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Jul
 
 The move to using Julia for the implementation of this algorithm is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
-All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga, all rights reserved.  Permission is given to use this code for evaluation purposes. The code is made available with no warranty or guarantee of any kind.  Use at own risk.  
+All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[file:LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  Feedback, including bug reports, is most welcome.
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  The software itself may be cited using doi:10.5281/zenodo.5045812. 
 
 A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  Specifically, as /Fresa/ is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  /Fresa/ has been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
+
+: add Fresa.jl
+
+in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
+
+#+begin_comment
+Specifically, as /Fresa/ is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
 
 : add http://github.com/ericsfraga/Fresa.jl
 
 to install /Fresa/.  You exit the Julia package manager by hitting your =Backspace= key.
+#+end_comment
 
 /Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
