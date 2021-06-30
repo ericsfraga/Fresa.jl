@@ -77,6 +77,7 @@ to install /Fresa/.  You exit the Julia package manager by hitting your =Backspa
 ** Version information <<version>>
 Major version log:
 
+- June 2021 :: first public release, v2021.06.30, via =github= and Zenodo: doi:10.5281/zenodo.5045812.
 - May 2021 :: implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
 - April 2021 ::
   1. the domain for the search, which has to be bounded, is now defined by [[domain][a =Domain= data structure]] which allows for different representations of solutions in the search space in a given population;
@@ -103,7 +104,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-05-28 12:37]"
+  version = "[2021-06-30 14:22]"
   using Dates
   using Distributed
   using Printf
