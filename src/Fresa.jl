@@ -2,14 +2,14 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-05-28 12:37]"
+version = "[2021-07-03 13:58]"
 using Dates
 using Distributed
 using Printf
 function __init__()
     if myid() == 1
         println("# -*- mode: org; eval: (org-content 3); -*-")
-        println(": Fresa PPA version $version")
+        println(": Fresa PPA last change $version")
     end
 end
 # modulestart ends here

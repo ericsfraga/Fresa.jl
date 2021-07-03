@@ -72,23 +72,27 @@ to install /Fresa/.  You exit the Julia package manager by hitting your =Backspa
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
-  scp -r fresa.html defaultsteepness.png sharpersteepness.png socrates.ucl.ac.uk:html.pub
+  scp -r fresa.html \
+      defaultsteepness.png \
+      LICENSE \
+      sharpersteepness.png \
+      socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information <<version>>
 Major version log:
 
-- June 2021 :: first public release, v2021.06.30, via =github= and Zenodo: doi:10.5281/zenodo.5045812.
-- May 2021 :: implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
-- April 2021 ::
+- June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
+- May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
+- April 2021 :: *v7*,
   1. the domain for the search, which has to be bounded, is now defined by [[domain][a =Domain= data structure]] which allows for different representations of solutions in the search space in a given population;
   2. allow setting the steepness of the [[adjustfitness][fitness adjustment function]].  This is an outcome of the presentation by Wouter Vrielink at the PPA mini-zoomposium I organised in March 2021 to discuss the impact of PPA parameters on the effectiveness of the search procedure.
-- March 2021 :: one of the required arguments to the =solve= function has been changed.  Specifically, the initial guess must now be a population of =Point= objects and not a single decision variable.  See [[examples][examples]] below for how to create this initial population easily.
+- March 2021 :: *v6*, one of the required arguments to the =solve= function has been changed.  Specifically, the initial guess must now be a population of =Point= objects and not a single decision variable.  See [[examples][examples]] below for how to create this initial population easily.
 - April 2020 :: moved all code to [[https://github.com/ericsfraga/Fresa.jl][github]].  This should make it easier for others to use the code.
-- September 2019 :: The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
-- July 2019 :: The returned values for ~Fresa.solve~ in the single objective case have changed.  Instead of separate returned values for the decision variables, the objective function value, etc., a single ~Fresa.Point~ value is returned for the best point found, along with the full final population as an array of ~Fresa.point~ values.
-- June 2019 :: The calling interface for using the =Fresa.solve= method has changed.  Specifically, when the search space is defined by data structures that are not a vector of =Float64= values, the user must create a =Fresa.neighbour= function definition for the specific data structure type.
-- September 2017 :: moved to an object representation for points in the search space and allowed for parallel evaluation of the objective function when multiple processors are available.
-- November 2016 :: first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
+- September 2019 :: *v5*, The objective function values, in the ~Point~ type, are now a generic =Vector= instead of an array of floating point numbers.  This opens up *Fresa* to be used for objective functions which are not necessarily simple scalar values.  The use case has been illustrated through a case study in stochastic optimization, specifically /design under uncertainty/.  Details available from the author.
+- July 2019 :: *v4*, The returned values for ~Fresa.solve~ in the single objective case have changed.  Instead of separate returned values for the decision variables, the objective function value, etc., a single ~Fresa.Point~ value is returned for the best point found, along with the full final population as an array of ~Fresa.point~ values.
+- June 2019 :: *v3*, The calling interface for using the =Fresa.solve= method has changed.  Specifically, when the search space is defined by data structures that are not a vector of =Float64= values, the user must create a =Fresa.neighbour= function definition for the specific data structure type.
+- September 2017 :: *v2*, moved to an object representation for points in the search space and allowed for parallel evaluation of the objective function when multiple processors are available.
+- November 2016 :: *v1*, first [[http://www.julialang.org/][Julia]] plant propagation algorithm implementation.
 A list [[*Recent change history][summary of recent change history]] is given below.
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
@@ -104,14 +108,14 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-06-30 14:22]"
+  version = "[2021-07-03 13:58]"
   using Dates
   using Distributed
   using Printf
   function __init__()
       if myid() == 1
           println("# -*- mode: org; eval: (org-content 3); -*-")
-          println(": Fresa PPA version $version")
+          println(": Fresa PPA last change $version")
       end
   end
 #+end_src
