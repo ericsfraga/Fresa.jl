@@ -60,14 +60,6 @@ This document has been written using [[http://orgmode.org/][org mode]] in the [[
 
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
 
-#+begin_comment
-Specifically, as /Fresa/ is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
-
-: add http://github.com/ericsfraga/Fresa.jl
-
-to install /Fresa/.  You exit the Julia package manager by hitting your =Backspace= key.
-#+end_comment
-
 /Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Upload to web site                                        :noexport:
 #+name: upload
@@ -108,7 +100,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-09 14:27]"
+  version = "[2021-07-09 14:28]"
   using Dates
   using Distributed
   using Printf
