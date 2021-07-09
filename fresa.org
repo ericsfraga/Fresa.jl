@@ -56,7 +56,7 @@ A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the d
 ** Installation
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  /Fresa/ has been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
 
-: add Fresa.jl
+: add Fresa
 
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
 
@@ -108,7 +108,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-03 13:58]"
+  version = "[2021-07-09 14:27]"
   using Dates
   using Distributed
   using Printf
