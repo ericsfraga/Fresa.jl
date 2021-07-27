@@ -20,7 +20,16 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [8/14]                           :noexport:
+* TODO bugs and new features [8/17]                           :noexport:
+- [ ] use Catalyst.jl for reaction modelling in Fresa
+  https://catalyst.sciml.ai/stable/
+- [ ] work on prune method in Fresa
+- [ ] think about Fresa's neighbourhood function, single dimension variation : Re: on popSize
+  - From :: Wouter Vrielink <wouter-vrielink@hotmail.com>
+  - Subject :: Re: on popSize
+  - Email :: [[gnus:nnml+outlook:mail.t3610#AM0PR07MB41784C775EC2916C6DFAFEC1E46F9@AM0PR07MB4178.eurprd07.prod.outlook.com][Email from Wouter Vrielink: Re: on popSize]]
+
+  [2021-03-12 Fri 11:29]
 - consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
 - [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
 - [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
@@ -100,7 +109,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-09 14:28]"
+  version = "[2021-07-27 12:58]"
   using Dates
   using Distributed
   using Printf
