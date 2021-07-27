@@ -20,7 +20,8 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [8/17]                           :noexport:
+* TODO bugs and new features [8/18]                           :noexport:
+- [ ] replace use of =typeof()= and =isa()= with the infix =isa= operator
 - [ ] use Catalyst.jl for reaction modelling in Fresa
   https://catalyst.sciml.ai/stable/
 - [ ] work on prune method in Fresa
@@ -109,7 +110,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-27 12:58]"
+  version = "[2021-07-27 16:37]"
   using Dates
   using Distributed
   using Printf
