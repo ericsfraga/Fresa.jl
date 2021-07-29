@@ -1,5 +1,5 @@
 # [[file:../fresa.org::testmultiobjective][testmultiobjective]]
-using Fresa
+; using Fresa
 nx = 2
 # specify the domain for the search, x ∈ [0,10]ⁿ
 domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
@@ -15,13 +15,13 @@ pareto, population = Fresa.solve(f, p0, domain;
                                  #fitnesstype = :borda,
                                  fitnesstype = :nondominated,
                                  ngen=200,
-                                 npop=20,
+                                 npop=(20,40),
                                  plotvectors=true,
                                  tolerance=0.01)
 
 println("**** Pareto front:")
-println("#+plot: ind:2 deps:(3) with:points")
+println("#+plot: ind:1 deps:(2) with:points")
 println(population[pareto])
 #using BenchmarkTools
-#@benchmark
+#@benchmark;
 # testmultiobjective ends here

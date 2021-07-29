@@ -20,8 +20,9 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [8/18]                           :noexport:
-- [ ] replace use of =typeof()= and =isa()= with the infix =isa= operator
+* TODO bugs and new features [11/20]                          :noexport:
+- [ ] use =all= (and =any=?) in the form =all(predicate,iterable)= as it should be faster than how I do this now.
+- [X] replace use of =typeof()= and =isa()= with the infix =isa= operator
 - [ ] use Catalyst.jl for reaction modelling in Fresa
   https://catalyst.sciml.ai/stable/
 - [ ] work on prune method in Fresa
@@ -31,12 +32,13 @@
   - Email :: [[gnus:nnml+outlook:mail.t3610#AM0PR07MB41784C775EC2916C6DFAFEC1E46F9@AM0PR07MB4178.eurprd07.prod.outlook.com][Email from Wouter Vrielink: Re: on popSize]]
 
   [2021-03-12 Fri 11:29]
-- consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
+- [X] consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
 - [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
 - [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
-- [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
+- [ ] use a grey code for defining neighbours for integer programming; consider the C1P problem for instance.
 - [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
-- [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+- [X] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+  - actually ended up using multithreading instead as it fits the solution procedure better.
 - [ ] use constraint information in fitness calculations
 - [X] Pareto set should not include infeasible points (unless all are infeasible?)
 - [X] keep Pareto set as elite
@@ -110,7 +112,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-29 15:21]"
+  version = "[2021-07-29 17:24]"
   using Dates
   using Distributed
   using Printf
@@ -235,12 +237,12 @@ The optional =parameters= and =ancestor= arguments are passed through to their r
   function createpoint(x,f,parameters = nothing,ancestor = nothing)
       z = 0
       g = 0
-      if typeof(parameters) != Nothing
+      if ! ( parameters isa Nothing )
           (z, g) = f(x, parameters)
       else
           (z, g) = f(x)
       end
-      if typeof(g) == Int
+      if g isa Int
           g = Float64(g)
       end
       p = Nothing
@@ -374,7 +376,7 @@ See below for a discussion about the second function argument, =steepness=, and 
   function adjustfitness(fitness, steepness, generation, ngen)
       if (maximum(fitness)-minimum(fitness)) > eps()
           s = steepness
-          if isa(steepness, Tuple)
+          if steepness isa Tuple
               a = (2*steepness[1]-2*steepness[2])/3
               b = - (3*steepness[1] - 3*steepness[2])/ngen^2
               d = steepness[1]
@@ -598,7 +600,7 @@ Each point encountered in the search, other than points in the initial populatio
 #+begin_src julia
   function printHistoryTrace(p :: Point)
       a = p.ancestor
-      while typeof(a) != Nothing
+      while ! (a isa Nothing)
           println("| $(a.generation) | $(a.fitness) |")
           a = a.point.ancestor
       end
@@ -648,7 +650,7 @@ Previously, pruning was done on objective function values.  In the case where th
           (pruned, npruned)
       catch e
           # println("prune method error: $e")
-          if isa(e, MethodError)
+          if e isa MethodError
               # probably (possibly) due to objective function type not
               # being a number.  In this case, we try again but looking
               # at the decision variable values instead.
@@ -680,7 +682,7 @@ Previously, pruning was done on objective function values.  In the case where th
                   (pruned, npruned)        
               catch e
                   # println("prune method second error: $e")
-                  if isa(e, MethodError)
+                  if e isa MethodError
                       # this is now probably/possibly due to not being
                       # to find the difference between two decision
                       # points.  In that case, return the whole
@@ -837,7 +839,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       # optimization problems so a warning will be given otherwise.
       npopmin = npop
       npopmax = npop
-      if isa(npop, Tuple)
+      if npop isa Tuple
           if nz > 1
               npopmin = npop[1]
               npopmax = npop[2]
@@ -1161,7 +1163,7 @@ This test uses a simple quadratic objective function, defined within.  All point
   # specify the domain for the search, x ∈ [0,10]ⁿ
   domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
   # the actual objective function
-  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
+  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   # create the initial population consisting of this single point
   p0 = [Fresa.createpoint(x0,f)]
   # now invoke Fresa to solve the problem
@@ -1231,12 +1233,12 @@ for \(n>1\).
                                    #fitnesstype = :borda,
                                    fitnesstype = :nondominated,
                                    ngen=200,
-                                   npop=20,
+                                   npop=(20,40),
                                    plotvectors=true,
                                    tolerance=0.01)
-
+  
   println("**** Pareto front:")
-  println("#+plot: ind:2 deps:(3) with:points")
+  println("#+plot: ind:1 deps:(2) with:points")
   println(population[pareto])
   #using BenchmarkTools
   #@benchmark
@@ -1331,7 +1333,7 @@ Using the results obtained above, we use the linking information for all the poi
 #+begin_src julia :tangle test/minlp.jl
   println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
   ancestor = best.ancestor;
-  while ancestor != Some(nothing) && typeof(ancestor) != Nothing
+  while ancestor != Some(nothing) && ! (ancestor isa Nothing)
       global ancestor
       println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
       ancestor = ancestor.point.ancestor

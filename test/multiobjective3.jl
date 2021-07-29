@@ -1,5 +1,5 @@
 # [[file:../fresa.org::testmultiobjective3][testmultiobjective3]]
-using Fresa
+; using Fresa
 using Profile
 nx = 5
 # specify the domain for the search, x ∈ [0,1]ⁿ
@@ -24,5 +24,5 @@ p0 = [Fresa.createpoint(x,f)]
 end
 println("*** profile data")
 println(": this may take some time so please wait")
-Profile.print(format=:flat, sortedby=:count)
+Profile.print(format=:flat, sortedby=:count);
 # testmultiobjective3 ends here
