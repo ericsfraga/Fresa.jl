@@ -110,7 +110,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-27 16:37]"
+  version = "[2021-07-29 15:12]"
   using Dates
   using Distributed
   using Printf
@@ -613,10 +613,10 @@ Previously, pruning was done on objective function values.  In the case where th
   function prune(pop :: AbstractArray, tolerance)
       npruned = 0
       z = map(p->p.z, pop)
-      @show z[1]
-      println("typeof(z)=$(typeof(z))")
+      # @show z[1]
+      # println("typeof(z)=$(typeof(z))")
       l = length(z)
-      println("typeof(z[1])=$(typeof(z[1]))")
+      # println("typeof(z[1])=$(typeof(z[1]))")
       n = length(z[1])
       @show n
       zmin = zeros(n)
@@ -647,7 +647,7 @@ Previously, pruning was done on objective function values.  In the case where th
           end
           (pruned, npruned)
       catch e
-          println("prune method error: $e")
+          # println("prune method error: $e")
           if isa(e, MethodError)
               # probably (possibly) due to objective function type not
               # being a number.  In this case, we try again but looking
@@ -679,7 +679,7 @@ Previously, pruning was done on objective function values.  In the case where th
                   end
                   (pruned, npruned)        
               catch e
-                  println("prune method second error: $e")
+                  # println("prune method second error: $e")
                   if isa(e, MethodError)
                       # this is now probably/possibly due to not being
                       # to find the difference between two decision
