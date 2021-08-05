@@ -10,7 +10,7 @@ authors:
     orcid: 0000-0002-5732-6082
     affiliation: 1
 affiliations:
- - name: Sargent Centre for Process Systems Engineerg, Department of Chemical Engineering, University College London (UCL)
+ - name: Sargent Centre for Process Systems Engineering, Department of Chemical Engineering, University College London (UCL)
    index: 1
 date: 5 August 2021
 bibliography: paper.bib
