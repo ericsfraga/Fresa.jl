@@ -28,7 +28,7 @@ There are a number of different ways optimization methods can be categorized: ma
 
 Direct search methods, and especially those based on stochastic searches, are often necessary due to the properties of the optimization problem.  Problems with discontinuities, for instance, are challenging to handle robustly, if at all, using mathematical programming approaches.  Properties such as nonlinear and non-convex behaviour also challenge many solution methods as would models based on ordinary or partial differential equations.  In engineering, models may exhibit noise.  Noise can arise when the objective function is based on data from experiments but noise may also arise when the objective function requires the numerical solution of embedded differential equations, for instance.  Noise in the values of the objective function create difficulties in using derivative information for guiding the search and will, in the best case, lead to sub-optimal results.
 
-Further, many problems, especially in design, have multiple criteria for the evaluation of points in the search space.  Multi-objective optimization is therefore a desirable feature of an optimization solver, although such problems can and are solved using single objective methods through multiple solutions of a suitably modified single objective problem (weighting the objectives; &epsilon;-constraint methods).
+Further, many problems, especially in design, have multiple criteria for the evaluation of points in the search space.  Multi-objective optimization is therefore a desirable feature of an optimization solver.  Although such problems can be and are often solved using single objective methods through multiple solutions of a suitably modified single objective problem (weighting the objectives; $\varepsilon$-constraint methods), a solver which addresses the multi-objective nature of the problem directly is often easier to use.
 
 
 # Features
@@ -41,11 +41,7 @@ One interesting feature of `Fresa` is that it allows for heterogeneous populatio
 
 For multi-objective optimization, different algorithms have been implemented to assign fitness values to individual solutions in the population.  One of these is the non-dominated sorting algorithm, exemplified by the popular NSGA-II genetic algorithm implementation [@deb-2000].  In `Fresa`, other alternatives are fitness values based on the *Hadamard* product of the rankings with respect to the individual criteria [@fraga-amusat-2016a] and another alternative based on the *Borda* sum of those individual rankings.  These latter two fitness assignment methods tend to emphasise solutions found towards the ends of the Pareto frontier whereas the non-dominated sorting algorithm may lead to the ends of the frontier having less representation in the population.
 
-`Fresa` is in the *Julia General Registry* <sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup> and so installation is straightforward, with no dependencies beyond a small number of standard Julia packages.
+`Fresa` is in the [Julia General Registry](https://github.com/JuliaRegistries/General) and so installation is straightforward, with no dependencies beyond a small number of standard Julia packages.
 
 # References
 
-
-# Footnotes
-
-<sup><a id="fn.1" href="#fnr.1">1</a></sup> <https://github.com/JuliaRegistries/General>
