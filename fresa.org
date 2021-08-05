@@ -21,6 +21,7 @@
 
 
 * TODO bugs and new features [11/20]                          :noexport:
+- [ ] create a =CITATION.cff= file so that people know how to cite this code: https://citation-file-format.github.io/
 - [ ] use =all= (and =any=?) in the form =all(predicate,iterable)= as it should be faster than how I do this now.
 - [X] replace use of =typeof()= and =isa()= with the infix =isa= operator
 - [ ] use Catalyst.jl for reaction modelling in Fresa
@@ -112,7 +113,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-29 17:24]"
+  version = "[2021-07-30 17:13]"
   using Dates
   using Distributed
   using Printf
@@ -243,7 +244,7 @@ The optional =parameters= and =ancestor= arguments are passed through to their r
           (z, g) = f(x)
       end
       if g isa Int
-          g = Float64(g)
+          g = float(g)
       end
       p = Nothing
       if rank(z) == 1

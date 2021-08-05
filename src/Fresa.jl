@@ -2,7 +2,7 @@
 ; # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-07-29 17:24]"
+version = "[2021-07-30 15:00]"
 using Dates
 using Distributed
 using Printf
@@ -93,7 +93,7 @@ end;
         (z, g) = f(x)
     end
     if g isa Int
-        g = Float64(g)
+        g = float(g)
     end
     p = Nothing
     if rank(z) == 1
