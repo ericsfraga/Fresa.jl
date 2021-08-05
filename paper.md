@@ -41,8 +41,7 @@ For multi-objective optimization, different algorithms have been implemented to 
 
 `Fresa` is in the *Julia General Registry* <sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup> and so installation is straightforward, with no dependencies beyond a small number of standard Julia packages.
 
-\bibliographystyle{unsrtnat}
-\bibliography{}
+# References
 
 
 # Footnotes
