@@ -47,11 +47,51 @@ There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Jul
 
 The move to using Julia for the implementation of this algorithm is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
+A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  
+** Licence and citing
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[file:LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /Strawberry/ codes are used and this use leads to publications of any type, please do cite the publications listed in the first paragraph of the documentation for [[file:strawberry.org][Strawberry]].  The software itself may be cited using doi:10.5281/zenodo.5045812. 
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include the software itself (doi:10.5281/zenodo.5045812):
 
-A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]
+#+begin_src bibtex
+  @misc{fresa,
+    author={Eric S. Fraga},
+    title={ericsfraga/Fresa.jl: First public release (r2021.06.30)},
+    journal={Zenodo},
+    note={{doi:10.5281/zenodo.5045812}},
+    year={2021},
+    doi={10.5281/zenodo.5045812},
+    url={https://doi.org/10.5281/zenodo.5045812}
+  }
+#+end_src
+
+You may also wish to cite the original paper which led to the development of both /Fresa/ and [[http:strawberry.html][Strawberry]], the first implementation of the plant propagation algorithm in MATLAB:
+
+#+begin_src bibtex
+                    @inproceedings{salhi-fraga-2011a,
+                      author={Abdellah Salhi and Eric S. Fraga},
+                      title={Nature-inspired optimisation approaches and the new plant propagation algorithm},
+                      booktitle={Proceedings of ICeMATH 2011, The International Conference on Numerical Analysis and Optimization},
+                      year={2011},
+                      pages={K2:1--8},
+                      address={Yogyakarta},
+                      month={6}
+                    }
+#+end_src
+
+The tutorial example was the basis for a publication (doi:10.3303/CET1974101):
+
+#+begin_src bibtex
+                    @article{fraga-2019a,
+                      author={Eric S. Fraga},
+                      title={An example of multi-objective optimization for dynamic processes},
+                      journal={Chemical Engineering Transactions},
+                      year={2019},
+                      volume={74},
+                      pages={601-606},
+                      doi={10.3303/CET1974101}
+                    }
+#+end_src
 
 ** Installation
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  /Fresa/ has been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
@@ -108,7 +148,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-03 13:58]"
+  version = "[2021-08-06 16:24]"
   using Dates
   using Distributed
   using Printf
