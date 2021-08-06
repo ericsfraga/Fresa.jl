@@ -1,0 +1,10 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Fraga
+    given-names: Eric S.
+    orcid: https://orcid.org/0000-0002-5732-6082
+title: "ericsfraga/Fresa.jl: First public release (r2021.06.30)"
+version: 7.2.0
+doi: 10.5281/zenodo.5045812
+date-released: 2021-06-30
