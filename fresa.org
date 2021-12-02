@@ -20,8 +20,10 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [11/20]                          :noexport:
-- [ ] create a =CITATION.cff= file so that people know how to cite this code: https://citation-file-format.github.io/
+* TODO bugs and new features [12/22]                          :noexport:
+- [ ] find code that converts JuMP model into callable objective function and constraints functions and implement this as a test example in Fresa:
+  - for instance, look at DictModel from Nonconvex.jl for transforming a JuMP model into a function based model
+- [X] create a =CITATION.cff= file so that people know how to cite this code: https://citation-file-format.github.io/
 - [ ] use =all= (and =any=?) in the form =all(predicate,iterable)= as it should be faster than how I do this now.
 - [X] replace use of =typeof()= and =isa()= with the infix =isa= operator
 - [ ] use Catalyst.jl for reaction modelling in Fresa
@@ -113,7 +115,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-07-30 17:13]"
+  version = "[2021-09-09 15:39]"
   using Dates
   using Distributed
   using Printf
