@@ -702,13 +702,19 @@ Previously, pruning was done on objective function values.  In the case where th
   end                             # function
 #+end_src 
 ** randompopulation -- for testing other methods
-Create a random population of size ~n~ evaluated using ~f~.  This method is only really appropriate for search with real valued vectors as optimization variables.
+Create a random population of size ~n~ evaluated using ~f~.  A single point, =x=, in the search domain must be given as the domain definition is function based and the lower and upper bounds are potentially a function of the location in the space.  The =randompoint= method below is suitable for domains defined by float valued vectors.
 #+name: randompopulation
 #+begin_src julia
-  function randompopulation(n,f,parameters,a,b)
+  function randompopulation(n, f, parameters, p0, domain :: Domain)
       p = Point[]                 # population object
       for j in 1:n
-          push!(p, createpoint(randompoint(a,b), f, parameters))
+          # l = domain.lower(p0.x)
+          # @show l
+          # u = domain.upper(p0.x)
+          # @show u
+          # x = randompoint(l,u)
+          # push!(p, createpoint(x, f, parameters))
+          push!(p, createpoint(randompoint(domain.lower(p0.x), domain.upper(p0.x)), f, parameters))
       end
       p
   end
@@ -716,7 +722,10 @@ Create a random population of size ~n~ evaluated using ~f~.  This method is only
 By default, the following method generates a random point within the search domain.  This does not attempt to find a feasible point, simply one within the box defined by lower, =a=, and upper, =b=, bounds.  
 #+name: randompoint
 #+begin_src julia
-  function randompoint(a,b)
+  function randompoint(a :: Float64, b :: Float64)
+      x = a + rand()*b
+  end
+  function randompoint(a, b)
       x = a + rand(length(a)).*b
   end
 #+end_src 
