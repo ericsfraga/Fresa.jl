@@ -1,5 +1,5 @@
 # [[file:../fresa.org::testsimple][testsimple]]
-; # load in the Fresa optimization package
+# load in the Fresa optimization package
 using Fresa
 # specify the dimension of the search space
 nx = 2
@@ -15,11 +15,11 @@ p0 = [Fresa.createpoint(x0,f)]
 @time best, pop = Fresa.solve(f, p0, domain)
 # output the results
 println("Population at end:\n$pop")
-println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )");
+println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 # testsimple ends here
 
 # [[file:../fresa.org::*simple objective function][simple objective function:2]]
-; println("\nHistory trace, by generation number, of fitness value of solution selected for propagation which results in a new best solution:")
+println("\nHistory trace, by generation number, of fitness value of solution selected for propagation which results in a new best solution:")
 println("#+plot: ind:1 deps:(2) with:\"linespoints pt 7 ps 0.25\" set:nokey set:\"yrange [0:1]\" set:\"xrange [0:*]\" set:\"xlabel 'Generation'\" set:\"ylabel 'fitness'\"")
-Fresa.printHistoryTrace(best);
+Fresa.printHistoryTrace(best)
 # simple objective function:2 ends here

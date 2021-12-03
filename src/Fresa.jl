@@ -1,8 +1,8 @@
 # [[file:../fresa.org::modulestart][modulestart]]
-; # All code copyright © Eric S Fraga. 
+# All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-07-30 15:00]"
+version = "[2021-12-03 12:36]"
 using Dates
 using Distributed
 using Printf
@@ -11,11 +11,11 @@ function __init__()
         println("# -*- mode: org; eval: (org-content 3); -*-")
         println(": Fresa PPA last change $version")
     end
-end;
+end
 # modulestart ends here
 
 # [[file:../fresa.org::pointtype][pointtype]]
-; """
+"""
 
 Point (`x`) in the search space along with objective function values
 (`z[]`) and feasbility indication (`g`).  The type of `x` is problem
@@ -28,11 +28,11 @@ struct Point
     z :: Vector                 # objective function values
     g :: Float64                # constraint violation
     ancestor                    # the parent of this point
-end;
+end
 # pointtype ends here
 
 # [[file:../fresa.org::showpoint][showpoint]]
-; import Base
+import Base
 Base.show(io::IO, p::Fresa.Point) = print(io, "f(", p.x, ")=", p.z, " g=", p.g)
 # and also an array of points
 function Base.show(io::IO, p::Array{Point,1})
@@ -56,35 +56,35 @@ function Base.show(io::IO, p::Array{Point,1})
     else
         print(io,"empty")
     end
-end;
+end
 # showpoint ends here
 
 # [[file:../fresa.org::pointsize][pointsize]]
-; import Base.size
-Base.size(p :: Point) = ();
+import Base.size
+Base.size(p :: Point) = ()
 # pointsize ends here
 
 # [[file:../fresa.org::ancestortype][ancestortype]]
-; struct Ancestor
+struct Ancestor
     point :: Point        # the actual ancestor point
     fitness :: Float64    # the fitness of the ancestor
     generation :: Int32   # the generation when this point was created
-end;
+end
 # ancestortype ends here
 
 # [[file:../fresa.org::*Ancestor <<ancestor>>][Ancestor <<ancestor>>:2]]
-; ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing} ;
+ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing}
 # Ancestor <<ancestor>>:2 ends here
 
-# [[file:../fresa.org::*Domain <<domain>>][Domain <<domain>>:1]]
-; struct Domain
+# [[file:../fresa.org::domaintype][domaintype]]
+struct Domain
     lower                       # function which returns lower bound on search variable(s)
     upper                       # function which returns upper bound on search variable(s)
-end;
-# Domain <<domain>>:1 ends here
+end
+# domaintype ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
-; function createpoint(x,f,parameters = nothing,ancestor = nothing)
+function createpoint(x,f,parameters = nothing,ancestor = nothing)
     z = 0
     g = 0
     if ! ( parameters isa Nothing )
@@ -104,11 +104,11 @@ end;
         error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
     end
     return p
-end;
+end
 # createpoint ends here
 
 # [[file:../fresa.org::fitness][fitness]]
-; function fitness(pop, fitnesstype, steepness, generation, ngen)
+function fitness(pop, fitnesstype, steepness, generation, ngen)
     l = length(pop)
     indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
     indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
@@ -139,11 +139,11 @@ end;
                                              ) / factor;
     end
     fit
-end;
+end
 # fitness ends here
 
 # [[file:../fresa.org::vectorfitness][vectorfitness]]
-; """
+"""
 For single objective problems, the fitness is simply the normalised
 objective function value.
 
@@ -199,11 +199,11 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
     end
     fit
-end;
+end
 # vectorfitness ends here
 
 # [[file:../fresa.org::adjustfitness][adjustfitness]]
-; function adjustfitness(fitness, steepness, generation, ngen)
+function adjustfitness(fitness, steepness, generation, ngen)
     if (maximum(fitness)-minimum(fitness)) > eps()
         s = steepness
         if steepness isa Tuple
@@ -221,11 +221,11 @@ end;
         fit = 0.5*ones(length(fitness))
     end
     fit
-end;
+end
 # adjustfitness ends here
 
 # [[file:../fresa.org::assigndominancefitness][assigndominancefitness]]
-; function assigndominancefitness!(f,v,l)
+function assigndominancefitness!(f,v,l)
     # assign value l to all members of v which dominate rest and then
     # recurse on those which are dominated
     (p, d) = paretoindices(v)
@@ -236,11 +236,11 @@ end;
     else
         l
     end
-end;
+end
 # assigndominancefitness ends here
 
 # [[file:../fresa.org::neighbourarray][neighbourarray]]
-; function neighbour(x :: Array{Float64,1},
+function neighbour(x :: Array{Float64,1},
                    a :: Array{Float64,1},
                    b :: Array{Float64,1},
                    f :: Float64
@@ -249,11 +249,11 @@ end;
     xnew[xnew.<a] = a[xnew.<a];
     xnew[xnew.>b] = b[xnew.>b];
     return xnew
-end;
+end
 # neighbourarray ends here
 
 # [[file:../fresa.org::neighbourfloat][neighbourfloat]]
-; function neighbour(x :: Float64,
+function neighbour(x :: Float64,
                    a :: Float64,
                    b :: Float64,
                    f :: Float64
@@ -267,28 +267,28 @@ end;
         newx = b
     end
     newx
-end;
+end
 # neighbourfloat ends here
 
 # [[file:../fresa.org::dominates][dominates]]
-; function dominates(a, b)
+function dominates(a, b)
     all(a .<= b) && any(a .< b)
 end
-≻(a,b) = dominates(a,b);
+≻(a,b) = dominates(a,b)
 # dominates ends here
 
 # [[file:../fresa.org::*find Pareto set][find Pareto set:1]]
-; function paretoindices(z)
+function paretoindices(z)
     n = length(z)
     dominance = [reduce(&, [!(z[i] ≻ z[j]) for i ∈ 1:n]) for j ∈ 1:n]
     paretoindices = filter(j -> dominance[j], 1:n)
     dominatedindices = filter(j -> !dominance[j], 1:n)
     (paretoindices, dominatedindices)
-end;
+end
 # find Pareto set:1 ends here
 
 # [[file:../fresa.org::pareto][pareto]]
-; # indices of non-dominated and dominated points from the population of
+# indices of non-dominated and dominated points from the population of
 # Point objects
 function pareto(pop :: Vector{Point})
     l = length(pop)
@@ -308,21 +308,21 @@ function pareto(pop :: Vector{Point})
     # feasible solutions
     (p, d) = paretoindices(z)
     (indices[p], indices[d])
-end;
+end
 # pareto ends here
 
 # [[file:../fresa.org::printhistorytrace][printhistorytrace]]
-; function printHistoryTrace(p :: Point)
+function printHistoryTrace(p :: Point)
     a = p.ancestor
     while ! (a isa Nothing)
         println("| $(a.generation) | $(a.fitness) |")
         a = a.point.ancestor
     end
-end;
+end
 # printhistorytrace ends here
 
 # [[file:../fresa.org::prune][prune]]
-; function prune(pop :: AbstractArray, tolerance)
+function prune(pop :: AbstractArray, tolerance)
     npruned = 0
     z = map(p->p.z, pop)
     # @show z[1]
@@ -406,27 +406,36 @@ end;
             @error "Unexpected error in prune method for objective function values" e
         end                     # if is a method error
     end                         # try pruning on objective function values
-end                             # function;
+end                             # function
 # prune ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
-; function randompopulation(n,f,parameters,a,b)
+function randompopulation(n, f, parameters, p0, domain :: Domain)
     p = Point[]                 # population object
     for j in 1:n
-        push!(p, createpoint(randompoint(a,b), f, parameters))
+        # l = domain.lower(p0.x)
+        # @show l
+        # u = domain.upper(p0.x)
+        # @show u
+        # x = randompoint(l,u)
+        # push!(p, createpoint(x, f, parameters))
+        push!(p, createpoint(randompoint(domain.lower(p0.x), domain.upper(p0.x)), f, parameters))
     end
     p
-end;
+end
 # randompopulation ends here
 
 # [[file:../fresa.org::randompoint][randompoint]]
-; function randompoint(a,b)
-    x = a + rand(length(a)).*b
-end;
+function randompoint(a :: Float64, b :: Float64)
+    x = a + rand()*(b-a)
+end
+function randompoint(a, b)
+    x = a + rand(length(a)).*(b-a)
+end
 # randompoint ends here
 
 # [[file:../fresa.org::select][select]]
-; function select(f)
+function select(f)
     l = length(f)
     ind1 = rand(1:l)
     if ind1 == 0
@@ -439,11 +448,11 @@ end;
     else
         return ind2
     end
-end;
+end
 # select ends here
 
 # [[file:../fresa.org::solve][solve]]
-; """ 
+""" 
 
 Solve an optimisation problem, defined as the minimization of the
 values returned by the objective function, `f`.  `f` returns not only
@@ -750,31 +759,31 @@ function solve(f, p0, domain;        # required arguments
     else
         return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
     end
-end;
+end
 # solve ends here
 
 # [[file:../fresa.org::thinout][thinout]]
-; function thinout(pop, fit, pareto, n::Int)
+function thinout(pop, fit, pareto, n::Int)
     indices = sortperm(fit[pareto])
     return pop[pareto[indices[end-n+1:end]]], pop[pareto[indices[1:end-n]]]
-end;
+end
 # thinout ends here
 
 # [[file:../fresa.org::orgtimestamp][orgtimestamp]]
-; function orgtimestamp(dt::DateTime)
+function orgtimestamp(dt::DateTime)
     return @sprintf("[%d-%02d-%02d %02d:%02d]",
                     Dates.year(dt),
                     Dates.month(dt),
                     Dates.day(dt),
                     Dates.hour(dt),
                     Dates.minute(dt))
-end;
+end
 # orgtimestamp ends here
 
 # [[file:../fresa.org::rank][rank]]
-; rank(x :: Any) = length(size(x));
+rank(x :: Any) = length(size(x))
 # rank ends here
 
 # [[file:../fresa.org::moduleend][moduleend]]
-; end;
+end
 # moduleend ends here

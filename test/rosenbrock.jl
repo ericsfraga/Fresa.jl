@@ -1,5 +1,5 @@
 # [[file:../fresa.org::testrosenbrock][testrosenbrock]]
-; using Fresa
+using Fresa
 nx = 2
 x0 = 0.5*ones(nx)
 # specify the domain for the search, x ∈ [0,10]ⁿ
@@ -11,5 +11,5 @@ p0 = [Fresa.createpoint(x0,rosenbrock)]
 # now invoke Fresa to solve the problem
 best, pop = Fresa.solve(rosenbrock, p0, domain; ngen=1000, tolerance=1e-8)
 println("Population at end: $pop")
-println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )");
+println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 # testrosenbrock ends here

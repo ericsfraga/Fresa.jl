@@ -115,7 +115,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-09-09 15:39]"
+  version = "[2021-12-03 12:36]"
   using Dates
   using Distributed
   using Printf
@@ -724,10 +724,10 @@ By default, the following method generates a random point within the search doma
 #+name: randompoint
 #+begin_src julia
   function randompoint(a :: Float64, b :: Float64)
-      x = a + rand()*b
+      x = a + rand()*(b-a)
   end
   function randompoint(a, b)
-      x = a + rand(length(a)).*b
+      x = a + rand(length(a)).*(b-a)
   end
 #+end_src 
 ** select -- choose a member of the population

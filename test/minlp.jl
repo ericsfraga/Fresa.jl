@@ -1,5 +1,5 @@
 # [[file:../fresa.org::testminlp][testminlp]]
-; using Distributed
+using Distributed
 using Printf
 @everywhere using Fresa
 # define new type for mixed integer problems
@@ -40,15 +40,15 @@ p0 = [Fresa.createpoint(MI(1.0, 1),f)]
 # now invoke Fresa to solve the problem
 best, pop = Fresa.solve(f, p0, domain; ngen=100)
 println("Population: $pop")
-println("Best: f($(best.x)) = $(best.z), $(best.g)");
+println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # testminlp ends here
 
 # [[file:../fresa.org::testminlpsupplement][testminlpsupplement]]
-; println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
+println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
 ancestor = best.ancestor;
 while ancestor != Some(nothing) && ! (ancestor isa Nothing)
     global ancestor
     println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
     ancestor = ancestor.point.ancestor
-end;
+end
 # testminlpsupplement ends here
