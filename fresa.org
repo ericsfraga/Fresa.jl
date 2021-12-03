@@ -1617,7 +1617,7 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
   ;;             (list
   ;;              (lambda ()
   ;;                (with-current-buffer (find-file-noselect "Project.toml")
-  ;;                  (if (re-search-forward "version = \"[^\"]*\"")
+  ;;                  (if (re-search-forward "version = \"[^\"]*\"" nil t)
   ;;                      (replace-match (concat "version = \"" (format-time-string "%Y.%m.%d") "\"")))
   ;;                  (save-buffer)))))
 #+end_src
