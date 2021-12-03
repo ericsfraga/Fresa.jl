@@ -209,6 +209,7 @@ Once the =Ancestor= data structure has been defined, we can now use an /access c
 *** Domain <<domain>>
 /Fresa/ assumes a bounded domain for the search.  Each design variable will have a lower and upper bound.  To provide for domain specific design variable data structures, the =Domain= structure is used.  In this structure, the =lower= and =upper= variables are functions which will be evaluated with a point in the search space and are expected to return appropriate data that the =neighbour= function (see [[neighbour][below]]) will be able to use to ensure the domain bounds are respected in the creation of new search points.  
 
+#+name: domaintype
 #+begin_src julia
   struct Domain
       lower                       # function which returns lower bound on search variable(s)
