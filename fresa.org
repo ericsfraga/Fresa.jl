@@ -10,7 +10,7 @@
 
 # +HTML_HEAD: <link href=\"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css\" rel=\"stylesheet\">
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
-#+HTML_HEAD: <link href="taopeng-notes.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="style.css" rel="stylesheet" type="text/css" />
 # +html: <style>pre.src:before { display: inline; }</style>
 
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                  |
@@ -20,7 +20,13 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [12/22]                          :noexport:
+* TODO bugs and new features [12/23]                          :noexport:
+- [ ] from the manual: instead of writing
+  : Complex{Float64}(x)
+  write
+  : complex(float(x))
+  which I could use in =createpoint= in Fresa.
+
 - [ ] find code that converts JuMP model into callable objective function and constraints functions and implement this as a test example in Fresa:
   - for instance, look at DictModel from Nonconvex.jl for transforming a JuMP model into a function based model
 - [X] create a =CITATION.cff= file so that people know how to cite this code: https://citation-file-format.github.io/
@@ -83,6 +89,7 @@ in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
       defaultsteepness.png \
       LICENSE \
       sharpersteepness.png \
+      style.css \
       socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information <<version>>
@@ -115,7 +122,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-12-03 12:36]"
+  version = "[2022-06-01 17:36]"
   using Dates
   using Distributed
   using Printf
@@ -552,7 +559,7 @@ Given a population of ~Point~ objects, this function identifies those that are n
           subset = view(pop,indexfeasible)
           indices = indexfeasible
       else
-          println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
+          #println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
           subset = pop
           indices = 1:l
       end
@@ -1249,7 +1256,7 @@ for \(n>1\).
                                    npop=(20,40),
                                    plotvectors=true,
                                    tolerance=0.01)
-  
+
   println("**** Pareto front:")
   println("#+plot: ind:1 deps:(2) with:points")
   println(population[pareto])
@@ -1622,6 +1629,7 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 #+name: startup
 #+begin_src emacs-lisp :results none
   (org-content 2)
+  (setq-local org-html-htmlize-output-type 'css)
   (setq-local htmlize-output-type 'inline-css)
   ;; (setq-local org-babel-pre-tangle-hook
   ;;             (list
