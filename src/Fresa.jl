@@ -2,13 +2,14 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-07-03 13:58]"
+version = "[2022-08-06 16:04]"
 using Dates
 using Distributed
 using Printf
 function __init__()
     if myid() == 1
-        println("# -*- mode: org; eval: (org-content 3); -*-")
+        println("# -*- mode: org; -*-")
+        println("#+startup: show3levels")
         println(": Fresa PPA last change $version")
     end
 end
@@ -76,24 +77,24 @@ end
 ancestor(p :: Point) = p.ancestor :: Union{Ancestor,Nothing}
 # Ancestor <<ancestor>>:2 ends here
 
-# [[file:../fresa.org::*Domain <<domain>>][Domain <<domain>>:1]]
+# [[file:../fresa.org::domaintype][domaintype]]
 struct Domain
     lower                       # function which returns lower bound on search variable(s)
     upper                       # function which returns upper bound on search variable(s)
 end
-# Domain <<domain>>:1 ends here
+# domaintype ends here
 
 # [[file:../fresa.org::createpoint][createpoint]]
 function createpoint(x,f,parameters = nothing,ancestor = nothing)
     z = 0
     g = 0
-    if typeof(parameters) != Nothing
+    if ! ( parameters isa Nothing )
         (z, g) = f(x, parameters)
     else
         (z, g) = f(x)
     end
-    if typeof(g) == Int
-        g = Float64(g)
+    if g isa Int
+        g = float(g)
     end
     p = Nothing
     if rank(z) == 1
@@ -206,7 +207,7 @@ end
 function adjustfitness(fitness, steepness, generation, ngen)
     if (maximum(fitness)-minimum(fitness)) > eps()
         s = steepness
-        if isa(steepness, Tuple)
+        if steepness isa Tuple
             a = (2*steepness[1]-2*steepness[2])/3
             b = - (3*steepness[1] - 3*steepness[2])/ngen^2
             d = steepness[1]
@@ -298,7 +299,7 @@ function pareto(pop :: Vector{Point})
         subset = view(pop,indexfeasible)
         indices = indexfeasible
     else
-        println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
+        #println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
         subset = pop
         indices = 1:l
     end
@@ -314,7 +315,7 @@ end
 # [[file:../fresa.org::printhistorytrace][printhistorytrace]]
 function printHistoryTrace(p :: Point)
     a = p.ancestor
-    while typeof(a) != Nothing
+    while ! (a isa Nothing)
         println("| $(a.generation) | $(a.fitness) |")
         a = a.point.ancestor
     end
@@ -325,12 +326,12 @@ end
 function prune(pop :: AbstractArray, tolerance)
     npruned = 0
     z = map(p->p.z, pop)
-    @show z[1]
-    println("typeof(z)=$(typeof(z))")
+    # @show z[1]
+    # println("typeof(z)=$(typeof(z))")
     l = length(z)
-    println("typeof(z[1])=$(typeof(z[1]))")
+    # println("typeof(z[1])=$(typeof(z[1]))")
     n = length(z[1])
-    @show n
+    # @show n
     zmin = zeros(n)
     zmax = zeros(n)
     try 
@@ -359,8 +360,8 @@ function prune(pop :: AbstractArray, tolerance)
         end
         (pruned, npruned)
     catch e
-        println("prune method error: $e")
-        if isa(e, MethodError)
+        # println("prune method error: $e")
+        if e isa MethodError
             # probably (possibly) due to objective function type not
             # being a number.  In this case, we try again but looking
             # at the decision variable values instead.
@@ -391,8 +392,8 @@ function prune(pop :: AbstractArray, tolerance)
                 end
                 (pruned, npruned)        
             catch e
-                println("prune method second error: $e")
-                if isa(e, MethodError)
+                # println("prune method second error: $e")
+                if e isa MethodError
                     # this is now probably/possibly due to not being
                     # to find the difference between two decision
                     # points.  In that case, return the whole
@@ -410,18 +411,27 @@ end                             # function
 # prune ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
-function randompopulation(n,f,parameters,a,b)
+function randompopulation(n, f, parameters, p0, domain :: Domain)
     p = Point[]                 # population object
     for j in 1:n
-        push!(p, createpoint(randompoint(a,b), f, parameters))
+        # l = domain.lower(p0.x)
+        # @show l
+        # u = domain.upper(p0.x)
+        # @show u
+        # x = randompoint(l,u)
+        # push!(p, createpoint(x, f, parameters))
+        push!(p, createpoint(randompoint(domain.lower(p0.x), domain.upper(p0.x)), f, parameters))
     end
     p
 end
 # randompopulation ends here
 
 # [[file:../fresa.org::randompoint][randompoint]]
-function randompoint(a,b)
-    x = a + rand(length(a)).*b
+function randompoint(a :: Float64, b :: Float64)
+    x = a + rand()*(b-a)
+end
+function randompoint(a, b)
+    x = a + rand(length(a)).*(b-a)
 end
 # randompoint ends here
 
@@ -515,7 +525,7 @@ function solve(f, p0, domain;        # required arguments
     # optimization problems so a warning will be given otherwise.
     npopmin = npop
     npopmax = npop
-    if isa(npop, Tuple)
+    if npop isa Tuple
         if nz > 1
             npopmin = npop[1]
             npopmax = npop[2]

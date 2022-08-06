@@ -10,7 +10,7 @@
 
 # +HTML_HEAD: <link href=\"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css\" rel=\"stylesheet\">
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
-#+HTML_HEAD: <link href="taopeng-notes.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="style.css" rel="stylesheet" type="text/css" />
 # +html: <style>pre.src:before { display: inline; }</style>
 
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                  |
@@ -20,13 +20,34 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [8/14]                           :noexport:
-- consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
+* TODO bugs and new features [12/23]                          :noexport:
+- [ ] from the manual: instead of writing
+  : Complex{Float64}(x)
+  write
+  : complex(float(x))
+  which I could use in =createpoint= in Fresa.
+
+- [ ] find code that converts JuMP model into callable objective function and constraints functions and implement this as a test example in Fresa:
+  - for instance, look at DictModel from Nonconvex.jl for transforming a JuMP model into a function based model
+- [X] create a =CITATION.cff= file so that people know how to cite this code: https://citation-file-format.github.io/
+- [ ] use =all= (and =any=?) in the form =all(predicate,iterable)= as it should be faster than how I do this now.
+- [X] replace use of =typeof()= and =isa()= with the infix =isa= operator
+- [ ] use Catalyst.jl for reaction modelling in Fresa
+  https://catalyst.sciml.ai/stable/
+- [ ] work on prune method in Fresa
+- [ ] think about Fresa's neighbourhood function, single dimension variation : Re: on popSize
+  - From :: Wouter Vrielink <wouter-vrielink@hotmail.com>
+  - Subject :: Re: on popSize
+  - Email :: [[gnus:nnml+outlook:mail.t3610#AM0PR07MB41784C775EC2916C6DFAFEC1E46F9@AM0PR07MB4178.eurprd07.prod.outlook.com][Email from Wouter Vrielink: Re: on popSize]]
+
+  [2021-03-12 Fri 11:29]
+- [X] consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
 - [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
 - [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
-- [ ] use a gray code for defining neighbours for integer programming; consider the C1P problem for instance.
+- [ ] use a grey code for defining neighbours for integer programming; consider the C1P problem for instance.
 - [ ] could we use a hyper-volume of space dominated by a solution as a means of ranking?  There would be difficulty in having a ranking that does not penalise extrema, mind you.
-- [ ] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+- [X] try using ~pmap~ for parallel processing, as described in [[file:~/s/notes/notes.org::*using%20pmap%20for%20parallel%20processing][note on using pmap for parallel processing]], mapping solutions to Points; alternatively, could use ~@sync @parallel for i=1,...~.  There's a note on this: [[file:~/s/notes/notes.org::*threads%20and%20parallel%20loops%20in%20Julia][threads and parallel loops in Julia]].
+  - actually ended up using multithreading instead as it fits the solution procedure better.
 - [ ] use constraint information in fitness calculations
 - [X] Pareto set should not include infeasible points (unless all are infeasible?)
 - [X] keep Pareto set as elite
@@ -79,43 +100,198 @@ You may also wish to cite the original paper which led to the development of bot
                     }
 #+end_src
 
-The tutorial example was the basis for a publication (doi:10.3303/CET1974101):
-
-#+begin_src bibtex
-                    @article{fraga-2019a,
-                      author={Eric S. Fraga},
-                      title={An example of multi-objective optimization for dynamic processes},
-                      journal={Chemical Engineering Transactions},
-                      year={2019},
-                      volume={74},
-                      pages={601-606},
-                      doi={10.3303/CET1974101}
-                    }
-#+end_src
-
 ** Installation
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  /Fresa/ has been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
 
-: add Fresa.jl
+: add Fresa
 
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
 
-#+begin_comment
-Specifically, as /Fresa/ is not listed in the main Julia registry, you have to specify where to install from.  In the Julia package manager, accessible by typing =]= at the =julia>= prompt, type
-
-: add http://github.com/ericsfraga/Fresa.jl
-
-to install /Fresa/.  You exit the Julia package manager by hitting your =Backspace= key.
-#+end_comment
-
 /Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+** Quick example
+:PROPERTIES:
+:header-args:julia: :tangle no :exports code :noweb yes
+:END:
+
+Once Fresa is available in your Julia installation, using it requires you to define three aspects to define a problem:
+1. the objective function;
+2. the search domain; and,
+3. an initial population.
+I will illustrate how to use Fresa for a simple nonlinear problem, adapted from chapter 13 of a textbook from MIT:[fn:3:Exercise 9, page 452: https://web.mit.edu/15.053/www/AMP-Chapter-13.pdf] 
+
+\[ \min_x z = 5 x_1^2 + 4 x_2^2 - 60 x_1 - 80 x_2 \]
+
+subject to the following constraints
+
+\begin{array*}
+6x_1 + 5x_2 & \le 60 \\
+10x_1 + 12 x_2 & \le 150
+\end{array*}
+
+and with \(x_1 \in [0,8]\) and \(x_2 \in [0,\infty]\).
+
+We start by telling Julia that we wish to use the Fresa package:
+
+#+name: exampleusingfresa
+#+begin_src julia
+  using Fresa
+#+end_src
+The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of /z/, the objective function value, and /g/, the indication of feasibility.  /g/ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the easiest approach is to rewrite the constraints in the form \(g(x) \le 0\):
+\begin{array*}
+6x_1 + 5x_2 - 60 & \le 0 \\
+10x_1 + 12 x_2 - 150 & \le 0
+\end{array*}
+With this transformation, the objective function can be written:
+#+name: exampleobjective
+#+begin_src julia :noweb yes :tangle no
+  function objective(x)
+      # calculate the objective function value
+      z = 5*x[1]^2 + 4*x[2]^2 - 60*x[1] - 80*x[2]
+      # evaluate the constraints so that feasible points result in a
+      # non-positive value, i.e. 0 or less, but infeasible points give a
+      # positive value.  We choose the maximum of both constraints
+      g = maximum( [ 6*x[1]+5*x[2]-60
+                     10*x[1] + 12*x[2] - 150 ] )
+      # return the objective function value along with indication of
+      # feasibility
+      (z, g)
+  end
+#+end_src
+
+The second requirement is the definition of the domain.  For flexibility, Fresa allows for the domain to be dynamically defined and so it depends on the current point in the search.  The domain is defined by providing two functions, one which returns the lower bounds on all the variables and the other returning the upper bound.  For problems involving a search in the real number domain, such as the example above, it is usually straightforward to define a box search domain.
+
+In the example above, the second optimization variable is unbounded above.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\).  The domain is therefore defined:
+#+name: exampledomain
+#+begin_src julia :tangle no :noweb yes
+  domain = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
+                         x -> [ 8.0, 12.5 ] ) # upper bounds
+#+end_src
+This code says that for any point in the search space, ~x~, the lower bounds are given by the vector ~[0.0, 0.0]~ and the upper bounds by ~[8.0, 12.5]~
+
+Finally, an initial population must be provided to Fresa.  This population can be of any size so long as there is at least one member.  Fresa usually works well even if only one initial point in the search domain is provided.  We consider starting at the midpoint of the search domain defined above and create a point in the search domain:
+#+name: exampleinitialpopulation
+#+begin_src julia :tangle no :noweb yes
+  initialpopulation = [ Fresa.createpoint( [4.0, 6.25 ], objective) ]
+#+end_src
+The ~Fresa.createpoint~ function expects two arguments: the actual point in the search space and the name of the objective function.
+
+Given the above code, Fresa can now be used to solve the problem:
+#+name: examplesolve
+#+begin_src julia
+  best, population = Fresa.solve( objective, initialpopulation, domain )
+#+end_src
+
+If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
+#+name: examplesolution
+#+begin_src julia :eval no-export :exports results :results output org :tangle example.jl
+  <<exampleusingfresa>>
+      <<exampleobjective>>
+      <<exampledomain>>
+      <<exampleinitialpopulation>>
+      <<examplesolve>>
+#+end_src
+
+#+results: examplesolution
+#+begin_src org
+  # -*- mode: org; -*-
+  ,#+startup: show3levels
+  : Fresa PPA last change [2022-08-06 16:04]
+  objective (generic function with 1 method)
+  Fresa.Domain(var"#1#3"(), var"#2#4"())
+  1-element Vector{Fresa.Point}:
+   f([4.0, 6.25])=[-503.75] g=-4.75
+  ,** solve objective [2022-08-06 16:04]
+  ,#+name: objectivesettings
+  | variable | value |
+  |-
+  | ngen | 100 |
+  | npop | 10 |
+  | nrmax | 5 |
+  | ns | 100 |
+  | elite | true |
+  | archive | false |
+  | fitness | hadamard |
+  | steepness | 1.0 |
+  |-
+  : function evaluations performed sequentially.
+  ,*** initial population
+  ,#+name: objectiveinitial
+  |-
+  | z1 | g | x |
+  |-
+  | -503.75 | -4.75 | [4.0, 6.25] |
+  |-
+
+  ,*** evolution
+  ,#+name: objectiveevolution
+  ,#+plot: ind:1 deps:(6) with:"points pt 7" set:"logscale x"
+  |       gen |      npop |        nf |    pruned |     t (s) | z1        |         g |
+  |-
+  |         1 |         1 |         1 |         0 |      1.62 | -503.75 | -4.75 |
+  |         2 |         2 |         2 |         0 |      2.24 | -503.75 | -4.75 |
+  |         3 |         3 |         4 |         0 |      2.24 | -508.98024613972393 | -3.963481299254326 |
+  |         4 |        10 |        14 |         1 |      2.24 | -516.708162060443 | -2.25158356765359 |
+  |         5 |        26 |        40 |         2 |      2.24 | -520.6840859905025 | -1.1924432568181942 |
+  |         6 |        29 |        68 |         2 |      2.24 | -523.7646499331361 | -0.21175198131829376 |
+  |         7 |        30 |       103 |         8 |      2.30 | -523.7646499331361 | -0.21175198131829376 |
+  |         8 |        24 |       129 |        11 |      2.30 | -524.1229955815547 | -0.35088947745457233 |
+  |         9 |        30 |       160 |        13 |      2.30 | -524.6890696989392 | -0.1186704914001453 |
+  |        10 |        28 |       188 |        14 |      2.30 | -525.265180854414 | -0.7525770581036753 |
+  |        20 |        18 |       458 |        67 |      2.30 | -529.2960864238084 | -0.07945091191650988 |
+  |        30 |        23 |       764 |       125 |      2.31 | -529.6657551053829 | -0.017628945114793737 |
+  |        40 |        22 |      1028 |       191 |      2.31 | -529.6657551053829 | -0.017628945114793737 |
+  |        50 |        28 |      1289 |       249 |      2.31 | -529.6657551053829 | -0.017628945114793737 |
+  |        60 |        15 |      1575 |       364 |      2.32 | -529.6657551053829 | -0.017628945114793737 |
+  |        70 |        33 |      1894 |       416 |      2.32 | -529.6657551053829 | -0.017628945114793737 |
+  |        80 |        21 |      2182 |       495 |      2.33 | -529.6657551053829 | -0.017628945114793737 |
+  |        90 |        22 |      2451 |       545 |      2.34 | -529.6657551053829 | -0.017628945114793737 |
+  |       100 |        19 |      2741 |       597 |      2.34 | -529.6657551053829 | -0.017628945114793737 |
+  ,*** Fresa run finished
+  : nf=2767 npruned=601
+  (f([3.7020260052569407, 7.554043004668713])=[-529.6657551053829] g=-0.017628945114793737, |-
+  | z1 | g | x |
+  |-
+  | -529.6657551053829 | -0.017628945114793737 | [3.7020260052569407, 7.554043004668713] |
+  | -366.54435704507523 | -27.21876533995116 | [1.7692502532766028, 4.433146628077845] |
+  | -414.2529968479937 | -20.951491873449086 | [1.3966036701257092, 6.133777221159331] |
+  | -528.8463299506853 | -0.22900672389539523 | [3.6795486014901346, 7.53874033343276] |
+  | -530.384414390094 | 0.16910579472867937 | [3.7209424919011393, 7.568690168664369] |
+  | -443.1260111837601 | -16.228285953791016 | [2.86399171858194, 5.317552746943469] |
+  | -445.6210305308239 | -15.601715891265954 | [3.016294412254267, 5.260103527041689] |
+  | -414.6744628574651 | -20.448352990168345 | [2.5321364109887003, 4.871765708779892] |
+  | -429.18276623025895 | -18.390573964068352 | [2.672394747864535, 5.1150115097488875] |
+  | -527.1298300049249 | -0.5625086104374191 | [3.825709902044894, 7.296646395458643] |
+  | -524.7657659486813 | -1.1402676069200197 | [3.7873107530029255, 7.227173575012485] |
+  | -524.5668961935723 | -1.1915319178131085 | [3.780900324334527, 7.224613227235946] |
+  | -525.8468778251139 | -0.8906651408825468 | [3.7913260301461618, 7.272275735648097] |
+  | -527.7529757793898 | -0.4269495828330747 | [3.8153534947185843, 7.336185889771085] |
+  | -528.3084551642806 | -0.347630580465065 | [3.734607564840653, 7.448944806098202] |
+  | -528.6635168151147 | -0.22202810180591115 | [3.801579393238273, 7.39369910775289] |
+  | -392.9526971218319 | -22.862738531064636 | [2.5817576982271797, 4.329343055914457] |
+  | -457.4148735934202 | -13.81074842840058 | [3.112459710647433, 5.5028986615429645] |
+  | -424.5002108062361 | -12.353125520526376 | [4.648811676286212, 3.9508008843512705] |
+  | -423.1306398623829 | -15.348331900055584 | [3.973866475752854, 4.161693849085458] |
+  | -427.5637392336674 | -11.136583646876801 | [4.8401741154869224, 3.964474332040334] |
+  | -359.63180208155165 | -15.950095856635826 | [5.141747031659222, 2.6398843906817673] |
+  | -414.0489650018614 | -9.615662219485117 | [5.402713812562485, 3.593610981027995] |
+  |-
+  )
+#+end_src
+
+The output includes details on the settings of all tunable parameters for the method, the evolution of the population as Fresa propagates solutions, and finally the best solution found along with the full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
+
+A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.
+
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
   scp -r fresa.html \
+      example.jl \
       defaultsteepness.png \
       LICENSE \
+      ltximg \
       sharpersteepness.png \
+      style.css \
       socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information <<version>>
@@ -148,13 +324,14 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2021-08-06 16:24]"
+  version = "[2022-08-06 16:16]"
   using Dates
   using Distributed
   using Printf
   function __init__()
       if myid() == 1
-          println("# -*- mode: org; eval: (org-content 3); -*-")
+          println("# -*- mode: org; -*-")
+          println("#+startup: show3levels")
           println(": Fresa PPA last change $version")
       end
   end
@@ -242,6 +419,7 @@ Once the =Ancestor= data structure has been defined, we can now use an /access c
 *** Domain <<domain>>
 /Fresa/ assumes a bounded domain for the search.  Each design variable will have a lower and upper bound.  To provide for domain specific design variable data structures, the =Domain= structure is used.  In this structure, the =lower= and =upper= variables are functions which will be evaluated with a point in the search space and are expected to return appropriate data that the =neighbour= function (see [[neighbour][below]]) will be able to use to ensure the domain bounds are respected in the creation of new search points.  
 
+#+name: domaintype
 #+begin_src julia
   struct Domain
       lower                       # function which returns lower bound on search variable(s)
@@ -273,13 +451,13 @@ The optional =parameters= and =ancestor= arguments are passed through to their r
   function createpoint(x,f,parameters = nothing,ancestor = nothing)
       z = 0
       g = 0
-      if typeof(parameters) != Nothing
+      if ! ( parameters isa Nothing )
           (z, g) = f(x, parameters)
       else
           (z, g) = f(x)
       end
-      if typeof(g) == Int
-          g = Float64(g)
+      if g isa Int
+          g = float(g)
       end
       p = Nothing
       if rank(z) == 1
@@ -412,7 +590,7 @@ See below for a discussion about the second function argument, =steepness=, and 
   function adjustfitness(fitness, steepness, generation, ngen)
       if (maximum(fitness)-minimum(fitness)) > eps()
           s = steepness
-          if isa(steepness, Tuple)
+          if steepness isa Tuple
               a = (2*steepness[1]-2*steepness[2])/3
               b = - (3*steepness[1] - 3*steepness[2])/ngen^2
               d = steepness[1]
@@ -584,7 +762,7 @@ Given a population of ~Point~ objects, this function identifies those that are n
           subset = view(pop,indexfeasible)
           indices = indexfeasible
       else
-          println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
+          #println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
           subset = pop
           indices = 1:l
       end
@@ -636,7 +814,7 @@ Each point encountered in the search, other than points in the initial populatio
 #+begin_src julia
   function printHistoryTrace(p :: Point)
       a = p.ancestor
-      while typeof(a) != Nothing
+      while ! (a isa Nothing)
           println("| $(a.generation) | $(a.fitness) |")
           a = a.point.ancestor
       end
@@ -651,12 +829,12 @@ Previously, pruning was done on objective function values.  In the case where th
   function prune(pop :: AbstractArray, tolerance)
       npruned = 0
       z = map(p->p.z, pop)
-      @show z[1]
-      println("typeof(z)=$(typeof(z))")
+      # @show z[1]
+      # println("typeof(z)=$(typeof(z))")
       l = length(z)
-      println("typeof(z[1])=$(typeof(z[1]))")
+      # println("typeof(z[1])=$(typeof(z[1]))")
       n = length(z[1])
-      @show n
+      # @show n
       zmin = zeros(n)
       zmax = zeros(n)
       try 
@@ -685,8 +863,8 @@ Previously, pruning was done on objective function values.  In the case where th
           end
           (pruned, npruned)
       catch e
-          println("prune method error: $e")
-          if isa(e, MethodError)
+          # println("prune method error: $e")
+          if e isa MethodError
               # probably (possibly) due to objective function type not
               # being a number.  In this case, we try again but looking
               # at the decision variable values instead.
@@ -717,8 +895,8 @@ Previously, pruning was done on objective function values.  In the case where th
                   end
                   (pruned, npruned)        
               catch e
-                  println("prune method second error: $e")
-                  if isa(e, MethodError)
+                  # println("prune method second error: $e")
+                  if e isa MethodError
                       # this is now probably/possibly due to not being
                       # to find the difference between two decision
                       # points.  In that case, return the whole
@@ -735,13 +913,19 @@ Previously, pruning was done on objective function values.  In the case where th
   end                             # function
 #+end_src 
 ** randompopulation -- for testing other methods
-Create a random population of size ~n~ evaluated using ~f~.  This method is only really appropriate for search with real valued vectors as optimization variables.
+Create a random population of size ~n~ evaluated using ~f~.  A single point, =x=, in the search domain must be given as the domain definition is function based and the lower and upper bounds are potentially a function of the location in the space.  The =randompoint= method below is suitable for domains defined by float valued vectors.
 #+name: randompopulation
 #+begin_src julia
-  function randompopulation(n,f,parameters,a,b)
+  function randompopulation(n, f, parameters, p0, domain :: Domain)
       p = Point[]                 # population object
       for j in 1:n
-          push!(p, createpoint(randompoint(a,b), f, parameters))
+          # l = domain.lower(p0.x)
+          # @show l
+          # u = domain.upper(p0.x)
+          # @show u
+          # x = randompoint(l,u)
+          # push!(p, createpoint(x, f, parameters))
+          push!(p, createpoint(randompoint(domain.lower(p0.x), domain.upper(p0.x)), f, parameters))
       end
       p
   end
@@ -749,8 +933,11 @@ Create a random population of size ~n~ evaluated using ~f~.  This method is only
 By default, the following method generates a random point within the search domain.  This does not attempt to find a feasible point, simply one within the box defined by lower, =a=, and upper, =b=, bounds.  
 #+name: randompoint
 #+begin_src julia
-  function randompoint(a,b)
-      x = a + rand(length(a)).*b
+  function randompoint(a :: Float64, b :: Float64)
+      x = a + rand()*(b-a)
+  end
+  function randompoint(a, b)
+      x = a + rand(length(a)).*(b-a)
   end
 #+end_src 
 ** select -- choose a member of the population
@@ -875,7 +1062,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       # optimization problems so a warning will be given otherwise.
       npopmin = npop
       npopmax = npop
-      if isa(npop, Tuple)
+      if npop isa Tuple
           if nz > 1
               npopmin = npop[1]
               npopmax = npop[2]
@@ -1199,18 +1386,18 @@ This test uses a simple quadratic objective function, defined within.  All point
   # specify the domain for the search, x ∈ [0,10]ⁿ
   domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
   # the actual objective function
-  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0.0)
+  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   # create the initial population consisting of this single point
   p0 = [Fresa.createpoint(x0,f)]
   # now invoke Fresa to solve the problem
   @time best, pop = Fresa.solve(f, p0, domain)
   # output the results
-  println("Population at end: $pop")
+  println("Population at end:\n$pop")
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src 
 One of the features that /Fresa/ provides is a trace of how each solution has been created.  That is, each solution has a link back to the ancestor solution that led to its creation, along with information about when this happened (the generation) and how /fit/ the ancestor solution was.  There is a function defined in /Fresa/ for outputting a history trace.  The output is in form of an =org mode= table but is simple text that can be imported into a spreadsheet program, for instance.
 #+begin_src julia :tangle test/simple.jl
-  ,#+plot: ind:1 deps:(2) with:"linespoints lt 3 pt 7 ps 0.25" set:nokey set:"yrange [0:1]" set:"xrange [0:*]"
+  println("\nHistory trace, by generation number, of fitness value of solution selected for propagation which results in a new best solution:")
   println("#+plot: ind:1 deps:(2) with:\"linespoints pt 7 ps 0.25\" set:nokey set:\"yrange [0:1]\" set:\"xrange [0:*]\" set:\"xlabel 'Generation'\" set:\"ylabel 'fitness'\"")
   Fresa.printHistoryTrace(best)
 #+end_src
@@ -1269,12 +1456,12 @@ for \(n>1\).
                                    #fitnesstype = :borda,
                                    fitnesstype = :nondominated,
                                    ngen=200,
-                                   npop=20,
+                                   npop=(20,40),
                                    plotvectors=true,
                                    tolerance=0.01)
 
   println("**** Pareto front:")
-  println("#+plot: ind:2 deps:(3) with:points")
+  println("#+plot: ind:1 deps:(2) with:points")
   println(population[pareto])
   #using BenchmarkTools
   #@benchmark
@@ -1369,7 +1556,7 @@ Using the results obtained above, we use the linking information for all the poi
 #+begin_src julia :tangle test/minlp.jl
   println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
   ancestor = best.ancestor;
-  while ancestor != Some(nothing) && typeof(ancestor) != Nothing
+  while ancestor != Some(nothing) && ! (ancestor isa Nothing)
       global ancestor
       println("| $(ancestor.point.z) | $(ancestor.fitness) | $(ancestor.generation) |")
       ancestor = ancestor.point.ancestor
@@ -1617,6 +1804,7 @@ Summary of the most recent changes to the package:
 #+end_src
 A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]].
 * settings                                                    :noexport:
+#+startup: show2levels
 ** latex settings
 #+begin_export latex
 \lstdefinelanguage{Julia}%
@@ -1644,13 +1832,14 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 ** org startup on file visit
 #+name: startup
 #+begin_src emacs-lisp :results none
-  (org-content 2)
+  ;;(org-content 2)
+  (setq-local org-html-htmlize-output-type 'css)
   (setq-local htmlize-output-type 'inline-css)
   ;; (setq-local org-babel-pre-tangle-hook
   ;;             (list
   ;;              (lambda ()
   ;;                (with-current-buffer (find-file-noselect "Project.toml")
-  ;;                  (if (re-search-forward "version = \"[^\"]*\"")
+  ;;                  (if (re-search-forward "version = \"[^\"]*\"" nil t)
   ;;                      (replace-match (concat "version = \"" (format-time-string "%Y.%m.%d") "\"")))
   ;;                  (save-buffer)))))
 #+end_src

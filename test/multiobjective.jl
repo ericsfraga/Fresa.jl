@@ -15,12 +15,12 @@ pareto, population = Fresa.solve(f, p0, domain;
                                  #fitnesstype = :borda,
                                  fitnesstype = :nondominated,
                                  ngen=200,
-                                 npop=20,
+                                 npop=(20,40),
                                  plotvectors=true,
                                  tolerance=0.01)
 
 println("**** Pareto front:")
-println("#+plot: ind:2 deps:(3) with:points")
+println("#+plot: ind:1 deps:(2) with:points")
 println(population[pareto])
 #using BenchmarkTools
 #@benchmark
