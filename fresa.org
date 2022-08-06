@@ -153,7 +153,7 @@ Given the above code, Fresa can now be used to solve the problem:
   best, population = Fresa.solve( objective, initialpopulation, domain )
 #+end_src
 
-If we execute all the above lines of code in Julia, the output will be similar to this:
+If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 #+name: examplesolution
 #+begin_src julia :eval no-export :exports results :results output org :tangle example.jl
   <<exampleusingfresa>>
@@ -258,8 +258,10 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
   scp -r fresa.html \
+      example.jl \
       defaultsteepness.png \
       LICENSE \
+      ltximg \
       sharpersteepness.png \
       style.css \
       socrates.ucl.ac.uk:html.pub
@@ -294,7 +296,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-08-06 16:04]"
+  version = "[2022-08-06 16:12]"
   using Dates
   using Distributed
   using Printf
