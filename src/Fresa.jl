@@ -2,13 +2,14 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2021-12-03 12:36]"
+version = "[2022-08-06 16:04]"
 using Dates
 using Distributed
 using Printf
 function __init__()
     if myid() == 1
-        println("# -*- mode: org; eval: (org-content 3); -*-")
+        println("# -*- mode: org; -*-")
+        println("#+startup: show3levels")
         println(": Fresa PPA last change $version")
     end
 end
@@ -298,7 +299,7 @@ function pareto(pop :: Vector{Point})
         subset = view(pop,indexfeasible)
         indices = indexfeasible
     else
-        println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
+        #println(": Fresa.pareto warning: no feasible solutions.  Pareto set meaningless?")
         subset = pop
         indices = 1:l
     end
