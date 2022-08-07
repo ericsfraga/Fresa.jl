@@ -136,7 +136,7 @@ We start by telling Julia that we wish to use the Fresa package:
 #+begin_src julia
   using Fresa
 #+end_src
-The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of /z/, the objective function value, and /g/, the indication of feasibility.  /g/ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the easiest approach is to rewrite the constraints in the form \(g(x) \le 0\):
+The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of /z/, the objective function value, and /g/, the indication of feasibility.  /g/ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the most straightforward approach can be to rewrite the constraints in the form \(g(x) \le 0\):
 \begin{array*}
 6x_1 + 5x_2 - 60 & \le 0 \\
 10x_1 + 12 x_2 - 150 & \le 0
@@ -149,8 +149,9 @@ With this transformation, the objective function can be written:
       z = 5*x[1]^2 + 4*x[2]^2 - 60*x[1] - 80*x[2]
       # evaluate the constraints so that feasible points result in a
       # non-positive value, i.e. 0 or less, but infeasible points give a
-      # positive value.  We choose the maximum of both constraints
-      g = maximum( [ 6*x[1]+5*x[2]-60
+      # positive value.  We choose the maximum of both constraints as
+      # the value to return as an indication of feasibility
+      g = maximum( [ 6*x[1] + 5*x[2] - 60
                      10*x[1] + 12*x[2] - 150 ] )
       # return the objective function value along with indication of
       # feasibility
@@ -158,9 +159,9 @@ With this transformation, the objective function can be written:
   end
 #+end_src
 
-The second requirement is the definition of the domain.  For flexibility, Fresa allows for the domain to be dynamically defined and so it depends on the current point in the search.  The domain is defined by providing two functions, one which returns the lower bounds on all the variables and the other returning the upper bound.  For problems involving a search in the real number domain, such as the example above, it is usually straightforward to define a box search domain.
+The second requirement is the definition of the search domain.  For flexibility, for instance to allow the use of problem specific data structures, Fresa expects the search domain to be a function of the search points.  The domain therefore is defined by providing two functions, one which returns the lower bounds for the given point in the search space and the other returning the upper bounds.  For problems involving a search in the real number domain, such as the example above, it is usually straightforward to define a box search domain.
 
-In the example above, the second optimization variable is unbounded above.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\).  The domain is therefore defined:
+In the example above, the second optimization variable is unbounded above.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\) must hold for feasible points.  The search domain, for Fresa, is therefore defined as follows:
 #+name: exampledomain
 #+begin_src julia :tangle no :noweb yes
   domain = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
@@ -173,15 +174,15 @@ Finally, an initial population must be provided to Fresa.  This population can b
 #+begin_src julia :tangle no :noweb yes
   initialpopulation = [ Fresa.createpoint( [4.0, 6.25 ], objective) ]
 #+end_src
-The ~Fresa.createpoint~ function expects two arguments: the actual point in the search space and the name of the objective function.
+The ~Fresa.createpoint~ function expects two arguments: the actual point in the search domain and the actual objective function.
 
 Given the above code, Fresa can now be used to solve the problem:
 #+name: examplesolve
 #+begin_src julia
   best, population = Fresa.solve( objective, initialpopulation, domain )
 #+end_src
+The arguments given here for the ~solve~ function are those that are required.  There are also a number of optional arguments, as described [[solve][in the code section below]]
 
-If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 #+name: examplesolution
 #+begin_src julia :eval no-export :exports results :results output org :tangle example.jl
   <<exampleusingfresa>>
@@ -190,6 +191,8 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
       <<exampleinitialpopulation>>
       <<examplesolve>>
 #+end_src
+
+If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 
 #+results: examplesolution
 #+begin_src org
@@ -278,7 +281,7 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
   )
 #+end_src
 
-The output includes details on the settings of all tunable parameters for the method, the evolution of the population as Fresa propagates solutions, and finally the best solution found along with the full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
+The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
 
 A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.
 
@@ -324,7 +327,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-08-06 16:16]"
+  version = "[2022-08-07 13:10]"
   using Dates
   using Distributed
   using Printf
@@ -970,7 +973,7 @@ Used to set some of the module global variables used by many of the functions in
       # println("Size of problem: $n")
   end
 #+end_src
-** solve -- use the PPA to solve the optimisation problem
+** solve -- use the PPA to solve the optimisation problem <<solve>>
 The function expects the objective function, ~f~, an initial population, ~p0~, with at least one point, and the =Domain= for the search.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.  The actual return values and data structures depends on the number of criteria:
 - 1 :: returns best point as a ~Fresa.Point~ object (which includes the decision variable values, the objective function value, and the constraint value) and also the full population;
 - >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.

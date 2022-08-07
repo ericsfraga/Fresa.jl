@@ -5,8 +5,9 @@ using Fresa
         z = 5*x[1]^2 + 4*x[2]^2 - 60*x[1] - 80*x[2]
         # evaluate the constraints so that feasible points result in a
         # non-positive value, i.e. 0 or less, but infeasible points give a
-        # positive value.  We choose the maximum of both constraints
-        g = maximum( [ 6*x[1]+5*x[2]-60
+        # positive value.  We choose the maximum of both constraints as
+        # the value to return as an indication of feasibility
+        g = maximum( [ 6*x[1] + 5*x[2] - 60
                        10*x[1] + 12*x[2] - 150 ] )
         # return the objective function value along with indication of
         # feasibility

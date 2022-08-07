@@ -1,7 +1,7 @@
 name = "Fresa"
 uuid = "35d66a44-7359-11ea-387b-f94ed747d8e0"
 authors = ["Eric S Fraga <e.fraga@ucl.ac.uk>"]
-version = "7.2.19"
+version = "7.2.24"
 
 [compat]
 julia = "1.6"
