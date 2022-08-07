@@ -319,7 +319,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 :header-args:julia: :tangle "src/Fresa.jl" :comments yes
 :END:
 # +toc: headlines 2 local
-The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[*solve -- use the PPA to solve the optimisation problem][for the =solve= method below]] for more details on the data structures used and expected.
+The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[solve][for the =solve= method below]] for more details on the data structures used and expected.
 ** start of module and dependencies
 Fresa depends on a number of packages that should be available in any Julia installation.  These are packages for displaying output and using parallel computing capabilities when available on the actual hardware.
 #+name: modulestart
@@ -327,7 +327,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-08-07 13:10]"
+  version = "[2022-08-07 13:14]"
   using Dates
   using Distributed
   using Printf
