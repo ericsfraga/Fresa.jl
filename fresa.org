@@ -110,7 +110,7 @@ in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
 /Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Quick example
 :PROPERTIES:
-:header-args:julia: :tangle no :exports code :noweb yes
+:header-args:julia: :tangle no :exports code :noweb yes :session :results silent
 :END:
 
 Once Fresa is available in your Julia installation, using it requires you to define three aspects to define a problem:
@@ -136,6 +136,7 @@ We start by telling Julia that we wish to use the Fresa package:
 #+begin_src julia
   using Fresa
 #+end_src
+
 The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of /z/, the objective function value, and /g/, the indication of feasibility.  /g/ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the most straightforward approach can be to rewrite the constraints in the form \(g(x) \le 0\):
 \begin{array*}
 6x_1 + 5x_2 - 60 & \le 0 \\
@@ -178,7 +179,7 @@ The ~Fresa.createpoint~ function expects two arguments: the actual point in the 
 
 Given the above code, Fresa can now be used to solve the problem:
 #+name: examplesolve
-#+begin_src julia
+#+begin_src julia :results output
   best, population = Fresa.solve( objective, initialpopulation, domain )
 #+end_src
 The arguments given here for the ~solve~ function are those that are required.  There are also a number of optional arguments, as described [[solve][in the code section below]]
@@ -327,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-08-07 13:14]"
+  version = "[2022-11-23 15:31]"
   using Dates
   using Distributed
   using Printf
