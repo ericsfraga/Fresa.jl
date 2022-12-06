@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2022-08-07 13:10]"
+version = "[2022-12-06 12:29]"
 using Dates
 using Distributed
 using Printf
@@ -685,6 +685,7 @@ function solve(f, p0, domain;        # required arguments
                 # passing through the lower and upper bounds
                 # appropriate for the particular solution point
                 newx = neighbour(pop[s].x, domain.lower(pop[s].x), domain.upper(pop[s].x), fit[s])
+                nf += 1
                 # for parallel evaluation, we store the neighbours and
                 # evaluate them later; otherwise, we evaluate
                 # immediately and save the resulting point
@@ -696,7 +697,6 @@ function solve(f, p0, domain;        # required arguments
                     if plotvectors
                         write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                     end
-                    nf += 1
                 end
             end
             # remove selected member from the original population so

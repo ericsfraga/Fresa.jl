@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-11-23 15:31]"
+  version = "[2022-12-06 12:29]"
   using Dates
   using Distributed
   using Printf
@@ -995,7 +995,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
 #+name: solve
 #+begin_src julia
   """ 
-  
+
   Solve an optimisation problem, defined as the minimization of the
   values returned by the objective function, `f`.  `f` returns not only
   the objective function values, an array of `Float64` values, but also
@@ -1003,18 +1003,18 @@ The *output* of the progress during the search is controlled by the ~output~ opt
   solved using the Fresa algorithm.  `p0` is the initial population
   which has to have at least one member, a `Point`, and `a` and `b` are
   ,*bounds* on the search space.
-  
+
   The return values for the solution of a single criterion problem are
   the best point and the full population at the end of the search. 
-  
+
   For a multi-objective problem, the returned values are the set of
   indices for the points within the full population (the second returned
   value) approximating the *Pareto* front.
-  
+
   The population will consist of an array of `Fresa.Point` objects, each
   of which will have the point in the search space, the objective
   function value and the feasibility measure.
-  
+
   """
   function solve(f, p0, domain;        # required arguments
                  parameters = nothing, # allow parameters for objective function 
@@ -1226,6 +1226,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                   # passing through the lower and upper bounds
                   # appropriate for the particular solution point
                   newx = neighbour(pop[s].x, domain.lower(pop[s].x), domain.upper(pop[s].x), fit[s])
+                  nf += 1
                   # for parallel evaluation, we store the neighbours and
                   # evaluate them later; otherwise, we evaluate
                   # immediately and save the resulting point
@@ -1237,7 +1238,6 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                       if plotvectors
                           write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                       end
-                      nf += 1
                   end
               end
               # remove selected member from the original population so
