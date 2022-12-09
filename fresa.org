@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2022-12-09 14:47]"
+  version = "[2022-12-09 14:49]"
   using Dates
   using Distributed
   using Printf
@@ -1501,53 +1501,88 @@ for \(n>1\).
   Profile.print(format=:flat, sortedby=:count)
 #+end_src 
 
-** mixed integer nonlinear example
-The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
+** mixed integer problems
+:PROPERTIES:
+:header-args:julia: :tangle no :noweb yes
+:END:
 
-The aims of this example are to test the use of a non-default /neighbour/ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
+The aims of the examples in this section are to test the use of a non-default ~neighbour~ function and the use of a problem-specific type for solutions, a mixed-integer type in this case.
 
-This example is also used, for the moment, to test out the parallel implementation of Fresa.  The important aspects are that Fresa as well as the =MI= type be available on all worker processes.  This is not a good example in that the parallel version takes longer than the sequential version.
+*** The ~MI~ structure
+All the examples before this have use a vector of floating point numbers to represent points in the search space.  For many problems in process systems engineering, the search space may be defined in terms of not only floating point numbers but also integer variables, often taking on only binary values, 0 or 1.  To cater for such optimization problems, we can ask Fresa to use a space defined by points represented using a specific data structure:
 
-#+name: testminlp
-#+begin_src julia :tangle test/minlp.jl
-  using Distributed
-  using Printf
-  @everywhere using Fresa
-  # define new type for mixed integer problems
-  # in general, this would be vectors of real and integer values
-  @everywhere struct MI
-      x :: Float64
-      y :: Int32
+#+name: mistructure
+#+begin_src julia
+  struct MI
+      x :: Vector{Float64}
+      y :: Vector{Int}
   end
-  import Base
-  Base.show(io::IO, m::MI) = print(io, m.x, " ", m.y)
-  f = s -> (3s.y - 5s.x,
-            max(2s.y + 3s.x - 24,
-                3s.x - 2s.y - 8,
-                2s.y^2 - 2*√s.y + 11s.y + 8s.x - 39 - 2*√s.x*s.y^2))
-  # bounds
-  domain = Fresa.Domain(x -> MI(1.0, 1),
-                        x -> MI(6.0, 6))
-  # function to find a neighbouring solution for MI type decision points
+#+end_src
+
+where ~x~ are the floating point or real numbers defining a point in the search space and ~y~ the integer numbers.
+
+Using any data structure to represent points in the search space, other than a vector of floating point numbers, requires defining a method for identifying neighbouring solutions (see [[neighbour]] above).  We can make use of the default ~neighbour~ function to manipulate the floating point numbers but will need to handle the integer values directly.
+
+#+name: mineighbour
+#+begin_src julia
   function Fresa.neighbour(s :: MI,
                            a :: MI,
                            b :: MI,
                            f :: Float64) :: MI
-      x = s.x + (b.x-a.x)*(1-f)*2*(rand()-0.5)
-      x = x < a.x ? a.x : (x > b.x ? b.x : x)
-      # for the integer variable, we move in one direction or the other
-      # a random number of places depending on fitness
-      positive = rand(Bool)
-      r = rand()
-      # @printf(": neighbour: f=%g r=%g\n", f, r)
-      inc = ceil(f*r*(b.y-a.y)/2)
-      # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
-      y = s.y + (positive ? inc : -inc)
-      y = y < a.y ? a.y : (y > b.y ? b.y : y)
+      # use the neighbour function in Fresa to find a neighbour for the
+      # floating point numbers in the representation of the current
+      # point
+      x = Fresa.neighbour(s.x, a.x, b.x, f)
+      # the integer variables are treated differently.  We only consider
+      # changing any value at all if the random number is greater than
+      # the fitness value, which means that the most fit solutions will
+      # likely not have the integer values changed.  If one is to be
+      # changed, we limit to just one variable at a time.
+      y = copy(s.y)
+      if rand() > f
+          i = rand(1:length(y))
+          # consider the case of binary variables as special cases:
+          # toggle the boolean value (which is essentially what a binary
+          # variable can be considered to be); otherwise, change value
+          # up or down randomly.
+          if a.y[i] == 0 && b.y[i] == 1
+              # binary variable
+              y[i] = 1 - y[i]
+          else
+              # for the integer variable we select to change, we move in one
+              # direction or the other a random number of places depending
+              # on fitness
+              positive = rand(Bool)
+              # random number to decide how much change to make to this
+              # integer
+              r = rand()
+              inc = ceil(f*r*(y[i]-y[i])/2)
+              # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
+              y[i] = y[i] + (positive ? inc : -inc)
+              # keep within bounds
+              y[i] = y[i] < a.y[i] ? a.y[i] : (y[i] > b.y[i] ? b.y[i] : y[i])
+          end
+      end
+      # return the new search point consisting of both the floating
+      # point numbers and the integer numbers
       return MI(x,y)
   end
+#+end_src
+*** Example 1: Westerlund & Westerlund
+The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
+
+#+name: mitest1
+#+begin_src julia
+  # objective function and constraints
+  f = s -> (3s.y[1] - 5s.x[1],
+            max(2s.y[1] + 3s.x[1] - 24,
+                3s.x[1] - 2s.y[1] - 8,
+                2s.y[1]^2 - 2*√s.y[1] + 11s.y[1] + 8s.x[1] - 39 - 2*√s.x[1]*s.y[1]^2))
+  # bounds
+  domain = Fresa.Domain(x -> MI([1.0], [1]),
+                        x -> MI([6.0], [6]))
   # create the initial population consisting of a single MI point
-  p0 = [Fresa.createpoint(MI(1.0, 1),f)]
+  p0 = [Fresa.createpoint(MI([1.0], [1]),f)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(f, p0, domain; ngen=100)
   println("Population: $pop")
@@ -1556,8 +1591,8 @@ This example is also used, for the moment, to test out the parallel implementati
 
 Using the results obtained above, we use the linking information for all the points in the search space encountered to do some simple analysis of the search.  The simple analysis consists of printing out the path of evolution that led to the final best solution:
 
-#+name: testminlpsupplement
-#+begin_src julia :tangle test/minlp.jl
+#+name: mitest1evolution
+#+begin_src julia
   println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
   ancestor = best.ancestor;
   while ancestor != Some(nothing) && ! (ancestor isa Nothing)
@@ -1567,6 +1602,50 @@ Using the results obtained above, we use the linking information for all the poi
   end
 #+end_src 
 
+# tangle all of the above to the test file
+#+begin_src julia :tangle test/minlp.jl
+  using Fresa
+  <<mistructure>>
+      <<mineighbour>>
+      <<mitest1>>
+      <<mitest1evolution>>
+#+end_src 
+
+*** Example 2: Quesada & Grossmann
+The second MINLP example comes from: Ignacio Quesada & Ignacio E. Grossmann, /An LP/NLP based branch and bound algorithm for convex MINLP optimization problems/, Computers & Chemical Engineering *16*:10-11, 937-947, 1992.  This problem has one integer (binary) variable and 2 continuous variables.
+
+#+name: mitest2
+#+begin_src julia
+  # objective function and constraints
+  f = s -> (10*s.x[1]^2 - s.x[2] + 5*(s.y[1] - 1),
+            max(
+                s.x[2] - 5*log(s.x[1]+1) - 3*s.y[1],
+                s.x[1]^2 - s.x[2] - s.y[1] - 1,
+                s.x[1] + s.x[2] + 20*s.y[1] - 24,
+                3*s.x[1] + 2*s.x[2] - 10
+            ))
+  # bounds, avoiding the absolute lower bound at -1 on the x variables
+  # as this will cause numeric difficulties with the log function. eps()
+  # is a built-in function which is the machine precision.
+  domain = Fresa.Domain(x -> MI([-1.0+eps(), -1.0+eps()], [0]),
+                        x -> MI([50.0, 50.0], [1]))
+  # create the initial population consisting of a single MI point
+  p0 = [Fresa.createpoint(MI([0.0, 0.0], [1]),f)]
+  # now invoke Fresa to solve the problem
+  best, pop = Fresa.solve(f, p0, domain; ngen=1_000, npop=100, tolerance=0.0)
+  println("Population: $pop")
+  println("Best: f($(best.x)) = $(best.z), $(best.g)")
+#+end_src 
+
+# tangle all of the above to the test file
+#+begin_src julia :tangle test/minlp2.jl
+  using Fresa
+  <<mistructure>>
+      <<mineighbour>>
+      <<mitest2>>
+#+end_src 
+
+With this code, ~Fresa~ is able to find a good solution typically within ten to twenty generations.  The example has a stopping criterion of one thousand generations and most of the extra search serves to refine the solution.  The optimum for this problem is on one (or more?) of the constraints and getting right up to the constraint is challenging for meta-heuristic methods such as Fresa.  However, the solution found within 10-20 generations is usually (maybe always) well within 1% of the optimum value.
 ** a GAMS interface example
 :PROPERTIES:
 :header-args:julia: :tangle "test/gams.jl"
