@@ -1515,7 +1515,7 @@ All the examples before this have use a vector of floating point numbers to repr
 #+begin_src julia
   struct MI
       x :: Vector{Float64}
-      y :: Vector{Int32}
+      y :: Vector{Int}
   end
 #+end_src
 
