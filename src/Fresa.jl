@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2022-12-09 14:49]"
+version = "[2022-12-10 12:50]"
 using Dates
 using Distributed
 using Printf
