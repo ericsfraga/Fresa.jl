@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2022-12-10 12:50]"
+version = "[2023-01-05 11:02]"
 using Dates
 using Distributed
 using Printf
@@ -512,6 +512,7 @@ function solve(f, p0, domain;        # required arguments
         println("| archive | $archiveelite |")
         println("| fitness | $fitnesstype |")
         println("| steepness | $steepness |")
+        println("| tolerance | $tolerance |")
         println("|-")
         # output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
         # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
