@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-01-05 11:02]"
+version = "[2023-01-05 11:36]"
 using Dates
 using Distributed
 using Printf
@@ -630,12 +630,12 @@ function solve(f, p0, domain;        # required arguments
         if output >= 0
             print(stderr, ": $gen np=$(length(newpop))/$npop",
                   archiveelite ? " na=$(length(archive))" : "",
-              " with most fit z=$(best.z)           \r")
+              " with most fit z=$(best.z) \r")
             # if output has been requested, check to see if output is
             # required now and then also check to see if the frequency
             # needs to be reduced.
             if output > 0
-                if gen%output == 0
+                if gen%output == 0 || gen == ngen
                     @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
                             (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
                     for i = 1:length(best.z)
