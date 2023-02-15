@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-15 13:38]"
+  version = "[2023-02-15 14:35]"
   using Dates
   using Distributed
   using Printf
@@ -992,8 +992,11 @@ The *output* of the progress during the search is controlled by the ~output~ opt
   the objective function values, an array of `Float64` values, but also
   a measure of feasibility (≤0) or infeasibility (>0).  The problem is
   solved using the Fresa algorithm.  `p0` is the initial population
-  which has to have at least one member, a `Point`, and `a` and `b` are
-  ,*bounds* on the search space.
+  which has to have at least one member, a `Point`, and `domain`
+  describes the search domain.  This latter argument is an instance of
+  the `Fresa.Domain` struct which has a `lower` and an `upper` members
+  which are functions to be evaluated with a current point in the
+  domain.
 
   The return values for the solution of a single criterion problem are
   the best point and the full population at the end of the search. 
