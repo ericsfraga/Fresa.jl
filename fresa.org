@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-01-05 11:36]"
+  version = "[2023-02-15 13:38]"
   using Dates
   using Distributed
   using Printf
@@ -945,22 +945,13 @@ By default, the following method generates a random point within the search doma
   end
 #+end_src 
 ** select -- choose a member of the population
-Given a fitness, ~f~, choose two solutions randomly and select the one with the better fitness.  This is known as a /tournament/ selection procedure of size 2.  Other options are possible but not currently implemented.
+Given a fitness, ~f~, choose two solutions randomly and select the one with the better fitness.  This is known as a /tournament/ selection procedure with the given size, which defaults to 2 in the ~solve~ function unless given a value by caller of that function.  Other select methods are possible but not currently implemented.
 #+name: select
 #+begin_src julia
-  function select(f)
-      l = length(f)
-      ind1 = rand(1:l)
-      if ind1 == 0
-          ind1 = 1
-      end
-      ind2 = rand(1:l)
-      # println("Comparing $ind1 to $ind2")
-      if f[ind1] > f[ind2]
-          return ind1
-      else
-          return ind2
-      end
+  function select(f, size)
+      indices = rand(1:length(f), size)       # generate size indices
+      best = argmax([f[i] for i ∈ indices])
+      indices[best]
   end
 #+end_src 
 ** COMMENT set bounds -- for real valued decision vectors
@@ -1029,6 +1020,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                  output = 1,           # how often to output information
                  plotvectors = false,  # generate output file for search plot
                  populationoutput = false, # output population every generation?
+                 tournamentsize = 2,         # number to base selection on
                  steepness = 1.0,      # show steep is the adjustment shape for fitness
                  tolerance = 0.0,      # tolerance for similarity detection
                  usemultiproc = false) # parallel processing by Fresa itself?
@@ -1052,6 +1044,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           println("| elite | $elite |")
           println("| archive | $archiveelite |")
           println("| fitness | $fitnesstype |")
+          println("| tournamentsize | $tournamentsize |")
           println("| steepness | $steepness |")
           println("| tolerance | $tolerance |")
           println("|-")
@@ -1205,7 +1198,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           # generating neighbours
           l = length(pop)
           for i in 1:min(l,npop)
-              s = select(fit)
+              s = select(fit, tournamentsize)
               # println(": selection $i is $s")
               # println(": size of pop is $(size(pop))")
               selected = pop[s]

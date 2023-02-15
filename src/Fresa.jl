@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-01-05 11:36]"
+version = "[2023-02-15 13:38]"
 using Dates
 using Distributed
 using Printf
@@ -436,19 +436,10 @@ end
 # randompoint ends here
 
 # [[file:../fresa.org::select][select]]
-function select(f)
-    l = length(f)
-    ind1 = rand(1:l)
-    if ind1 == 0
-        ind1 = 1
-    end
-    ind2 = rand(1:l)
-    # println("Comparing $ind1 to $ind2")
-    if f[ind1] > f[ind2]
-        return ind1
-    else
-        return ind2
-    end
+function select(f, size)
+    indices = rand(1:length(f), size)       # generate size indices
+    best = argmax([f[i] for i ∈ indices])
+    indices[best]
 end
 # select ends here
 
@@ -488,6 +479,7 @@ function solve(f, p0, domain;        # required arguments
                output = 1,           # how often to output information
                plotvectors = false,  # generate output file for search plot
                populationoutput = false, # output population every generation?
+               tournamentsize = 2,         # number to base selection on
                steepness = 1.0,      # show steep is the adjustment shape for fitness
                tolerance = 0.0,      # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
@@ -511,6 +503,7 @@ function solve(f, p0, domain;        # required arguments
         println("| elite | $elite |")
         println("| archive | $archiveelite |")
         println("| fitness | $fitnesstype |")
+        println("| tournamentsize | $tournamentsize |")
         println("| steepness | $steepness |")
         println("| tolerance | $tolerance |")
         println("|-")
@@ -664,7 +657,7 @@ function solve(f, p0, domain;        # required arguments
         # generating neighbours
         l = length(pop)
         for i in 1:min(l,npop)
-            s = select(fit)
+            s = select(fit, tournamentsize)
             # println(": selection $i is $s")
             # println(": size of pop is $(size(pop))")
             selected = pop[s]
