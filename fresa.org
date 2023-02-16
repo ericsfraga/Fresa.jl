@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-15 14:35]"
+  version = "[2023-02-16 16:26]"
   using Dates
   using Distributed
   using Printf
@@ -1279,7 +1279,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           # and finally, if we have elitism, remove any duplicate points
           # in the new population and make it the current population for
           # the next generation; otherwise, simply copy over
-          if elite
+          if elite && tolerance > eps()
               (pop, nn) = prune(newpop, tolerance)
               npruned += nn
           else

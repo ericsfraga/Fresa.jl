@@ -2,7 +2,7 @@
 # All code copyright © Eric S Fraga. 
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-15 13:38]"
+version = "[2023-02-16 16:26]"
 using Dates
 using Distributed
 using Printf
@@ -451,8 +451,11 @@ values returned by the objective function, `f`.  `f` returns not only
 the objective function values, an array of `Float64` values, but also
 a measure of feasibility (≤0) or infeasibility (>0).  The problem is
 solved using the Fresa algorithm.  `p0` is the initial population
-which has to have at least one member, a `Point`, and `a` and `b` are
-*bounds* on the search space.
+which has to have at least one member, a `Point`, and `domain`
+describes the search domain.  This latter argument is an instance of
+the `Fresa.Domain` struct which has a `lower` and an `upper` members
+which are functions to be evaluated with a current point in the
+domain.
 
 The return values for the solution of a single criterion problem are
 the best point and the full population at the end of the search. 
@@ -735,7 +738,7 @@ function solve(f, p0, domain;        # required arguments
         # and finally, if we have elitism, remove any duplicate points
         # in the new population and make it the current population for
         # the next generation; otherwise, simply copy over
-        if elite
+        if elite && tolerance > eps()
             (pop, nn) = prune(newpop, tolerance)
             npruned += nn
         else
