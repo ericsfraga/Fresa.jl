@@ -17,8 +17,10 @@ using Fresa
                            x -> [ 8.0, 12.5 ] ) # upper bounds
     initialpopulation = [ Fresa.Point( [4.0, 6.25 ], objective ) ]
     best, population = Fresa.solve( objective, initialpopulation, domain )
-    println("Best solution found:")
-    println(best)
-    println("Full population at the end:")
-    print(population)
+    println("Population at end:")
+    println("$population")
+    println("Best solution found is:")
+    println("  f($( best.x ))=$( best.z )")
+    println("with constraint satisfaction (≤ 0) or violation (> 0):")
+    println("  g=$( best.g ).")
 # examplesolution ends here
