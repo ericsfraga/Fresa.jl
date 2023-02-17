@@ -144,7 +144,7 @@ We start by telling Julia that we wish to use the Fresa package:
   using Fresa
 #+end_src
 
-The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of /z/, the objective function value, and /g/, the indication of feasibility.  /g/ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the most straightforward approach can be to rewrite the constraints in the form \(g(x) \le 0\):
+The next step is to define the objective function.  This function has two responsibilities: it must calculate the value of the objective and it must indicate whether the given point in the search space is feasible or not.  The function returns a /tuple/ consisting of ~z~, the objective function value, and ~g~, the indication of feasibility.  ~g~ should be \le 0 if the point is feasible and greater than 0 otherwise.  For constraints as in the example given above, the most straightforward approach can be to rewrite the constraints in the form \(g(x) \le 0\):
 \begin{array*}
 6x_1 + 5x_2 - 60 & \le 0 \\
 10x_1 + 12 x_2 - 150 & \le 0
@@ -177,12 +177,12 @@ In the example above, the second optimization variable is unbounded above.  Howe
 #+end_src
 This code says that for any point in the search space, ~x~, the lower bounds are given by the vector ~[0.0, 0.0]~ and the upper bounds by ~[8.0, 12.5]~
 
-Finally, an initial population must be provided to Fresa.  This population can be of any size so long as there is at least one member.  Fresa usually works well even if only one initial point in the search domain is provided.  We consider starting at the midpoint of the search domain defined above and create a point in the search domain:
+Finally, an initial population must be provided to Fresa.  This population can be of any size so long as there is at least one member.  Fresa usually works well even if only one initial point in the search domain is provided.  We consider starting at the midpoint of the search domain defined above and create a ~Point~ in the search domain:
 #+name: exampleinitialpopulation
 #+begin_src julia :tangle no :noweb yes
-  initialpopulation = [ Fresa.createpoint( [4.0, 6.25 ], objective) ]
+  initialpopulation = [ Fresa.Point( [4.0, 6.25 ], objective ) ]
 #+end_src
-The ~Fresa.createpoint~ function expects two arguments: the actual point in the search domain and the actual objective function.
+Defining the ~Point~ object (see [[*Point][below]]) requires two arguments: the values of an actual instance of the decision or optimization variables in the search domain and the Julia function that evaluates the objective function for the optimization problem.
 
 Given the above code, Fresa can now be used to solve the problem:
 #+name: examplesolve
