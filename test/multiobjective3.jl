@@ -3,7 +3,7 @@ using Fresa
 using Profile
 nx = 5
 # specify the domain for the search, x ∈ [0,1]ⁿ
-domain = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
+d = Fresa.Domain(x -> zeros(length(x)), x -> ones(length(x)))
 x = zeros(nx)
 f = x -> ([ sum((x.-0.5).^2 .+ 1)
             sum(cos.(x))
@@ -13,7 +13,8 @@ f = x -> ([ sum((x.-0.5).^2 .+ 1)
 p0 = [Fresa.Point(x,f)]
 # now invoke Fresa to solve the problem
 @profile for i=1
-    pareto, population = Fresa.solve(f, p0, domain;
+    pareto, population = Fresa.solve(f, p0;
+                                     domain = d,
                                      archiveelite = false,
                                      npop=20, ngen=300,
                                      #output=100,

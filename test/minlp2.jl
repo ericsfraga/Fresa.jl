@@ -5,13 +5,16 @@ struct MI
     y :: Vector{Int}
 end
     function Fresa.neighbour(s :: MI,
-                             a :: MI,
-                             b :: MI,
-                             f :: Float64) :: MI
+                             f :: Float64,
+                             d :: Fresa.Domain) :: MI
+        # find the lower and upper bounds on all variables
+        a = d.lower(s)
+        b = d.upper(s)
         # use the neighbour function in Fresa to find a neighbour for the
         # floating point numbers in the representation of the current
-        # point
-        x = Fresa.neighbour(s.x, a.x, b.x, f)
+        # point; the domain is defined by the real parts of the overall
+        # domain, a and b retrieved above.
+        x = Fresa.neighbour(s.x, f, Fresa.Domain(x -> a.x, x -> b.x))
         # the integer variables are treated differently.  We only consider
         # changing any value at all if the random number is greater than
         # the fitness value, which means that the most fit solutions will
@@ -57,12 +60,12 @@ end
     # bounds, avoiding the absolute lower bound at -1 on the x variables
     # as this will cause numeric difficulties with the log function. eps()
     # is a built-in function which is the machine precision.
-    domain = Fresa.Domain(x -> MI([-1.0+eps(), -1.0+eps()], [0]),
-                          x -> MI([50.0, 50.0], [1]))
+    d = Fresa.Domain(x -> MI([-1.0+eps(), -1.0+eps()], [0]),
+                     x -> MI([50.0, 50.0], [1]))
     # create the initial population consisting of a single MI point
     p0 = [Fresa.Point(MI([0.0, 0.0], [1]),f)]
     # now invoke Fresa to solve the problem
-    best, pop = Fresa.solve(f, p0, domain; ngen=10_000, tolerance=0.0)
+    best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000, tolerance=0.0)
     println("Population: $pop")
     println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # Example 2: Quesada & Grossmann:2 ends here

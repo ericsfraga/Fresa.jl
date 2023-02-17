@@ -4,7 +4,7 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-17 14:50]"
+version = "[2023-02-17 15:33]"
 using Dates
 using Printf
 function __init__()
@@ -264,11 +264,14 @@ end
 # assigndominancefitness ends here
 
 # [[file:../fresa.org::neighbourarray][neighbourarray]]
-function neighbour(x :: Array{Float64,1},
-                   a :: Array{Float64,1},
-                   b :: Array{Float64,1},
-                   f :: Float64
-                   ) :: Array{Float64,1}
+function neighbour(x :: Vector{Float64},
+                   f :: Float64,
+                   d :: Domain
+                   ) :: Vector{Float64}
+    # allow movements both up and down in the domain for this variable
+    # so determine the actual domain lower and upper bounds
+    a = d.lower(x)
+    b = d.upper(x)
     xnew = x .+ (1.0 .- f) .* 2(rand(length(x)).-0.5) .* (b.-a)
     xnew[xnew.<a] = a[xnew.<a];
     xnew[xnew.>b] = b[xnew.>b];
@@ -278,12 +281,13 @@ end
 
 # [[file:../fresa.org::neighbourfloat][neighbourfloat]]
 function neighbour(x :: Float64,
-                   a :: Float64,
-                   b :: Float64,
-                   f :: Float64
+                   f :: Float64,
+                   d :: Domain
                    ) :: Float64
     # allow movements both up and down
     # in the domain for this variable
+    a = domain.lower(x)
+    b = domain.upper(x)
     newx = x + (b-a)*(2*rand()-1)/2.0 * (1-f)
     if newx < a
         newx = a
@@ -493,9 +497,10 @@ of which will have the point in the search space, the objective
 function value and the feasibility measure.
 
 """
-function solve(f, p0, domain;        # required arguments
+function solve(f, p0;                # required arguments
                parameters = nothing, # allow parameters for objective function 
                archiveelite = false, # save thinned out elite members
+               domain = nothing,     # search domain: will often be required but not always
                elite = true,    # elitism by default
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                multithreading = false, # use multiple threads for objective function evaluation
@@ -703,9 +708,13 @@ function solve(f, p0, domain;        # required arguments
             # println(": generating $nr runners")
             for r in 1:nr
                 # create a neighbour, also function of fitness,
-                # passing through the lower and upper bounds
-                # appropriate for the particular solution point
-                newx = neighbour(pop[s].x, domain.lower(pop[s].x), domain.upper(pop[s].x), fit[s])
+                # optionally passing a Domain object for the search
+                # space.
+                if domain isa Nothing
+                    newx = neighbour(pop[s].x, fit[s])
+                else
+                    newx = neighbour(pop[s].x, fit[s], domain)
+                end
                 nf += 1
                 # for parallel evaluation, we store the neighbours and
                 # evaluate them later; otherwise, we evaluate
