@@ -475,7 +475,7 @@ These are variables that are global to the module.
   a = [0.0]                       # lower bounds
   b = [1.0]                       # upper bounds
 #+end_src 
-** create a point
+** create a point                                          :deprecated:
 A trivial function that simply creates a new =Point= object.  This exists for two reasons:
 1. It is needed for the =remotecall= functionality when using parallel computing because the =remotecall= function has to be given a function and not just a constructor (for some obscure reason that means that a constructor is transformed to a conversion operation... don't ask me).
 2. The ~Point~ type is parametric.  This makes defining a generic constructor difficult (at least, I was unable to find a working solution).
