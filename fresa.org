@@ -114,12 +114,13 @@ and then type Backspace to exit the package system in Julia.
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] but (at the time of writing this updated document) the version in the registry is currently out of date.
 
 /Fresa/ makes use of the following extra Julia packages: =Dates= and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+
 ** Quick example
 :PROPERTIES:
 :header-args:julia: :tangle no :exports code :noweb yes :session :results silent
 :END:
 
-Once Fresa is available in your Julia installation, using it requires you to define three aspects to define a problem:
+Once Fresa is available in your Julia installation, using it requires you to define *three* aspects to define a problem:
 1. the objective function;
 2. the search domain; and,
 3. an initial population.
