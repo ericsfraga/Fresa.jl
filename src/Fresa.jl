@@ -1,17 +1,16 @@
 # [[file:../fresa.org::modulestart][modulestart]]
 # All code copyright © Eric S Fraga. 
+# Licence for use and sharing can be found at
+#   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-16 16:26]"
+version = "[2023-02-17 14:01]"
 using Dates
-using Distributed
 using Printf
 function __init__()
-    if myid() == 1
-        println("# -*- mode: org; -*-")
-        println("#+startup: show3levels")
-        println(": Fresa PPA last change $version")
-    end
+    println("# -*- mode: org; -*-")
+    println("#+startup: show3levels")
+    println(": Fresa PPA last change $version")
 end
 # modulestart ends here
 
@@ -29,6 +28,30 @@ struct Point
     z :: Vector                 # objective function values
     g :: Float64                # constraint violation
     ancestor                    # the parent of this point
+    function Point(x,           # point in search space
+                   f,           # objective function 
+                   parameters = nothing, # arguments to objective function 
+                   ancestor = nothing)   # for analysis of search process
+        z = 0
+        g = 0
+        if ! ( parameters isa Nothing )
+            (z, g) = f(x, parameters)
+        else
+            (z, g) = f(x)
+        end
+        if g isa Int
+            g = float(g)
+        end
+        p = Nothing
+        if rank(z) == 1
+            p = new(x, z, g, ancestor)
+        elseif rank(z) == 0
+            p = new(x, [z], g, ancestor)
+        else
+            error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
+        end
+        return p
+    end
 end
 # pointtype ends here
 
@@ -420,7 +443,8 @@ function randompopulation(n, f, parameters, p0, domain :: Domain)
         # @show u
         # x = randompoint(l,u)
         # push!(p, createpoint(x, f, parameters))
-        push!(p, createpoint(randompoint(domain.lower(p0.x), domain.upper(p0.x)), f, parameters))
+        push!(p, Point(randompoint(domain.lower(p0.x), domain.upper(p0.x)),
+                       f, parameters))
     end
     p
 end
@@ -690,7 +714,7 @@ function solve(f, p0, domain;        # required arguments
                     push!(x, newx)
                     # push!(points, pop[s])
                 else
-                    push!(newpop, createpoint(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
+                    push!(newpop, Point(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
                     if plotvectors
                         write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                     end
@@ -709,31 +733,31 @@ function solve(f, p0, domain;        # required arguments
         if multithreading       # using threads and shared memory
             results = Array{Point}(undef,length(x))
             Threads.@threads for i ∈ 1:length(x)
-                results[i] = createpoint(x[i],f,parameters)
+                results[i] = Point(x[i],f,parameters)
             end
             append!(newpop, results)
-        elseif parallel        # using multiple processors with remote calls
-            # will be used to collect results from worker processors
-            results = Array{Future,1}(undef, nprocs())
-            i = 0;
-            while i < length(x)
-                # issue remote evaluation call
-                for j=1:nprocs()
-                    if i+j <= length(x) 
-                        # TODO: the information about the ancestor is
-                        # not available; this needs to be stored above
-                        results[j] = @spawn createpoint(x[i+j],f,parameters)
-                        nf += 1
-                    end
-                end
-                # now wait for results
-                for j=1:nprocs()
-                    if i+j <= length(x)
-                        push!(newpop, fetch(results[j]))
-                    end
-                end
-                i += nprocs()
-            end
+            # elseif parallel        # using multiple processors with remote calls
+            #     # will be used to collect results from worker processors
+            #     results = Array{Future,1}(undef, nprocs())
+            #     i = 0;
+            #     while i < length(x)
+            #         # issue remote evaluation call
+            #         for j=1:nprocs()
+            #             if i+j <= length(x) 
+            #                 # TODO: the information about the ancestor is
+            #                 # not available; this needs to be stored above
+            #                 results[j] = @spawn createpoint(x[i+j],f,parameters)
+            #                 nf += 1
+            #             end
+            #         end
+            #         # now wait for results
+            #         for j=1:nprocs()
+            #             if i+j <= length(x)
+            #                 push!(newpop, fetch(results[j]))
+            #             end
+            #         end
+            #         i += nprocs()
+            #     end
         end
         # and finally, if we have elitism, remove any duplicate points
         # in the new population and make it the current population for

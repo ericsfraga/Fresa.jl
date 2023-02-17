@@ -15,6 +15,6 @@ using Fresa
     end
     domain = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
                            x -> [ 8.0, 12.5 ] ) # upper bounds
-    initialpopulation = [ Fresa.createpoint( [4.0, 6.25 ], objective) ]
+    initialpopulation = [ Fresa.Point( [4.0, 6.25 ], objective ) ]
     best, population = Fresa.solve( objective, initialpopulation, domain )
 # examplesolution ends here
