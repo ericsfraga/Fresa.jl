@@ -66,11 +66,11 @@ There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Jul
 * Overview and introduction
 /Fresa/ is an implementation of a /plant propagation algorithm/ in [[http://www.julialang.org/][Julia]] programming language.  Our original version was called [[file:strawberry.org][Strawberry]], written in Octave (and usable in MATLAB).  Please see the [[file:strawberry.org][documentation]] of Strawberry for a longer description of the history of these codes, the conditions on which you may use these codes and which articles to cite.  The quite interesting story of the strawberry plant [[https://strawberryplants.org/strawberry-plant/][can be found elsewhere]].
 
-The move to using Julia for the implementation of this algorithm is motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
+The move to using Julia for the implementation of this algorithm was motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
 A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  
 ** Licence and citing
-All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[file:LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
+All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
 Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include the software itself (doi:10.5281/zenodo.5045812):
 
@@ -89,25 +89,31 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algori
 You may also wish to cite the original paper which led to the development of both /Fresa/ and [[http:strawberry.html][Strawberry]], the first implementation of the plant propagation algorithm in MATLAB:
 
 #+begin_src bibtex
-                    @inproceedings{salhi-fraga-2011a,
-                      author={Abdellah Salhi and Eric S. Fraga},
-                      title={Nature-inspired optimisation approaches and the new plant propagation algorithm},
-                      booktitle={Proceedings of ICeMATH 2011, The International Conference on Numerical Analysis and Optimization},
-                      year={2011},
-                      pages={K2:1--8},
-                      address={Yogyakarta},
-                      month={6}
-                    }
+  @inproceedings{salhi-fraga-2011a,
+    author={Abdellah Salhi and Eric S. Fraga},
+    title={Nature-inspired optimisation approaches and the new plant propagation algorithm},
+    booktitle={Proceedings of ICeMATH 2011, The International Conference on Numerical Analysis and Optimization},
+    year={2011},
+    pages={K2:1--8},
+    address={Yogyakarta},
+    month={6}
+  }
 #+end_src
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]].  /Fresa/ has been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]] but, basically, all you need to do is start Julia and then type
+
+: ]add https://github.com/ericsfraga/Fresa.jl
+
+and then type Backspace to exit the package system in Julia.
+
+/Fresa/ has also been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
 
 : add Fresa
 
-in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]].
+in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] but (at the time of writing this updated document) the version in the registry is currently out of date.
 
-/Fresa/ makes use of the following Julia packages: =Dates=, =Distributed=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+/Fresa/ makes use of the following extra Julia packages: =Dates= and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 ** Quick example
 :PROPERTIES:
 :header-args:julia: :tangle no :exports code :noweb yes :session :results silent
@@ -320,17 +326,18 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 :header-args:julia: :tangle "src/Fresa.jl" :comments yes
 :END:
 # +toc: headlines 2 local
-The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[solve][for the =solve= method below]] for more details on the data structures used and expected.
+The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is defined by the decision or optimization variables (the /point/ in a search space), the objective function values for this point and a feasibility indication, with =g≤0= feasible and =g>0= infeasible.  See the documentation [[solve][for the =solve= method below]] for more details on the data structures used and expected.
 ** start of module and dependencies
-Fresa depends on a number of packages that should be available in any Julia installation.  These are packages for displaying output and using parallel computing capabilities when available on the actual hardware.
+Fresa depends on a number of packages that should be available in any Julia installation.  These are packages for mostly for displaying output formatted for easy viewing in [[https://www.gnu.org/software/emacs/][the Emacs text editor]] using [[https://orgmode.org/][org mode]].
 #+name: modulestart
 #+begin_src julia
   # All code copyright © Eric S Fraga. 
+  # Licence for use and sharing can be found at
+  #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-16 16:26]"
+  version = "[2023-02-17 13:20]"
   using Dates
-  using Distributed
   using Printf
   function __init__()
       if myid() == 1
