@@ -1,2 +1,6 @@
 *.html
 ltximg/
+/src/TAGS
+/test/gamsdeclarations.lst
+/test/gamsexample.lst
+/test/gamsoutput.txt
