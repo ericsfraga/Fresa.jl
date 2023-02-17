@@ -375,6 +375,30 @@ An issue in Julia (as of 2021, at least) is that you cannot define two data stru
       z :: Vector                 # objective function values
       g :: Float64                # constraint violation
       ancestor                    # the parent of this point
+      function Point(x,           # point in search space
+                     f,           # objective function 
+                     parameters = nothing, # arguments to objective function 
+                     ancestor = nothing)   # for analysis of search process
+          z = 0
+          g = 0
+          if ! ( parameters isa Nothing )
+              (z, g) = f(x, parameters)
+          else
+              (z, g) = f(x)
+          end
+          if g isa Int
+              g = float(g)
+          end
+          p = Nothing
+          if rank(z) == 1
+              p = new(x, z, g, ancestor)
+          elseif rank(z) == 0
+              p = new(x, [z], g, ancestor)
+          else
+              error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
+          end
+          return p
+      end
   end
 #+end_src 
 Customise how a Point is displayed.  We display the objective function value(s) first and then the representation of the point.  This allows for a population to have different representations without causing problems with any data analysis on the columns representing the objective function values.
