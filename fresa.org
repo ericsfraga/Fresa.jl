@@ -337,15 +337,13 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-17 13:20]"
+  version = "[2023-02-17 14:01]"
   using Dates
   using Printf
   function __init__()
-      if myid() == 1
-          println("# -*- mode: org; -*-")
-          println("#+startup: show3levels")
-          println(": Fresa PPA last change $version")
-      end
+      println("# -*- mode: org; -*-")
+      println("#+startup: show3levels")
+      println(": Fresa PPA last change $version")
   end
 #+end_src
 ** types
