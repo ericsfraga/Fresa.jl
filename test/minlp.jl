@@ -55,7 +55,7 @@ end
     domain = Fresa.Domain(x -> MI([1.0], [1]),
                           x -> MI([6.0], [6]))
     # create the initial population consisting of a single MI point
-    p0 = [Fresa.createpoint(MI([1.0], [1]),f)]
+    p0 = [Fresa.Point(MI([1.0], [1]),f)]
     # now invoke Fresa to solve the problem
     best, pop = Fresa.solve(f, p0, domain; ngen=100)
     println("Population: $pop")

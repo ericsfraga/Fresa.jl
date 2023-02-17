@@ -10,9 +10,9 @@ domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
 # the actual objective function
 f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
 # create the initial population consisting of this single point
-p0 = [Fresa.createpoint(x0,f)]
+p0 = [Fresa.Point(x0,f)]
 # now invoke Fresa to solve the problem
-@time best, pop = Fresa.solve(f, p0, domain)
+best, pop = Fresa.solve(f, p0, domain)
 # output the results
 println("Population at end:\n$pop")
 println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")

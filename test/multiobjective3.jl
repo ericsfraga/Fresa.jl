@@ -10,7 +10,7 @@ f = x -> ([ sum((x.-0.5).^2 .+ 1)
             sum(sin.(x))],
           0)
 # create the initial population consisting of this single point
-p0 = [Fresa.createpoint(x,f)]
+p0 = [Fresa.Point(x,f)]
 # now invoke Fresa to solve the problem
 @profile for i=1
     pareto, population = Fresa.solve(f, p0, domain;

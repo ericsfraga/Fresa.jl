@@ -360,7 +360,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-17 14:30]"
+  version = "[2023-02-17 14:50]"
   using Dates
   using Printf
   function __init__()
@@ -1467,7 +1467,7 @@ One of the features that /Fresa/ provides is a trace of how each solution has be
   rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,rosenbrock)]
+  p0 = [Fresa.Point(x0,rosenbrock)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(rosenbrock, p0, domain; ngen=1000, tolerance=1e-8)
   println("Population at end: $pop")
@@ -1486,7 +1486,7 @@ for \(n>1\).
   domain = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
   rosenbrock(x) = (sum([100 * (x[i+1]-x[i]^2)^2 + (1-x[i])^2 for i ∈ 1:length(x)-1]), 0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,rosenbrock)]
+  p0 = [Fresa.Point(x0,rosenbrock)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(rosenbrock, p0, domain; npop=100, ngen=1000, tolerance=1e-8, multithreading=true)
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
@@ -1504,7 +1504,7 @@ for \(n>1\).
   # objective function 
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f)]
+  p0 = [Fresa.Point(x,f)]
   # now invoke Fresa to solve the problem
   pareto, population = Fresa.solve(f, p0, domain;
                                    #fitnesstype = :hadamard,
@@ -1535,7 +1535,7 @@ for \(n>1\).
               sum(sin.(x))],
             0)
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x,f)]
+  p0 = [Fresa.Point(x,f)]
   # now invoke Fresa to solve the problem
   @profile for i=1
       pareto, population = Fresa.solve(f, p0, domain;
@@ -1633,7 +1633,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   domain = Fresa.Domain(x -> MI([1.0], [1]),
                         x -> MI([6.0], [6]))
   # create the initial population consisting of a single MI point
-  p0 = [Fresa.createpoint(MI([1.0], [1]),f)]
+  p0 = [Fresa.Point(MI([1.0], [1]),f)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(f, p0, domain; ngen=100)
   println("Population: $pop")
@@ -1681,7 +1681,7 @@ The second MINLP example comes from: Ignacio Quesada & Ignacio E. Grossmann, /An
   domain = Fresa.Domain(x -> MI([-1.0+eps(), -1.0+eps()], [0]),
                         x -> MI([50.0, 50.0], [1]))
   # create the initial population consisting of a single MI point
-  p0 = [Fresa.createpoint(MI([0.0, 0.0], [1]),f)]
+  p0 = [Fresa.Point(MI([0.0, 0.0], [1]),f)]
   # now invoke Fresa to solve the problem
   best, pop = Fresa.solve(f, p0, domain; ngen=10_000, tolerance=0.0)
   println("Population: $pop")
@@ -1820,7 +1820,7 @@ In this case, the value of the residual, in absolute sense, is a measure of feas
   domain = Fresa.Domain(x -> [0.0;0.0;0.0], x -> [5.0;3.0;3.0])
   x0 = [4.0;2.0;2.0]
   # create the initial population consisting of this single point
-  p0 = [Fresa.createpoint(x0,fmo)]
+  p0 = [Fresa.Point(x0,fmo)]
   # now invoke Fresa to solve the problem
   pareto, population = Fresa.solve(fmo, p0, domain;
                                    fitnesstype = :borda,
@@ -1880,10 +1880,10 @@ This test uses a simple quadratic objective function to test out the fitness eva
   f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
   # single objective test function 
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
-  pop = [Fresa.createpoint(x0,f)]
+  pop = [Fresa.Point(x0,f)]
   for i in 1:5
       x = Fresa.neighbour(x0,a,b,0.5)
-      push!(pop, Fresa.createpoint(x,f))
+      push!(pop, Fresa.Point(x,f))
       l = length(pop)
   end
   println(pop)

@@ -4,7 +4,7 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-17 14:01]"
+version = "[2023-02-17 14:50]"
 using Dates
 using Printf
 function __init__()
