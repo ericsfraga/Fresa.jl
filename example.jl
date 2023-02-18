@@ -13,10 +13,12 @@ using Fresa
         # feasibility
         (z, g)
     end
-    domain = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
-                           x -> [ 8.0, 12.5 ] ) # upper bounds
+    dom = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
+                        x -> [ 8.0, 12.5 ] ) # upper bounds
     initialpopulation = [ Fresa.Point( [4.0, 6.25 ], objective ) ]
-    best, population = Fresa.solve( objective, initialpopulation, domain )
+    best, population = Fresa.solve( objective, # function 
+                                    initialpopulation, # initial points
+                                    domain = dom )     # the search domain
     println("Population at end:")
     println("$population")
     println("Best solution found is:")

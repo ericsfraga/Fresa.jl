@@ -1,5 +1,3 @@
-# Note: export to HTML using twbs (=,ewh=)
-
 #+title: The Fresa plant propagation algorithm for optimization
 #+author:    Professor Eric S Fraga
 #+email:     e.fraga@ucl.ac.uk
@@ -7,6 +5,8 @@
 
 # add extra meta information when tangling the code
 #+property: header-args :comments yes
+# do not evaluate Julia blocks on export
+#+property: header-args:julia :eval no 
 
 # +HTML_HEAD: <link href=\"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css\" rel=\"stylesheet\">
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
@@ -117,7 +117,7 @@ in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] b
 
 ** Quick example
 :PROPERTIES:
-:header-args:julia: :tangle no :exports code :noweb yes :session :results silent
+:header-args:julia: :eval no :tangle no :exports code :noweb yes :session :results silent
 :END:
 
 Once Fresa is available in your Julia installation, using it requires you to define *three* aspects to define a problem:
@@ -172,8 +172,8 @@ The second requirement is the definition of the search domain.  For flexibility,
 In the example above, the second optimization variable is unbounded above.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\) must hold for feasible points.  The search domain, for Fresa, is therefore defined as follows:
 #+name: exampledomain
 #+begin_src julia :tangle no :noweb yes
-  domain = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
-                         x -> [ 8.0, 12.5 ] ) # upper bounds
+  dom = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
+                      x -> [ 8.0, 12.5 ] ) # upper bounds
 #+end_src
 This code says that for any point in the search space, ~x~, the lower bounds are given by the vector ~[0.0, 0.0]~ and the upper bounds by ~[8.0, 12.5]~
 
@@ -187,7 +187,9 @@ Defining the ~Point~ object (see [[*Point][below]]) requires two arguments: the 
 Given the above code, Fresa can now be used to solve the problem:
 #+name: examplesolve
 #+begin_src julia :results output
-  best, population = Fresa.solve( objective, initialpopulation, domain )
+  best, population = Fresa.solve( objective, # function 
+                                  initialpopulation, # initial points
+                                  domain = dom )     # the search domain
   println("Population at end:")
   println("$population")
   println("Best solution found is:")
@@ -198,7 +200,7 @@ Given the above code, Fresa can now be used to solve the problem:
 The arguments given here for the ~solve~ function are those that are required.  There are also a number of optional arguments, as described [[solve][in the code section below]]
 
 #+name: examplesolution
-#+begin_src julia :eval no :tangle example.jl
+#+begin_src julia :eval no :tangle example.jl :exports none
   <<exampleusingfresa>>
       <<exampleobjective>>
       <<exampledomain>>
@@ -208,8 +210,7 @@ The arguments given here for the ~solve~ function are those that are required.  
 
 If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 
-#+results: examplesolution
-#+begin_src org
+#+begin_example
   # -*- mode: org; -*-
   ,#+startup: show3levels
   : Fresa PPA last change [2023-02-17 14:01]
@@ -310,7 +311,7 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
     f([3.6780228209414902, 7.586274640604871])=[-529.7378294573089]
   with constraint satisfaction (≤ 0) or violation (> 0):
     g=-0.0004898713266996424.
-#+end_src
+#+end_example
 
 The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
 
@@ -333,7 +334,7 @@ Major version log:
 
 - February 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
   1. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change.
-  2. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change for any case where problem specific ~neighbour~ functions have been defined.
+  2. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change for any case where problem specific ~neighbour~ functions have been defined because the argument order for the ~solve~ and ~neighbour~ functions have changed to cater for the domain being optional.
 - June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
 - May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
 - April 2021 :: *v7*,
@@ -363,7 +364,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-17 15:33]"
+  version = "[2023-02-18 09:26]"
   using Dates
   using Printf
   function __init__()
@@ -770,7 +771,7 @@ There is also a version that expects single valued =Float64= arguments.
       newx
   end
 #+end_src
-Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
+Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer problems][mixed integer nonlinear examples]] below for an example of a simple mixed-integer case.
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248).
 *** <<<dominates>>>: determine dominance
@@ -1037,7 +1038,7 @@ The calling sequence for =f= is a point in the search space plus, optionally, th
 
 =p0= is a population with initial points in the search space; these points can be of any type.  =domain= is a valid =Domain= object with appropriate functions for determining the lower and upper bounds of the search space in terms of the optimization variables.  These should be consistent with the representations use for the individual points in the search space.
 
-If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example.
+If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer problems][mixed integer nonlinear problems]] below for an example.
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  One alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.  There is also the option ~fitnesstype=:nondominated~ which bases the fitness on levels of dominance, as used by the =NSGA-II= genetic algorithm.
 
@@ -1997,7 +1998,7 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 ** emacs local variables
 
 # Local Variables:
-# org-confirm-babel-evaluate: nil
+# org-confirm-babel-evaluate: t
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
 # time-stamp-format: "[%Y-%m-%d %H:%M]"
