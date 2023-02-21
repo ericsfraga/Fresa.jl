@@ -315,7 +315,7 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
 
 The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
 
-A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.
+A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.  Note, however, that the code in that paper is based on version 7 of Fresa so some small changes would be required to have it work in version 8.  See [[version]] section below for more details on the changes required in moving from version 7 to version 8.
 
 ** Upload to web site                                        :noexport:
 #+name: upload
@@ -333,8 +333,32 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 Major version log:
 
 - February 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
-  1. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change.
+  1. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change although it is recommended that any call to ~createpoint~ be replaced with the instantiation of a ~Fresa.Point~ data type directly.
+     
   2. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change for any case where problem specific ~neighbour~ functions have been defined because the argument order for the ~solve~ and ~neighbour~ functions have changed to cater for the domain being optional.
+
+     To update any code that worked with version 7 to now work with version 8, the key change is the call to the ~solve~ method.  Previously, the call would have been in the form
+
+     : Fresa.solve(f, p0, domain, ...)
+
+     where =...= indicates optional parameters.  This call would need to be changed to
+
+     : Fresa.solve(f, p0, domain = domain, ...)
+
+     Further, any definition of an application specific ~neighbour~ function would be changed from having an argument list
+
+     : Fresa.neighbour(x, a, b, f)
+
+     where ~a~ and ~b~ defined lower and upper bounds for the search domain, in version 7, would now be
+
+     : Fresa.neighbour(x, f, domain)
+
+     with ~domain~ being an instance of the ~Fresa.Domain~ data type.  For problems where the domain is not required or useful, this argument is optional and the signature of an application specific ~neighbour~ method can be
+
+     : Fresa.neighbour(x, f)
+
+     and the call to the ~solve~ method can simply not provide a ~Domain~ argument.
+     
 - June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
 - May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
 - April 2021 :: *v7*,
@@ -364,7 +388,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-18 09:26]"
+  version = "[2023-02-21 16:11]"
   using Dates
   using Printf
   function __init__()
