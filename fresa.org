@@ -375,7 +375,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
 :PROPERTIES:
-:header-args:julia: :tangle "src/Fresa.jl" :comments yes
+:header-args:julia: :tangle "src/Fresa.jl" :comments yes :eval no
 :END:
 # +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is defined by the decision or optimization variables (the /point/ in a search space), the objective function values for this point and a feasibility indication, with =g≤0= feasible and =g>0= infeasible.  See the documentation [[solve][for the =solve= method below]] for more details on the data structures used and expected.
@@ -388,7 +388,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-21 16:33]"
+  version = "[2023-02-22 13:42]"
   using Dates
   using Printf
   function __init__()
@@ -796,6 +796,7 @@ There is also a version that expects single valued =Float64= arguments.
   end
 #+end_src
 Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer problems][mixed integer nonlinear examples]] below for an example of a simple mixed-integer case.
+
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248).
 *** <<<dominates>>>: determine dominance
