@@ -6,7 +6,7 @@
 #+options: num:t ^:nil toc:t tex:imagemagick
 
 # add extra meta information when tangling the code
-#+property: header-args :comments yes
+#+property: header-args :comments yes :eval no-export
 
 # +HTML_HEAD: <link href=\"https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css\" rel=\"stylesheet\">
 #+html: <style type="text/css"> .nav {position: fixed;}</style>
@@ -317,7 +317,7 @@ A list [[*Recent change history][summary of recent change history]] is given bel
 * TODO [0/0] improvements or bugs                            :noexport:
 * Fresa – The code and documentation
 :PROPERTIES:
-:header-args:julia: :tangle "src/Fresa.jl" :comments yes
+:header-args:julia: :tangle "src/Fresa.jl" :comments yes :eval no
 :END:
 # +toc: headlines 2 local
 The /Fresa/ method is a population based evolutionary algorithm which mimics the propagation used by plants.  Throughout the module, the population object is an array of =Point= objects.  Each point is a point in a search space, the objective function values for this point and a feasibility indication with =g≤0= feasible and =g>0= infeasible.  See the documentation [[solve][for the =solve= method below]] for more details on the data structures used and expected.
@@ -328,7 +328,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   # All code copyright © Eric S Fraga. 
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-16 16:26]"
+  version = "[2023-02-22 13:38]"
   using Dates
   using Distributed
   using Printf
@@ -710,7 +710,7 @@ There is also a version that expects single valued =Float64= arguments.
       newx
   end
 #+end_src
-Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example of a simple mixed-integer case.
+Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer problems][mixed integer problems]] below for an example of a simple mixed-integer case.
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248).
 *** <<<dominates>>>: determine dominance
@@ -976,7 +976,7 @@ The calling sequence for =f= is a point in the search space plus, optionally, th
 
 =p0= is a population with initial points in the search space; these points can be of any type.  =domain= is a valid =Domain= object with appropriate functions for determining the lower and upper bounds of the search space in terms of the optimization variables.  These should be consistent with the representations use for the individual points in the search space.
 
-If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer nonlinear example][mixed integer nonlinear example]] below for an example.
+If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer problems][mixed integer problems]] below for an example.
 
 The =fitnesstype= is used for ranking members of a population for multi-objective problems.  The default is to use a Hadamard product of the rank each solution has for each objective individually.  One alternative, specifying ~fitnesstype=:borda~ uses a sum of the rank, i.e. a Borda count.  The former tends to emphasise points near the extrema of the individual criteria while the latter is possibly better distributed but possibly at providing less emphasis on the Pareto points themselves.  There is also the option ~fitnesstype=:nondominated~ which bases the fitness on levels of dominance, as used by the =NSGA-II= genetic algorithm.
 
