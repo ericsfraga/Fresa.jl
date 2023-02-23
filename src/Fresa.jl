@@ -4,9 +4,10 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-17 15:33]"
-using Dates
-using Printf
+version = "[2023-02-23 17:27]"
+using Dates                     # for org mode dates
+using LinearAlgebra             # for norm function
+using Printf                    # for formatted output
 function __init__()
     println("# -*- mode: org; -*-")
     println("#+startup: show3levels")
@@ -350,92 +351,41 @@ end
 # printhistorytrace ends here
 
 # [[file:../fresa.org::prune][prune]]
-function prune(pop :: AbstractArray, tolerance)
-    npruned = 0
-    z = map(p->p.z, pop)
-    # @show z[1]
-    # println("typeof(z)=$(typeof(z))")
-    l = length(z)
-    # println("typeof(z[1])=$(typeof(z[1]))")
-    n = length(z[1])
-    # @show n
-    zmin = zeros(n)
-    zmax = zeros(n)
-    try 
-        for i=1:n
-            row = [z[j][i] for j=1:l]
-            zmin[i] = minimum(row)
-            zmax[i] = maximum(row)
-            if zmax[i] - zmin[i] < 100*eps()
-                zmax[i] = zmin[i]+100*eps()
-            end
-        end
-        pruned = [pop[1]]
-        for i=2:l
-            similar = false
-            for j=1:length(pruned)
-                if all(abs.(z[i]-pruned[j].z) .< tolerance*(zmax-zmin))
-                    similar = true;
-                    break;
-                end
-            end
-            if !similar
-                push!(pruned,pop[i])
-            else
-                npruned += 1
-            end
-        end
-        (pruned, npruned)
-    catch e
-        # println("prune method error: $e")
-        if e isa MethodError
-            # probably (possibly) due to objective function type not
-            # being a number.  In this case, we try again but looking
-            # at the decision variable values instead.
-            x = map(p->p.x, pop)
-            # println("typeof(z)=$(typeof(z))")
-            l = length(x)
-            # start building up the population that remains after
-            # pruning.  The first entry will always be there as any
-            # similar solutions will not be included by the search
-            # that follows.
-            pruned = [pop[1]]
+function prune(pop :: AbstractArray, issimilar, ϵ)
+    l = length(pop)
+    # we will return a diverse population where similar solutions have
+    # been removed
+    diverse = [pop[1]]
+    # consider each solution in the population
+    for i=2:l
+        similar = false
+        j = 0
+        # compare this solution with all already identified as diverse
+        # enough
+        while !similar && j < length(diverse)
+            j += 1
             try
-                for i=2:l
-                    similar = false
-                    # now check this solution against all those already in
-                    # the list we are collating
-                    for j=1:length(pruned)
-                        if all(Float64.(abs.(x[i]-pruned[j].x)) .< tolerance)
-                            similar = true;
-                            break;
-                        end
-                    end
-                    if !similar
-                        push!(pruned,pop[i])
-                    else
-                        npruned += 1
-                    end
-                end
-                (pruned, npruned)        
+                similar = issimilar(diverse[j], pop[i], ϵ)
             catch e
-                # println("prune method second error: $e")
-                if e isa MethodError
-                    # this is now probably/possibly due to not being
-                    # to find the difference between two decision
-                    # points.  In that case, return the whole
-                    # original population
-                    (pop, 0)
-                else
-                    @error "Unexpected error in prune method for points" e
-                end             # if method error
-            end                 # try pruning on points
-        else
-            @error "Unexpected error in prune method for objective function values" e
-        end                     # if is a method error
-    end                         # try pruning on objective function values
-end                             # function
+                @error "Similarity detection function provided not compatible with decision variables used." e
+            end
+        end
+        if !similar
+            push!(diverse,pop[i])
+        end
+    end
+    # return diverse population and count of points removed
+    (diverse, length(pop)-length(diverse))
+end
 # prune ends here
+
+# [[file:../fresa.org::similarx][similarx]]
+similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ
+# similarx ends here
+
+# [[file:../fresa.org::similarz][similarz]]
+similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ
+# similarz ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
 function randompopulation(n, f, parameters, p0, domain :: Domain)
@@ -501,8 +451,10 @@ function solve(f, p0;                # required arguments
                parameters = nothing, # allow parameters for objective function 
                archiveelite = false, # save thinned out elite members
                domain = nothing,     # search domain: will often be required but not always
-               elite = true,    # elitism by default
+               elite = true,         # elitism by default
+               ϵ = 0.0001,           # ϵ for similarity detection
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
+               issimilar = nothing,  # function for diversity check: see prune function
                multithreading = false, # use multiple threads for objective function evaluation
                ngen = 100,           # number of generations
                npop = 10,            # population size: fixed (single value) or dynamic (tuple)
@@ -511,9 +463,8 @@ function solve(f, p0;                # required arguments
                output = 1,           # how often to output information
                plotvectors = false,  # generate output file for search plot
                populationoutput = false, # output population every generation?
-               tournamentsize = 2,         # number to base selection on
+               tournamentsize = 2,   # number to base selection on
                steepness = 1.0,      # show steep is the adjustment shape for fitness
-               tolerance = 0.0,      # tolerance for similarity detection
                usemultiproc = false) # parallel processing by Fresa itself?
     output > 0 && println("** solve $f $(orgtimestamp(now()))")
     tstart = time()
@@ -537,7 +488,7 @@ function solve(f, p0;                # required arguments
         println("| fitness | $fitnesstype |")
         println("| tournamentsize | $tournamentsize |")
         println("| steepness | $steepness |")
-        println("| tolerance | $tolerance |")
+        println("| ϵ | $ϵ |")
         println("|-")
         # output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
         # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
@@ -633,7 +584,13 @@ function solve(f, p0;                # required arguments
                 if length(wholepareto) > ceil(npop/2)
                     newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
                     if archiveelite
-                        archive = prune(append!(archive, removed), tolerance)[1]
+                        # add removed solutions to the archive, pruning if desired
+                        if issimilar != nothing
+                            archive = prune(append!(archive, removed), issimilar, ϵ)[1]
+                        else
+                            archive = append!(archive, removed)
+                        end
+                        # reduce archive to non-dominated solutions alone
                         archive = archive[pareto(archive)[1]]
                     end
                 else
@@ -768,11 +725,13 @@ function solve(f, p0;                # required arguments
             #         i += nprocs()
             #     end
         end
-        # and finally, if we have elitism, remove any duplicate points
-        # in the new population and make it the current population for
-        # the next generation; otherwise, simply copy over
-        if elite && tolerance > eps()
-            (pop, nn) = prune(newpop, tolerance)
+        # and finally, if diversity control has been enabled
+        # (issimilar function provided and tolerance specified),
+        # remove any duplicate points in the new population and make
+        # it the current population for the next generation;
+        # otherwise, simply copy over
+        if issimilar != nothing && ϵ > eps()
+            (pop, nn) = prune(newpop, issimilar, ϵ)
             npruned += nn
         else
             pop = newpop
