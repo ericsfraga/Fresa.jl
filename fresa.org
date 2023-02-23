@@ -13,6 +13,9 @@
 #+HTML_HEAD: <link href="style.css" rel="stylesheet" type="text/css" />
 # +html: <style>pre.src:before { display: inline; }</style>
 
+# citations
+#+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
+
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                  |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                |
 | *Latest news*   | API change for =solve= method. See [[version][version information]] below. |
@@ -72,7 +75,7 @@ A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the d
 ** Licence and citing
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include the software itself (doi:10.5281/zenodo.5045812):
+Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include the software itself [cite:@fresa]:
 
 #+begin_src bibtex
   @misc{fresa,
@@ -86,7 +89,7 @@ Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algori
   }
 #+end_src
 
-You may also wish to cite the original paper which led to the development of both /Fresa/ and [[http:strawberry.html][Strawberry]], the first implementation of the plant propagation algorithm in MATLAB:
+You may also wish to cite the original paper which led to the development of both /Fresa/ and [[http:strawberry.html][Strawberry]], the first implementation of the plant propagation algorithm in MATLAB [cite:@salhi-fraga-2011a]:
 
 #+begin_src bibtex
   @inproceedings{salhi-fraga-2011a,
@@ -388,7 +391,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-23 17:48]"
+  version = "[2023-02-23 17:55]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1979,6 +1982,8 @@ Summary of the most recent changes to the package:
   git log --date=format:"%Y-%m-%d %H:%M" --pretty=format:"%ad %s" -20 fresa.org
 #+end_src
 A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]].
+* Bibliography
+#+print_bibliography:
 * settings                                                    :noexport:
 #+startup: show2levels
 ** latex settings
