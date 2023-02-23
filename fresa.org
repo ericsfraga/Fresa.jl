@@ -116,7 +116,7 @@ and then type Backspace to exit the package system in Julia.
 
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] but (at the time of writing this updated document) the version in the registry is currently out of date.
 
-/Fresa/ makes use of the following extra Julia packages: =Dates= and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+/Fresa/ makes use of the following extra Julia packages: =Dates=, =LinearAlgebra=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
 
 ** Quick example
 :PROPERTIES:
@@ -336,9 +336,12 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 Major version log:
 
 - February 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
-  1. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change although it is recommended that any call to ~createpoint~ be replaced with the instantiation of a ~Fresa.Point~ data type directly.
+
+  1. The optional argument to ~solve~, ~npop~, has been renamed to ~np~ and stands for /the number of solutions to propagate/ in each generation.  It is *not* the size of the population.
+
+  2. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change although it is recommended that any call to ~createpoint~ be replaced with the instantiation of a ~Fresa.Point~ data type directly.
      
-  2. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change firstly because the ~solve~ function arguments have changed so that the ~domain~ is now an optional parameter as opposed to a required argument.  Secondly, for problem specific ~neighbour~ functions, the order of the arguments has changed to cater for the domain being an optional argument to the ~solve~ function.  Specific details follow on how to update any version 7 code to version 8.
+  3. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change firstly because the ~solve~ function arguments have changed so that the ~domain~ is now an optional parameter as opposed to a required argument.  Secondly, for problem specific ~neighbour~ functions, the order of the arguments has changed to cater for the domain being an optional argument to the ~solve~ function.  Specific details follow on how to update any version 7 code to version 8.
 
      To update any code that worked with version 7 to now work with version 8, the key change is the call to the ~solve~ method.  Previously, the call would have been in the form
 
@@ -361,6 +364,8 @@ Major version log:
      : Fresa.neighbour(x, f)
 
      and the call to the ~solve~ method can simply not provide a ~Domain~ argument.
+
+  4. The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[pruning][below]].
      
 - June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
 - May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
