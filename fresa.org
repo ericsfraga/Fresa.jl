@@ -388,7 +388,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-23 17:27]"
+  version = "[2023-02-23 17:48]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1014,15 +1014,44 @@ Used to set some of the module global variables used by many of the functions in
   end
 #+end_src
 ** solve -- use the PPA to solve the optimisation problem <<solve>>
+
+The ~solve~ function is the main (only) entry point for the Fresa optimization package.  The following details all the arguments, both required and optional, for this function:
+
+Required arguments:
+- f :: objective function.
+
+  The objective function should return a tuple consisting of two entries: the first is the objective function value(s), which must be either a scalar real value or a vector of real values, and the second a value giving the the constraint violation.  If =g≤0=, the point is considered to have satisfied all constraints for the optimization problem and hence is feasible.  If =g>0=, at least one constraint has been found to not be satisfied so the point is infeasible.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter, i.e. more close to being feasible.
+
+  The calling sequence for =f= is a point in the search space plus, optionally, the =parameters= defined in the call to =solve= (see optional arguments below).
+
+- p0 :: initial population with at least one initial point in the search space but there can be any number of points defined intially.  There is no requirement that all the points be based on the same data structure for the decision variables.  See the [[neighbour]] function for details and the use of multiple dispatch to enable heterogeneous populations in the search procedure [cite:@fraga2021multiple].
+
+Optional arguments:
+- parameters :: allow parameters for objective function ; default value nothing.
+- archiveelite :: save thinned out elite members; default value false.
+- domain :: search domain: will often be required but not always; default value nothing.
+- elite :: elitism by default; default value true.
+- ϵ :: ϵ for similarity detection; default value 0.0001.
+- fitnesstype :: how to rank solutions in multi-objective case; default value :hadamard.
+- issimilar :: function for diversity check: see prune function; default value nothing.
+- multithreading :: use multiple threads for objective function evaluation; default value false.
+- ngen :: number of generations; default value 100.
+- npop :: population size: fixed (single value) or dynamic (tuple); default value 10.
+- nrmax :: number of runners maximum; default value 5.
+- ns :: number of stable solutions for stopping; default value 100.
+- output :: how often to output information; default value 1.
+- plotvectors :: generate output file for search plot; default value false.
+- populationoutput :: output population every generation?; default value false.
+- tournamentsize :: number to base selection on; default value 2.
+- steepness :: show steep is the adjustment shape for fitness; default value 1.0.
+- usemultiproc :: parallel processing by Fresa itself?; default value false).
+
 The function expects the objective function, ~f~, an initial population, ~p0~, with at least one point, and the =Domain= for the search.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.  The actual return values and data structures depends on the number of criteria:
 - 1 :: returns best point as a ~Fresa.Point~ object (which includes the decision variable values, the objective function value, and the constraint value) and also the full population;
 - >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
      
-The objective function, =f=, should return two results: =z=, the objective function value(s) which must be of type =Float64=, single or array, and =g=, the constraint violation.  If =g≤0=, the point is feasible; any value =g>0= means an infeasible point.  The value of =g= for infeasible points will be used to rank the fitness of the infeasible solution, with lower values being fitter.
 
-The calling sequence for =f= is a point in the search space plus, optionally, the =parameters= defined in the call to =solve=.
-
-=p0= is a population with initial points in the search space; these points can be of any type.  =domain= is a valid =Domain= object with appropriate functions for determining the lower and upper bounds of the search space in terms of the optimization variables.  These should be consistent with the representations use for the individual points in the search space.
+=domain= is a valid =Domain= object with appropriate functions for determining the lower and upper bounds of the search space in terms of the optimization variables.  These should be consistent with the representations use for the individual points in the search space.
 
 If the decision vector is not an array of =Float64=, a type specific =Fresa.neighbour= function will need to be defined.  The calling sequence for =Fresa.neighbour= is =(x,a,b,fitness)= where =x=, =a=, and =b=, should all be of the desired type and the function itself must also return an object of that type.  The =fitness= will always be a =Float64=.  See the [[*mixed integer problems][mixed integer nonlinear problems]] below for an example.
 
