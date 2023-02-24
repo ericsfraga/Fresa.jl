@@ -12,13 +12,14 @@ p0 = [Fresa.Point(x,f)]
 # now invoke Fresa to solve the problem
 pareto, population = Fresa.solve(f, p0;
                                  domain = d,
+                                 ϵ = 0.01,
                                  #fitnesstype = :hadamard,
                                  #fitnesstype = :borda,
                                  fitnesstype = :nondominated,
+                                 issimilar = Fresa.similarx,
                                  ngen=200,
-                                 npop=(20,40),
-                                 plotvectors=true,
-                                 tolerance=0.01)
+                                 np=(20,40),
+                                 plotvectors=true)
 
 println("**** Pareto front:")
 println("#+plot: ind:1 deps:(2) with:points")

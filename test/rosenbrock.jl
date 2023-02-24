@@ -9,7 +9,11 @@ rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
 # create the initial population consisting of this single point
 p0 = [Fresa.Point(x0,rosenbrock)]
 # now invoke Fresa to solve the problem
-best, pop = Fresa.solve(rosenbrock, p0; domain=d, ngen=1000, tolerance=1e-8)
+best, pop = Fresa.solve(rosenbrock, p0;
+                        domain=d,
+                        ngen=1000,
+                        issimilar = Fresa.similarx,
+                        ϵ=1e-8)
 println("Population at end: $pop")
 println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 # testrosenbrock ends here

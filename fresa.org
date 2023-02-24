@@ -396,7 +396,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-23 22:30]"
+  version = "[2023-02-24 08:50]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1536,7 +1536,11 @@ One of the features that /Fresa/ provides is a trace of how each solution has be
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x0,rosenbrock)]
   # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(rosenbrock, p0; domain=d, ngen=1000, tolerance=1e-8)
+  best, pop = Fresa.solve(rosenbrock, p0;
+                          domain=d,
+                          ngen=1000,
+                          issimilar = Fresa.similarx,
+                          ϵ=1e-8)
   println("Population at end: $pop")
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src
@@ -1555,7 +1559,13 @@ for \(n>1\).
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x0,rosenbrock)]
   # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(rosenbrock, p0; domain=d, npop=100, ngen=1000, tolerance=1e-8, multithreading=true)
+  best, pop = Fresa.solve(rosenbrock, p0;
+                          domain=d,
+                          np=100,
+                          ngen=1000,
+                          ϵ=1e-8,
+                          issimilar = Fresa.similarx,
+                          multithreading=true)
   println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 #+end_src
 
@@ -1575,13 +1585,14 @@ for \(n>1\).
   # now invoke Fresa to solve the problem
   pareto, population = Fresa.solve(f, p0;
                                    domain = d,
+                                   ϵ = 0.01,
                                    #fitnesstype = :hadamard,
                                    #fitnesstype = :borda,
                                    fitnesstype = :nondominated,
+                                   issimilar = Fresa.similarx,
                                    ngen=200,
-                                   npop=(20,40),
-                                   plotvectors=true,
-                                   tolerance=0.01)
+                                   np=(20,40),
+                                   plotvectors=true)
 
   println("**** Pareto front:")
   println("#+plot: ind:1 deps:(2) with:points")
@@ -1608,10 +1619,12 @@ for \(n>1\).
   @profile for i=1
       pareto, population = Fresa.solve(f, p0;
                                        domain = d,
+                                       ϵ = 0.01,
                                        archiveelite = false,
-                                       npop=20, ngen=300,
-                                       #output=100,
-                                       tolerance=0.01)
+                                       issimilar = Fresa.similarx,
+                                       np=20,
+                                       ngen=300
+                                       )
 
       println("*** Pareto front:")
       println(population[pareto])
@@ -1755,7 +1768,7 @@ The second MINLP example comes from: Ignacio Quesada & Ignacio E. Grossmann, /An
   # create the initial population consisting of a single MI point
   p0 = [Fresa.Point(MI([0.0, 0.0], [1]),f)]
   # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000, tolerance=0.0)
+  best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000)
   println("Population: $pop")
   println("Best: f($(best.x)) = $(best.z), $(best.g)")
 #+end_src 
@@ -1832,7 +1845,7 @@ The objective function for Fresa takes the decision variables, ~x~, and uses the
           write(f, "put TEST.modelstat /;\n")
       end
       # execute GAMS
-      run( `/opt/gams/latest/gams gamsexample.gms` )
+      run(pipeline(`/opt/gams/latest/gams gamsexample.gms`, devnull))
       # read in results
       z = [0.0; 0.0]
       g = 0.0;
@@ -1868,7 +1881,7 @@ In this case, the value of the residual, in absolute sense, is a measure of feas
           write(f, "put TEST.modelstat /;\n")
       end
       # execute GAMS
-      run( `/opt/gams/latest/gams gamsexample.gms` )
+      run(pipeline(`/opt/gams/latest/gams gamsexample.gms`, devnull))
       # read in results
       z = 0.0
       g = 0.0
@@ -1913,7 +1926,8 @@ and plot out the resulting Pareto set in objective function space:
 
 *** solve the single objective version
 #+begin_src julia
-  best, pop = Fresa.solve(fsingle, p0; domain = d ngen = 100)
+  p0 = [Fresa.Point(x0,fsingle)]
+  best, pop = Fresa.solve(fsingle, p0; domain = d, ngen = 100)
   println("Population: $pop")
   println("Best: f($(best.x)) = $(best.z), $( best.g )")
 #+end_src

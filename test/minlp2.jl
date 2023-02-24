@@ -65,7 +65,7 @@ end
     # create the initial population consisting of a single MI point
     p0 = [Fresa.Point(MI([0.0, 0.0], [1]),f)]
     # now invoke Fresa to solve the problem
-    best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000, tolerance=0.0)
+    best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000)
     println("Population: $pop")
     println("Best: f($(best.x)) = $(best.z), $(best.g)")
 # Example 2: Quesada & Grossmann:2 ends here

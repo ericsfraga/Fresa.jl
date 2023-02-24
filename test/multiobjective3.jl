@@ -15,10 +15,12 @@ p0 = [Fresa.Point(x,f)]
 @profile for i=1
     pareto, population = Fresa.solve(f, p0;
                                      domain = d,
+                                     ϵ = 0.01,
                                      archiveelite = false,
-                                     npop=20, ngen=300,
-                                     #output=100,
-                                     tolerance=0.01)
+                                     issimilar = Fresa.similarx,
+                                     np=20,
+                                     ngen=300
+                                     )
 
     println("*** Pareto front:")
     println(population[pareto])

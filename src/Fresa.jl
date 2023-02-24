@@ -4,7 +4,7 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-23 17:27]"
+version = "[2023-02-24 08:50]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -448,7 +448,6 @@ function value and the feasibility measure.
 
 """
 function solve(f, p0;                # required arguments
-               parameters = nothing, # allow parameters for objective function 
                archiveelite = false, # save thinned out elite members
                domain = nothing,     # search domain: will often be required but not always
                elite = true,         # elitism by default
@@ -457,10 +456,11 @@ function solve(f, p0;                # required arguments
                issimilar = nothing,  # function for diversity check: see prune function
                multithreading = false, # use multiple threads for objective function evaluation
                ngen = 100,           # number of generations
-               npop = 10,            # population size: fixed (single value) or dynamic (tuple)
+               np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
                nrmax = 5,            # number of runners maximum
                ns = 100,             # number of stable solutions for stopping
                output = 1,           # how often to output information
+               parameters = nothing, # allow parameters for objective function 
                plotvectors = false,  # generate output file for search plot
                populationoutput = false, # output population every generation?
                tournamentsize = 2,   # number to base selection on
@@ -480,7 +480,7 @@ function solve(f, p0;                # required arguments
         println("| variable | value |")
         println("|-")
         println("| ngen | $ngen |")
-        println("| npop | $npop |")
+        println("| np | $np |")
         println("| nrmax | $nrmax |")
         println("| ns | $ns |")
         println("| elite | $elite |")
@@ -490,31 +490,31 @@ function solve(f, p0;                # required arguments
         println("| steepness | $steepness |")
         println("| ϵ | $ϵ |")
         println("|-")
-        # output != 0 && println(": solving with ngen=$ngen npop=$npop nrmax=$nrmax ns=$ns")
+        # output != 0 && println(": solving with ngen=$ngen np=$np nrmax=$nrmax ns=$ns")
         # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
     end
     if plotvectors
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
         output > 0 && println(": output of vectors for subsequent plotting")
     end
-    # if npop was given as a tuple, we are to have a dynamic
+    # if np was given as a tuple, we are to have a dynamic
     # population size.  This only makes sense for multi-objective
     # optimization problems so a warning will be given otherwise.
-    npopmin = npop
-    npopmax = npop
-    if npop isa Tuple
+    npmin = np
+    npmax = np
+    if np isa Tuple
         if nz > 1
-            npopmin = npop[1]
-            npopmax = npop[2]
-            if npopmin > npopmax
-                error("Dynamic population sizing requires min <= max; you specified $npop")
+            npmin = np[1]
+            npmax = np[2]
+            if npmin > npmax
+                error("Dynamic population sizing requires min <= max; you specified $np")
             end
-            npop = npopmin      # start with minimum possible
+            np = npmin      # start with minimum possible
         else
-            println("*Warning*: you have specified a tuple for population size: $npop")
+            println("*Warning*: you have specified a tuple for population size: $np")
             println("This only makes sense for multi-objective optimization problems.")
-            println("npop will be set to $(npop[1]).")
-            npop = npop[1]      # be optimistic and use minimum given
+            println("np will be set to $(np[1]).")
+            np = np[1]      # be optimistic and use minimum given
         end
     end
     # we use multithreading if asked for *and* if we have more than
@@ -538,7 +538,7 @@ function solve(f, p0;                # required arguments
         println("*** evolution")
         println("#+name: $(f)evolution")
         println("#+plot: ind:1 deps:(6) with:\"points pt 7\" set:\"logscale x\"")
-        @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "npop",
+        @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "pop",
                 (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
         for i in 1:nz
             @printf(" z%-8d |", i)
@@ -573,16 +573,16 @@ function solve(f, p0;                # required arguments
                 # of indices into the population
                 wholepareto = pareto(pop)[1]
                 # if using dynamic population sizing, adjust the population
-                npop = 2 * length(wholepareto)
-                if npop < npopmin
-                    npop = npopmin
+                np = 2 * length(wholepareto)
+                if np < npmin
+                    np = npmin
                 end
-                if npop > npopmax
-                    npop = npopmax
+                if np > npmax
+                    np = npmax
                 end
                 # now check that the pareto is not too big.  if it is, thin it out
-                if length(wholepareto) > ceil(npop/2)
-                    newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,npop/2))
+                if length(wholepareto) > ceil(np/2)
+                    newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,np/2))
                     if archiveelite
                         # add removed solutions to the archive, pruning if desired
                         if issimilar != nothing
@@ -610,7 +610,7 @@ function solve(f, p0;                # required arguments
             newpop = Point[]
         end
         if output >= 0
-            print(stderr, ": $gen np=$(length(newpop))/$npop",
+            print(stderr, ": $gen np=$(length(newpop))/$np",
                   archiveelite ? " na=$(length(archive))" : "",
               " with most fit z=$(best.z) \r")
             # if output has been requested, check to see if output is
@@ -645,7 +645,7 @@ function solve(f, p0;                # required arguments
         # now loop through population, applying selection and then
         # generating neighbours
         l = length(pop)
-        for i in 1:min(l,npop)
+        for i in 1:min(l,np)
             s = select(fit, tournamentsize)
             # println(": selection $i is $s")
             # println(": size of pop is $(size(pop))")

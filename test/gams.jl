@@ -13,7 +13,7 @@ function fmo(x::Array{Float64,1})
         write(f, "put TEST.modelstat /;\n")
     end
     # execute GAMS
-    run( `/opt/gams/latest/gams gamsexample.gms` )
+    run(pipeline(`/opt/gams/latest/gams gamsexample.gms`, devnull))
     # read in results
     z = [0.0; 0.0]
     g = 0.0;
@@ -46,7 +46,7 @@ function fsingle(x::Array{Float64,1})
         write(f, "put TEST.modelstat /;\n")
     end
     # execute GAMS
-    run( `/opt/gams/latest/gams gamsexample.gms` )
+    run(pipeline(`/opt/gams/latest/gams gamsexample.gms`, devnull))
     # read in results
     z = 0.0
     g = 0.0
@@ -89,7 +89,8 @@ PyPlot.savefig("gamsmo.pdf")
 # solve the multi-objective problem using Fresa:2 ends here
 
 # [[file:../fresa.org::*solve the single objective version][solve the single objective version:1]]
-best, pop = Fresa.solve(fsingle, p0; domain = d ngen = 100)
+p0 = [Fresa.Point(x0,fsingle)]
+best, pop = Fresa.solve(fsingle, p0; domain = d, ngen = 100)
 println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $( best.g )")
 # solve the single objective version:1 ends here
