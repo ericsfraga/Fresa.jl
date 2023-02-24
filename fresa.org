@@ -396,7 +396,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-24 08:50]"
+  version = "[2023-02-24 14:38]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -956,19 +956,27 @@ The ~issimilar~ function can define similarity based on the decision variables, 
 *** similarx
 A function that compares solutions based on the decision variables, where these variables are suitable for the difference operator, ~-~, and that the ~LinearAlgebra.norm~ function can accept this difference as an argument.  For other decision variables, e.g. a complex data type, a new similarity function will have to be defined.
 
+To avoid considering two solutions that straddle a constraint boundary, i.e. one feasible and the other infeasible, the constraint violation, ~g~, is also considered even though the objective function values are not.
+
 *Arguments*: ~p1~ and ~p2~ are two points in the search space to compare and ~ϵ>0~ the tolerance for similarity.
 #+name: similarx
 #+begin_src julia
-  similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ
+  similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ && # decision variables
+      norm(p1.g-p2.g) < ϵ &&                   # difference in violation
+      ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
 #+end_src 
 
 *** similarz
 A function that compares solutions based on objective function values, ~z~, and returns ~true~ if the two points passed are considered to be /similar/, enough that the search would benefit from not having both present in the population in terms of diversity.  This really only makes sense for an objective function space that is unimodal.  The more appropriate similarity test for multimodal objective function spaces would be comparing on the decision variables (see above).
 
+Again, the constraint violation, ~g~, is taken into consideration in identifying similar solutions.
+
 *Arguments*: ~p1~ and ~p2~ are two points in the search space to compare and ~ϵ>0~ the tolerance for similarity.
 #+name: similarz
 #+begin_src julia
-  similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ
+  similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ && # objective function values
+      norm(p1.g-p2.g) < ϵ &&                   # difference in violation
+      ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
 #+end_src 
 
 ** randompopulation -- for testing other methods

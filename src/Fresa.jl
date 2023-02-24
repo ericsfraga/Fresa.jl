@@ -4,7 +4,7 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-24 08:50]"
+version = "[2023-02-24 14:38]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -380,11 +380,15 @@ end
 # prune ends here
 
 # [[file:../fresa.org::similarx][similarx]]
-similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ
+similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ && # decision variables
+    norm(p1.g-p2.g) < ϵ &&                   # difference in violation
+    ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
 # similarx ends here
 
 # [[file:../fresa.org::similarz][similarz]]
-similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ
+similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ && # objective function values
+    norm(p1.g-p2.g) < ϵ &&                   # difference in violation
+    ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
 # similarz ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
