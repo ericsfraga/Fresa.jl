@@ -16,9 +16,19 @@
 # citations
 #+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
 
-| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                  |
-| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                |
+| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                    |
+| *Version*       | "8.0.0"                                                       |
+| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                  |
 | *Latest news*   | API change for =solve= method. See [[version][version information]] below. |
+#+TBLFM: @2$2='(org-sbe tomlversion);L
+
+# Version call_tomlversion[:results output]()
+
+* TOML version (for Julia Registry)                           :noexport:
+#+name: tomlversion
+#+begin_src shell :results output :exports results :eval yes
+  grep ^version Project.toml | awk -e '{print $3}'
+#+end_src
 
 # +toc: headlines 1
 
@@ -365,7 +375,7 @@ Major version log:
 
      and the call to the ~solve~ method can simply not provide a ~Domain~ argument.
 
-  4. The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[pruning][below]].
+  4. The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
      
 - June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
 - May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
@@ -396,7 +406,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-24 14:38]"
+  version = "[2023-02-26 10:29]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -2077,7 +2087,7 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 ** emacs local variables
 
 # Local Variables:
-# org-confirm-babel-evaluate: t
+# org-confirm-babel-evaluate: nil
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
 # time-stamp-format: "[%Y-%m-%d %H:%M]"
