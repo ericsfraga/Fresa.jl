@@ -12,20 +12,16 @@ f = x -> ([ sum((x.-0.5).^2 .+ 1)
 # create the initial population consisting of this single point
 p0 = [Fresa.Point(x,f)]
 # now invoke Fresa to solve the problem
-@profile for i=1
-    pareto, population = Fresa.solve(f, p0;
-                                     domain = d,
-                                     ϵ = 0.01,
-                                     archiveelite = false,
-                                     issimilar = Fresa.similarx,
-                                     np=20,
-                                     ngen=300
-                                     )
+pareto, population = Fresa.solve(f, p0;
+                                 domain = d,
+                                 ϵ = 0.01,
+                                 archiveelite = false,
+                                 issimilar = Fresa.similarx,
+                                 np=20,
+                                 ngen=300
+                                 )
 
-    println("*** Pareto front:")
-    println(population[pareto])
-end
-println("*** profile data")
-println(": this may take some time so please wait")
-Profile.print(format=:flat, sortedby=:count)
+println("*** Pareto front:")
+println("Pareto set of size $(length(pareto)) with indices: $pareto")
+println(population[pareto])
 # testmultiobjective3 ends here

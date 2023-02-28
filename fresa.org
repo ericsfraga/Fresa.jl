@@ -422,7 +422,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-28 14:44]"
+  version = "[2023-02-28 15:36]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1654,22 +1654,18 @@ for \(n>1\).
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x,f)]
   # now invoke Fresa to solve the problem
-  @profile for i=1
-      pareto, population = Fresa.solve(f, p0;
-                                       domain = d,
-                                       ϵ = 0.01,
-                                       archiveelite = false,
-                                       issimilar = Fresa.similarx,
-                                       np=20,
-                                       ngen=300
-                                       )
+  pareto, population = Fresa.solve(f, p0;
+                                   domain = d,
+                                   ϵ = 0.01,
+                                   archiveelite = false,
+                                   issimilar = Fresa.similarx,
+                                   np=20,
+                                   ngen=300
+                                   )
 
-      println("*** Pareto front:")
-      println(population[pareto])
-  end
-  println("*** profile data")
-  println(": this may take some time so please wait")
-  Profile.print(format=:flat, sortedby=:count)
+  println("*** Pareto front")
+  println("Pareto set of size $(length(pareto)) with indices: $pareto")
+  println(population[pareto])
 #+end_src 
 
 ** mixed integer problems
