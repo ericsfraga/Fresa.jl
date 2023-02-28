@@ -33,7 +33,7 @@
 # +toc: headlines 1
 
 
-* TODO bugs and new features [12/23]                          :noexport:
+* TODO bugs and new features [14/23]                          :noexport:
 - [ ] from the manual: instead of writing
   : Complex{Float64}(x)
   write
@@ -47,13 +47,15 @@
 - [X] replace use of =typeof()= and =isa()= with the infix =isa= operator
 - [ ] use Catalyst.jl for reaction modelling in Fresa
   https://catalyst.sciml.ai/stable/
-- [ ] work on prune method in Fresa
-- [ ] think about Fresa's neighbourhood function, single dimension variation : Re: on popSize
+- [X] work on prune method in Fresa
+- [X] think about Fresa's neighbourhood function, single dimension variation : Re: on popSize
   - From :: Wouter Vrielink <wouter-vrielink@hotmail.com>
   - Subject :: Re: on popSize
   - Email :: [[gnus:nnml+outlook:mail.t3610#AM0PR07MB41784C775EC2916C6DFAFEC1E46F9@AM0PR07MB4178.eurprd07.prod.outlook.com][Email from Wouter Vrielink: Re: on popSize]]
 
   [2021-03-12 Fri 11:29]
+
+  - we found we had to do single decision variable neighbour definitions for the layout problem which is highly constrained.
 - [X] consider a dynamic population size for multi-objective optimization problems where \(N_p \gets 2 \times N_{pareto}\) constrained by \(N_p \in [N_{p,\min}, N_{p,\max}]\)
 - [ ] It would be interesting to see a plot of the evolution of solutions (e.g. draw vectors from original point to neighbour found).  This could be done for the reactor operation example I presented at IChEAP14 and EGL-B as it has only three values in the decision vector.
 - [ ] consider implementing Christopher Taylor's algorithm(s) for more efficient non-dominated sort ranking which may be O(n^2).
@@ -351,6 +353,12 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
      - ~tolerance~ has been renamed to ~ϵ~ and is used by the next change: 
      - The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
 
+       The signature of the ~issimilar~ function is:
+
+       : function issimilar( p1::Point, p2::Point, ϵ::Float64, domain::Domain)
+
+       and two useful implementations, for real valued decision variables and real valued objective function values, are provided: ~Fresa.similarx~ and ~Fresa.similarz~.
+
   2. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change although it is recommended that any call to ~createpoint~ be replaced with the instantiation of a ~Fresa.Point~ data type directly.
 
   3. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change firstly because the ~solve~ function arguments have changed so that the ~domain~ is now an optional parameter as opposed to a required argument.  Secondly, for problem specific ~neighbour~ functions, the order of the arguments has changed to cater for the domain being an optional argument to the ~solve~ function.  Specific details follow on how to update any version 7 code to version 8.
@@ -414,7 +422,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-26 12:13]"
+  version = "[2023-02-28 14:44]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -944,7 +952,7 @@ The ~issimilar~ function can define similarity based on the decision variables, 
 
 #+name: prune
 #+begin_src julia
-  function prune(pop :: AbstractArray, issimilar, ϵ)
+  function prune(pop :: AbstractArray, issimilar, ϵ, domain)
       l = length(pop)
       # we will return a diverse population where similar solutions have
       # been removed
@@ -957,11 +965,7 @@ The ~issimilar~ function can define similarity based on the decision variables, 
           # enough
           while !similar && j < length(diverse)
               j += 1
-              try
-                  similar = issimilar(diverse[j], pop[i], ϵ)
-              catch e
-                  @error "Similarity detection function provided not compatible with decision variables used." e
-              end
+              similar = issimilar(diverse[j], pop[i], ϵ, domain)
           end
           if !similar
               push!(diverse,pop[i])
@@ -979,10 +983,14 @@ To avoid considering two solutions that straddle a constraint boundary, i.e. one
 *Arguments*: ~p1~ and ~p2~ are two points in the search space to compare and ~ϵ>0~ the tolerance for similarity.
 #+name: similarx
 #+begin_src julia
-  similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ && # decision variables
-      norm(p1.g-p2.g) < ϵ &&                   # difference in violation
-      ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+  function similarx(p1, p2, ϵ, domain)
+      norm(p1.x-p2.x) < ϵ &&      # decision variables
+          norm(p1.g-p2.g) < ϵ &&  # difference in violation
+          ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+  end
 #+end_src 
+
+As this similarity function compares decision variables, the ~domain~ could be used to compare solutions for a relative difference based on the size of the domain.  This is left as an exercise for the reader.
 
 *** similarz
 A function that compares solutions based on objective function values, ~z~, and returns ~true~ if the two points passed are considered to be /similar/, enough that the search would benefit from not having both present in the population in terms of diversity.  This really only makes sense for an objective function space that is unimodal.  The more appropriate similarity test for multimodal objective function spaces would be comparing on the decision variables (see above).
@@ -992,9 +1000,11 @@ Again, the constraint violation, ~g~, is taken into consideration in identifying
 *Arguments*: ~p1~ and ~p2~ are two points in the search space to compare and ~ϵ>0~ the tolerance for similarity.
 #+name: similarz
 #+begin_src julia
-  similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ && # objective function values
-      norm(p1.g-p2.g) < ϵ &&                   # difference in violation
-      ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+  function similarz(p1, p2, ϵ, domain)
+      norm(p1.z-p2.z) < ϵ &&      # objective function values
+          norm(p1.g-p2.g) < ϵ &&  # difference in violation
+          ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+  end
 #+end_src 
 
 ** randompopulation -- for testing other methods
@@ -1283,7 +1293,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                       if archiveelite
                           # add removed solutions to the archive, pruning if desired
                           if issimilar != nothing
-                              archive = prune(append!(archive, removed), issimilar, ϵ)[1]
+                              archive = prune(append!(archive, removed), issimilar, ϵ, domain)[1]
                           else
                               archive = append!(archive, removed)
                           end
@@ -1428,7 +1438,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           # it the current population for the next generation;
           # otherwise, simply copy over
           if issimilar != nothing && ϵ > eps()
-              (pop, nn) = prune(newpop, issimilar, ϵ)
+              (pop, nn) = prune(newpop, issimilar, ϵ, domain)
               npruned += nn
           else
               pop = newpop
@@ -1622,6 +1632,7 @@ for \(n>1\).
                                    plotvectors=true)
 
   println("**** Pareto front:")
+  println("Pareto set of size $(length(pareto)) with indices: $pareto")
   println("#+plot: ind:1 deps:(2) with:points")
   println(population[pareto])
   #using BenchmarkTools

@@ -22,6 +22,7 @@ pareto, population = Fresa.solve(f, p0;
                                  plotvectors=true)
 
 println("**** Pareto front:")
+println("Pareto set of size $(length(pareto)) with indices: $pareto")
 println("#+plot: ind:1 deps:(2) with:points")
 println(population[pareto])
 #using BenchmarkTools

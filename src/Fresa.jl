@@ -4,7 +4,7 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-26 10:29]"
+version = "[2023-02-28 14:39]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -351,7 +351,7 @@ end
 # printhistorytrace ends here
 
 # [[file:../fresa.org::prune][prune]]
-function prune(pop :: AbstractArray, issimilar, ϵ)
+function prune(pop :: AbstractArray, issimilar, ϵ, domain)
     l = length(pop)
     # we will return a diverse population where similar solutions have
     # been removed
@@ -364,11 +364,7 @@ function prune(pop :: AbstractArray, issimilar, ϵ)
         # enough
         while !similar && j < length(diverse)
             j += 1
-            try
-                similar = issimilar(diverse[j], pop[i], ϵ)
-            catch e
-                @error "Similarity detection function provided not compatible with decision variables used." e
-            end
+            similar = issimilar(diverse[j], pop[i], ϵ, domain)
         end
         if !similar
             push!(diverse,pop[i])
@@ -380,15 +376,19 @@ end
 # prune ends here
 
 # [[file:../fresa.org::similarx][similarx]]
-similarx(p1, p2, ϵ) = norm(p1.x-p2.x) < ϵ && # decision variables
-    norm(p1.g-p2.g) < ϵ &&                   # difference in violation
-    ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+function similarx(p1, p2, ϵ, domain)
+    norm(p1.x-p2.x) < ϵ &&      # decision variables
+        norm(p1.g-p2.g) < ϵ &&  # difference in violation
+        ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+end
 # similarx ends here
 
 # [[file:../fresa.org::similarz][similarz]]
-similarz(p1, p2, ϵ) = norm(p1.z-p2.z) < ϵ && # objective function values
-    norm(p1.g-p2.g) < ϵ &&                   # difference in violation
-    ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+function similarz(p1, p2, ϵ, domain)
+    norm(p1.z-p2.z) < ϵ &&      # objective function values
+        norm(p1.g-p2.g) < ϵ &&  # difference in violation
+        ( (p1.g ≤ 0 && p2.g ≤ 0) || (p1.g > 0 && p2.g > 0)) # both same feasibility
+end
 # similarz ends here
 
 # [[file:../fresa.org::randompopulation][randompopulation]]
@@ -591,7 +591,7 @@ function solve(f, p0;                # required arguments
                     if archiveelite
                         # add removed solutions to the archive, pruning if desired
                         if issimilar != nothing
-                            archive = prune(append!(archive, removed), issimilar, ϵ)[1]
+                            archive = prune(append!(archive, removed), issimilar, ϵ, domain)[1]
                         else
                             archive = append!(archive, removed)
                         end
@@ -736,7 +736,7 @@ function solve(f, p0;                # required arguments
         # it the current population for the next generation;
         # otherwise, simply copy over
         if issimilar != nothing && ϵ > eps()
-            (pop, nn) = prune(newpop, issimilar, ϵ)
+            (pop, nn) = prune(newpop, issimilar, ϵ, domain)
             npruned += nn
         else
             pop = newpop
