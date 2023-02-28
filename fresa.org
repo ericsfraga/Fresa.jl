@@ -19,7 +19,7 @@
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                    |
 | *Version*       | "8.0.0"                                                       |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                  |
-| *Latest news*   | API change for =solve= method. See [[version][version information]] below. |
+| *Latest news*   | Major version upgrade with breaking changes. See [[version][version information]] below. |
 #+TBLFM: @2$2='(org-sbe tomlversion);L
 
 # Version call_tomlversion[:results output]()
@@ -343,14 +343,16 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
       socrates.ucl.ac.uk:html.pub
 #+end_src
 ** Version information <<version>>
-Major version log:
 
-- February 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
+- March 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
 
-  1. The optional argument to ~solve~, ~npop~, has been renamed to ~np~ and stands for /the number of solutions to propagate/ in each generation.  It is *not* the size of the population.
+  1. Optional arguments to the main interface to Fresa, the ~solve~ function, have changed:
+     - ~npop~ has been renamed to ~np~ and stands for /the number of solutions to propagate/ in each generation.  It is *not* the size of the population.
+     - ~tolerance~ has been renamed to ~ϵ~ and is used by the next change: 
+     - The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
 
   2. /deprecated/ the ~createpoint~ function and use the ~Point~ structure constructor directly.  ~createpoint~ is still available so this is not a breaking change although it is recommended that any call to ~createpoint~ be replaced with the instantiation of a ~Fresa.Point~ data type directly.
-     
+
   3. Removed the need to pass a ~Domain~ object to the ~neighbour~ function as there are problems which are unbounded or for which the bounds are implicitly encoded in the decision variables.  This is a breaking change firstly because the ~solve~ function arguments have changed so that the ~domain~ is now an optional parameter as opposed to a required argument.  Secondly, for problem specific ~neighbour~ functions, the order of the arguments has changed to cater for the domain being an optional argument to the ~solve~ function.  Specific details follow on how to update any version 7 code to version 8.
 
      To update any code that worked with version 7 to now work with version 8, the key change is the call to the ~solve~ method.  Previously, the call would have been in the form
@@ -369,15 +371,21 @@ Major version log:
 
      : Fresa.neighbour(x, f, domain)
 
-     with ~domain~ being an instance of the ~Fresa.Domain~ data type.  For problems where the domain is not required or useful, this argument is optional and the signature of an application specific ~neighbour~ method can be
+     with ~domain~ being an instance of the ~Fresa.Domain~ data type.  The lower and upper bounds can be obtained by
+
+     : a = domain.lower(x)
+     : b = domain.upper(x)
+
+     in the ~neighbour~ function.
+
+     For problems where the domain is not required or useful, this ~domain~ argument is optional and the signature of an application specific ~neighbour~ method may be
 
      : Fresa.neighbour(x, f)
 
-     and the call to the ~solve~ method can simply not provide a ~Domain~ argument.
-
-  4. The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
+     where the call to the ~solve~ method can simply not provide a ~Domain~ argument if it is not necessary for identifying valid neighbouring solutions.
      
-- June 2021 :: *v7.2*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812.
+- February 2023 :: minor update to version *7.2.42* prior to the release of a new major version.
+- June 2021 :: *v7.2.1*, first public release via [[https://github.com/ericsfraga/Fresa.jl][github]] and Zenodo: doi:10.5281/zenodo.5045812 [cite:@fresa]. 
 - May 2021 :: *v7.1*, implemented *multithreading* in the evaluation of the population for each generation.  This introduces a new option for the =solve= method: =multithreading= which can be set to either =true= or =false= with the latter being the default.  Julia must be invoked with the =--threads= argument (or =-t= for short) with the number of threads to use or =auto= for automatic determination of the threads possible.  Multithreading is useful when the evaluation of the objective function is computationally expensive.  Otherwise, the overhead of multithreading is usually not worth it although it is not detrimental.
 - April 2021 :: *v7*,
   1. the domain for the search, which has to be bounded, is now defined by [[domain][a =Domain= data structure]] which allows for different representations of solutions in the search space in a given population;
@@ -406,7 +414,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-02-26 10:29]"
+  version = "[2023-02-26 12:13]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
