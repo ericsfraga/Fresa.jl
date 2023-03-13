@@ -326,7 +326,7 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
 
 The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
 
-A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper.[fn:2:E S Fraga (2019), /An example of multi-objective optimization for dynamic processes/, Chemical Engineering Transactions *74*:601-606, [[http://dx.doi.org/10.3303/CET1974101][10.3303/CET1974101]].]  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.  Note, however, that the code in that paper is based on version 7 of Fresa so some small changes would be required to have it work in version 8.  See [[version]] section below for more details on the changes required in moving from version 7 to version 8.
+A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper [cite:@fraga-2019a].  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.  Note, however, that the code in that paper is based on version 7 of Fresa so some small changes would be required to have it work in version 8.  See [[version]] section below for more details on the changes required in moving from version 7 to version 8.
 
 ** Upload to web site                                        :noexport:
 #+name: upload
@@ -418,7 +418,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-03-02 09:12]"
+  version = "[2023-03-13 16:33]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -2049,7 +2049,7 @@ Some code to play with the generation of a random population so as to learn how 
 * Recent change history
 Summary of the most recent changes to the package:
 #+name: changehistoryshellblock
-#+begin_src shell :exports results :results output
+#+begin_src shell :exports results :results output :eval export
   git log --date=format:"%Y-%m-%d %H:%M" --pretty=format:"%ad %s" -20 fresa.org
 #+end_src
 A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]].
