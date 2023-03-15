@@ -16,9 +16,9 @@
 # citations
 #+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
 
-| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                    |
-| *Version*       | "8.0.0"                                                       |
-| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                  |
+| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                                  |
+| *Version*       | "8.0.0"                                                                     |
+| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                                |
 | *Latest news*   | Major version upgrade with breaking changes. See [[version][version information]] below. |
 #+TBLFM: @2$2='(org-sbe tomlversion);L
 
@@ -27,7 +27,7 @@
 * TOML version (for Julia Registry)                           :noexport:
 #+name: tomlversion
 #+begin_src shell :results output :exports results :eval yes
-  grep ^version Project.toml | awk -e '{print $3}'
+  grep ^version Project.toml | awk -e '{print $3}' | sed -e 's/"//g'
 #+end_src
 
 # +toc: headlines 1
@@ -418,7 +418,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-03-13 16:33]"
+  version = "[2023-03-15 16:31]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
