@@ -4,16 +4,20 @@
 #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
 # Date of last change in version variable below.
 module Fresa
-version = "[2023-02-28 15:36]"
+# modulestart ends here
+
+# [[file:../fresa.org::init][init]]
+version = "8.0.0"
+lastchange = "[2023-03-15 16:34]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
 function __init__()
     println("# -*- mode: org; -*-")
     println("#+startup: show3levels")
-    println(": Fresa PPA last change $version")
+    println(": Fresa PPA v$version, last change $lastchange")
 end
-# modulestart ends here
+# init ends here
 
 # [[file:../fresa.org::pointtype][pointtype]]
 """

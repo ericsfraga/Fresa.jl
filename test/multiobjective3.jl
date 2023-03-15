@@ -21,7 +21,7 @@ pareto, population = Fresa.solve(f, p0;
                                  ngen=300
                                  )
 
-println("*** Pareto front:")
+println("*** Pareto front")
 println("Pareto set of size $(length(pareto)) with indices: $pareto")
 println(population[pareto])
 # testmultiobjective3 ends here

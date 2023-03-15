@@ -418,14 +418,18 @@ Fresa depends on a number of packages that should be available in any Julia inst
   #   https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE
   # Date of last change in version variable below.
   module Fresa
-  version = "[2023-03-15 16:31]"
+#+end_src
+
+#+name: init
+#+begin_src julia :var version=(org-sbe tomlversion)
+  lastchange = "[2023-03-15 16:34]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
   function __init__()
       println("# -*- mode: org; -*-")
       println("#+startup: show3levels")
-      println(": Fresa PPA last change $version")
+      println(": Fresa PPA v$version, last change $lastchange")
   end
 #+end_src
 ** types
@@ -2103,6 +2107,6 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 # time-stamp-line-limit: 1000
 # time-stamp-format: "[%Y-%m-%d %H:%M]"
 # time-stamp-active: t
-# time-stamp-start: "version = \""
+# time-stamp-start: "lastchange = \""
 # time-stamp-end: "\""
 # End:
