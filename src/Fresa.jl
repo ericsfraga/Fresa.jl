@@ -8,12 +8,12 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-03-16 11:29+0000]"
+lastchange = "[2023-03-16 16:47+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
 function __init__()
-    println(": Fresa PPA v$version, last change $lastchange")
+    println(": Fresa 🍓 PPA v$version, last change $lastchange")
 end
 # init ends here
 
