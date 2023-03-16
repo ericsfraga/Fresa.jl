@@ -422,7 +422,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-03-15 17:05]"
+  lastchange = "[2023-03-16 11:29+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -2103,7 +2103,7 @@ A full history is [[https://github.com/ericsfraga/Fresa.jl][at the github site]]
 # org-confirm-babel-evaluate: nil
 # eval: (esf/execute-startup-block)
 # time-stamp-line-limit: 1000
-# time-stamp-format: "[%Y-%m-%d %H:%M]"
+# time-stamp-format: "[%Y-%m-%d %H:%M%5z]"
 # time-stamp-active: t
 # time-stamp-start: "lastchange = \""
 # time-stamp-end: "\""
