@@ -4,3 +4,4 @@ ltximg/
 /test/gamsdeclarations.lst
 /test/gamsexample.lst
 /test/gamsoutput.txt
+*.data
