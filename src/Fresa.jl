@@ -8,12 +8,12 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-03-16 16:47+0000]"
+lastchange = "[2023-03-22 15:45+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
 function __init__()
-    println(": Fresa 🍓 PPA v$version, last change $lastchange")
+    println("# Fresa 🍓 PPA v$version, last change $lastchange")
 end
 # init ends here
 
@@ -465,6 +465,7 @@ function solve(f, p0;                # required arguments
                np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
                nrmax = 5,            # number of runners maximum
                ns = 100,             # number of stable solutions for stopping
+               orglevel = "",        # default org mode heading indentation for any output
                output = 1,           # how often to output information
                parameters = nothing, # allow parameters for objective function 
                plotvectors = false,  # generate output file for search plot
@@ -472,7 +473,7 @@ function solve(f, p0;                # required arguments
                tournamentsize = 2,   # number to base selection on
                steepness = 1.0,      # show steep is the adjustment shape for fitness
                usemultiproc = false) # parallel processing by Fresa itself?
-    output > 0 && println("** solve $f $(orgtimestamp(now()))")
+    output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
     tstart = time()
     nf = 1                   # number of function evaluations
     npruned = 0              # number solutions pruned from population
@@ -537,12 +538,12 @@ function solve(f, p0;                # required arguments
                 : (multithreading
                    ? "in parallel with $(Threads.nthreads()) threads."
                    : "sequentially."))
-        println("*** initial population")
+        println("$orglevel** initial population")
         println("#+name: $(f)initial")
         println(pop)
     end
     if output > 0
-        println("*** evolution")
+        println("$orglevel** evolution")
         println("#+name: $(f)evolution")
         println("#+plot: ind:1 deps:(6) with:\"points pt 7\" set:\"logscale x\"")
         @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "pop",
@@ -744,7 +745,7 @@ function solve(f, p0;                # required arguments
             pop = newpop
         end
     end
-    output > 0 && println("*** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+    output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
     if plotvectors
         close(plotvectorio)
     end
