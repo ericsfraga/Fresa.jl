@@ -422,7 +422,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-04-03 14:06+0100]"
+  lastchange = "[2023-04-03 14:50+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1088,7 +1088,9 @@ Optional arguments:
   
 - multithreading :: use multiple threads for objective function evaluation; default value ~false~.
 
-- ngen :: number of generations; default value ~100~.  This is probably the most commonly changed argument as different problems will require more or less generations to consistently identify good solutions.
+- nfmax :: number of objective function evaluations allowed; default value ~0~.  Either this argument or the next (~ngen~) must be given a positive value, i.e. greater than 0.  A value of 0 or less indicates that this stopping criterion is not used.
+  
+- ngen :: number of generations; default value ~0~.  Either this argument or the previous (~nfmax~) must be given a positive value, i.e. greater than 0.  A value of 0 or less indicates that this stopping criterion is not used.  
   
 - np :: number of members of the population to /propagate/ every generation: this may be /constant/ (single value) or /dynamic/ (tuple); default value ~10~.  For single objective problems, values for this argument between 5 and 20 have been shown to be most effective.  For multi-objective problems, values from 40 to 100 are better.
   
