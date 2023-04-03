@@ -345,6 +345,8 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 - March 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
 
   1. Optional arguments to the main interface to Fresa, the ~solve~ function, have changed:
+     - ~nfmax~ has been added as a second stopping criterion.  Either this or ~ngen~ is used to determine how much work to undertake in solving the problem.  One of these must be set explicitly.
+     - ~ngen~ no longer defaults to 100; instead, it is turned off and must be given a value explicitly if ~nfmax~ is not specified.
      - ~npop~ has been renamed to ~np~ and stands for /the number of solutions to propagate/ in each generation.  It is *not* the size of the population.
      - ~tolerance~ has been renamed to ~ϵ~ and is used by the next change: 
      - The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
@@ -422,7 +424,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-04-03 14:50+0100]"
+  lastchange = "[2023-04-03 14:52+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
