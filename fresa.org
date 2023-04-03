@@ -422,7 +422,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-03-22 15:45+0000]"
+  lastchange = "[2023-04-03 14:06+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1159,8 +1159,9 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                  fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                  issimilar = nothing,  # function for diversity check: see prune function
                  multithreading = false, # use multiple threads for objective function evaluation
-                 ngen = 100,           # number of generations
+                 ngen = 0,             # stopping criterion: number of generations
                  np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
+                 nfmax = 0,            # stopping criterion: maximum number of function evaluations
                  nrmax = 5,            # number of runners maximum
                  ns = 100,             # number of stable solutions for stopping
                  orglevel = "",        # default org mode heading indentation for any output
@@ -1180,6 +1181,14 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       if archiveelite
           archive = Point[]
       end
+      # check to see if at least one stopping criterion has been
+      # defined.  If not, set the number of generations to an arbitrary
+      # value but notify the user
+      if ngen ≤ 0 && nfmax ≤ 0
+          @warn "No stopping criteria given so defaulting to ngen=100"
+          ngen = 100
+          nfmax = typemax(Int32)  # arbitrarily large?
+      end
       if output > 0
           println("#+name: $(f)settings")
           println("| variable | value |")
@@ -1189,7 +1198,17 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           println("| ϵ | $ϵ |")
           println("| fitness | $fitnesstype |")
           println("| issimilar | $issimilar |")
-          println("| ngen | $ngen |")
+          println("| multithreading | $multithreading |")
+          if nfmax ≤ 0
+              println("| nfmax | ∞ |")
+          else
+              println("| nfmax | $nfmax |")
+          end
+          if ngen ≤ 0
+              println("| ngen | ∞ |")
+          else
+              println("| ngen | $ngen |")
+          end
           println("| np | $np |")
           println("| nrmax | $nrmax |")
           println("| ns | $ns |")
@@ -1252,8 +1271,15 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           @printf(" %9s |", "g")
           @printf("\n|-\n")
       end
-      # now evolve the population for a predetermined number of generations
-      for gen in 1:ngen
+      # now evolve the population.  There are two potential stopping
+      # criteria: a maximum number of generations to perform (ngen) and
+      # a maximum number of function evaluations (nfmax).  Either one or
+      # the other will determine how much work we do, whichever is
+      # reached first.
+      gen = 0
+      while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || nf < nfmax)
+          gen += 1                # keep count of generations performed
+
           # evaluate fitness which is adjusted depending on value of
           # steepness, a value that may depend on the generation
           fit = fitness(pop, fitnesstype, steepness, gen, ngen)
@@ -1318,7 +1344,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           if output >= 0
               print(stderr, ": $gen np=$(length(newpop))/$np",
                     archiveelite ? " na=$(length(archive))" : "",
-                " with most fit z=$(best.z) \r")
+                    " with most fit z=$(best.z) \r")
               # if output has been requested, check to see if output is
               # required now and then also check to see if the frequency
               # needs to be reduced.
