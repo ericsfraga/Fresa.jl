@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-03 14:06+0100]"
+lastchange = "[2023-04-18 10:56+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -644,9 +644,9 @@ function solve(f, p0;                # required arguments
             newpop = Point[]
         end
         if output >= 0
-            print(stderr, ": $gen np=$(length(newpop))/$np",
+            print(stderr, ": $nf@$gen npop $(length(newpop))/$(length(pop))",
                   archiveelite ? " na=$(length(archive))" : "",
-                  " with most fit z=$(best.z) \r")
+                  " most fit z=$(best.z) \r")
             # if output has been requested, check to see if output is
             # required now and then also check to see if the frequency
             # needs to be reduced.
@@ -769,6 +769,15 @@ function solve(f, p0;                # required arguments
             npruned += nn
         else
             pop = newpop
+        end
+    end
+    # if output has been requested, check to see if output is
+    # required for the last generation
+    if output > 0
+        if gen%output != 0
+            @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                    (elite && nz > 1) ? length(pop) : nf, npruned, time()-tstart)
+            println()
         end
     end
     output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
