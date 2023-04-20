@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-18 10:56+0100]"
+lastchange = "[2023-04-20 14:54+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -459,6 +459,7 @@ function solve(f, p0;                # required arguments
                elite = true,         # elitism by default
                ϵ = 0.0001,           # ϵ for similarity detection
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
+               hybrid = nothing,     # if defined, use another solve to fine-tune best solution
                issimilar = nothing,  # function for diversity check: see prune function
                multithreading = false, # use multiple threads for objective function evaluation
                ngen = 0,             # stopping criterion: number of generations
@@ -477,6 +478,7 @@ function solve(f, p0;                # required arguments
     output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
     tstart = time()
     nf = 1                   # number of function evaluations
+    nh = 0                   # number of function evaluations by hybrid function
     npruned = 0              # number solutions pruned from population
     nz = length(p0[1].z)     # number of criteria
     pop = copy(p0);          # create/initialise the population object
@@ -499,6 +501,7 @@ function solve(f, p0;                # required arguments
         println("| archive | $archiveelite |")
         println("| ϵ | $ϵ |")
         println("| fitness | $fitnesstype |")
+        println("| hybrid | $hybrid |")
         println("| issimilar | $issimilar |")
         println("| multithreading | $multithreading |")
         if nfmax ≤ 0
@@ -579,7 +582,7 @@ function solve(f, p0;                # required arguments
     # the other will determine how much work we do, whichever is
     # reached first.
     gen = 0
-    while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || nf < nfmax)
+    while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || (nf+nh) < nfmax)
         gen += 1                # keep count of generations performed
 
         # evaluate fitness which is adjusted depending on value of
@@ -644,7 +647,7 @@ function solve(f, p0;                # required arguments
             newpop = Point[]
         end
         if output >= 0
-            print(stderr, ": $nf@$gen npop $(length(newpop))/$(length(pop))",
+            print(stderr, ": $(nf+nh)@$gen npop $(length(newpop))/$(length(pop))",
                   archiveelite ? " na=$(length(archive))" : "",
                   " most fit z=$(best.z) \r")
             # if output has been requested, check to see if output is
@@ -653,7 +656,7 @@ function solve(f, p0;                # required arguments
             if output > 0
                 if gen%output == 0 || gen == ngen
                     @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                            (elite && nz > 1) ? length(newpop) : nf, npruned, time()-tstart)
+                            (elite && nz > 1) ? length(newpop) : (nf+nh), npruned, time()-tstart)
                     for i = 1:length(best.z)
                         print(" $(best.z[i]) |")
                     end
@@ -665,6 +668,25 @@ function solve(f, p0;                # required arguments
                 end
             end
         end
+        # if a hybrid function has been specified, we use that
+        # function to generate a new solution based on another solver.
+        if ! (hybrid isa Nothing)
+            # the signature of the hybrid function must be
+            #
+            # (newpoint, nf) = hybrid(somepoint, objectivefn, parameters)
+            #
+            # where newpoint is an improved point, if any, and nf is
+            # the number of function evaluations used by this hybrid
+            # solver.  This nf value contributes to the total number
+            # of function evaluations so will affect the Fresa
+            # iterations if a maximum number of function evaluations
+            # was specified.
+            tunedbest, nnh = hybrid(best, f, parameters)
+            nh += nnf           # update counter
+            if tunedbest != nothing
+                push!(newpop, tunedbest)
+            end
+        end
         # if we are using any form of multiprocessing, either threads
         # or multiple cores, create an array to store all new points
         # which we evaluate later in parallel.  Ideally, also keep
@@ -673,11 +695,13 @@ function solve(f, p0;                # required arguments
         # currently disabled as the creation of the Ancestor object
         # requires more information than I am currently storing away.
         if multithreading || parallel
-            x = Any[] # typeof(newpop[1].x)[]
-            # points = Point[]
+                    x = Any[] # typeof(newpop[1].x)[]
+                    # points = Point[]
         end
         # now loop through population, applying selection and then
-        # generating neighbours
+        # generating neighbours.  np is the number of solutions to
+        # propagate but we propagate less than that should the
+        # population not be big enough.
         l = length(pop)
         for i in 1:min(l,np)
             s = select(fit, tournamentsize)
@@ -776,11 +800,11 @@ function solve(f, p0;                # required arguments
     if output > 0
         if gen%output != 0
             @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                    (elite && nz > 1) ? length(pop) : nf, npruned, time()-tstart)
+                    (elite && nz > 1) ? length(pop) : (nf+nh), npruned, time()-tstart)
             println()
         end
     end
-    output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+    output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf nh=$nh npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
     if plotvectors
         close(plotvectorio)
     end
