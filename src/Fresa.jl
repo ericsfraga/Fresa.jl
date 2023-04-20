@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-20 14:54+0100]"
+lastchange = "[2023-04-20 16:43+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -26,15 +26,18 @@ specific.  `z[]` and `g` hold `Float64` values.  `g` should be of
 length 1.
 
 """
-struct Point
+mutable struct Point
     x :: Any                    # decision point
     z :: Vector                 # objective function values
     g :: Float64                # constraint violation
     ancestor                    # the parent of this point
+    tuned                       # has this been processed by another solver?
     function Point(x,           # point in search space
                    f,           # objective function 
-                   parameters = nothing, # arguments to objective function 
-                   ancestor = nothing)   # for analysis of search process
+                   parameters = nothing; # arguments to objective function 
+                   # optional follow
+                   ancestor = nothing,   # for analysis of search process
+                   tuned = false)        # for hybrid solvers
         z = 0
         g = 0
         if ! ( parameters isa Nothing )
@@ -47,9 +50,9 @@ struct Point
         end
         p = Nothing
         if rank(z) == 1
-            p = new(x, z, g, ancestor)
+            p = new(x, z, g, ancestor, tuned)
         elseif rank(z) == 0
-            p = new(x, [z], g, ancestor)
+            p = new(x, [z], g, ancestor, tuned)
         else
             error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
         end
@@ -670,7 +673,13 @@ function solve(f, p0;                # required arguments
         end
         # if a hybrid function has been specified, we use that
         # function to generate a new solution based on another solver.
-        if ! (hybrid isa Nothing)
+        # This is only done if the point has not already been "tuned"
+        # although, for stochastic methods, re-tuning might be
+        # beneficial.  Something to consider eventually.
+        if ! (hybrid isa Nothing || best.tuned)
+            # indicate that this best point has already been tuned so
+            # it is not processed again
+            best.tuned = true
             # the signature of the hybrid function must be
             #
             # (newpoint, nf) = hybrid(somepoint, objectivefn, parameters)
@@ -682,8 +691,9 @@ function solve(f, p0;                # required arguments
             # iterations if a maximum number of function evaluations
             # was specified.
             tunedbest, nnh = hybrid(best, f, parameters)
-            nh += nnf           # update counter
+            nh += nnh           # update counter
             if tunedbest != nothing
+                tunedbest.tuned = true # not worth processing further
                 push!(newpop, tunedbest)
             end
         end
@@ -738,7 +748,7 @@ function solve(f, p0;                # required arguments
                     push!(x, newx)
                     # push!(points, pop[s])
                 else
-                    push!(newpop, Point(newx, f, parameters, Ancestor(pop[s],fit[s],gen)))
+                    push!(newpop, Point(newx, f, parameters, ancestor = Ancestor(pop[s],fit[s],gen)))
                     if plotvectors
                         write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
                     end
