@@ -68,4 +68,5 @@ end
     best, pop = Fresa.solve(f, p0; domain=d, ngen=10_000)
     println("Population: $pop")
     println("Best: f($(best.x)) = $(best.z), $(best.g)")
+    println("identified after $(best.since[1]) function evaluates in generation $(best.since[2]).")
 # Example 2: Quesada & Grossmann:2 ends here

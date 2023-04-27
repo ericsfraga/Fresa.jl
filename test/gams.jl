@@ -93,4 +93,5 @@ p0 = [Fresa.Point(x0,fsingle)]
 best, pop = Fresa.solve(fsingle, p0; domain = d, ngen = 100)
 println("Population: $pop")
 println("Best: f($(best.x)) = $(best.z), $( best.g )")
+println("identified after $(best.since[1]) function evaluates in generation $(best.since[2]).")
 # solve the single objective version:1 ends here

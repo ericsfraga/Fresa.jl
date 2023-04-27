@@ -16,6 +16,7 @@ best, pop = Fresa.solve(f, p0, domain = d)
 # output the results
 println("Population at end:\n$pop")
 println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
+println("identified after $(best.since[1]) function evaluates in generation $(best.since[2]).")
 # testsimple ends here
 
 # [[file:../fresa.org::*simple objective function][simple objective function:2]]

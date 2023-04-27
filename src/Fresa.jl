@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-27 15:10+0100]"
+lastchange = "[2023-04-27 15:38+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -27,11 +27,19 @@ length 1.
 
 """
 mutable struct Point
-    x :: Any                    # decision point
-    z :: Vector                 # objective function values
-    g :: Float64                # constraint violation
-    ancestor                    # the parent of this point
-    tuned                       # has this been processed by another solver?
+    x :: Any     # decision point
+    z :: Vector  # objective function values
+    g :: Float64 # constraint violation
+    ancestor     # the parent of this point
+    since        # when was this found as best in population: (nf, ng)
+    tuned        # has this been processed by another solver?
+
+    # constructor function which only requires the point in the search
+    # space, i.e. the design variables, and the objective function but
+    # other aspects can be given if desired.  The parameters argument
+    # must, of course, be specified should the objective function
+    # require it so is not really optional but it is not recorded in
+    # the point structure.
     function Point(x,           # point in search space
                    f,           # objective function 
                    parameters = nothing; # arguments to objective function 
@@ -50,9 +58,9 @@ mutable struct Point
         end
         p = Nothing
         if rank(z) == 1
-            p = new(x, z, g, ancestor, tuned)
+            p = new(x, z, g, ancestor, nothing, tuned)
         elseif rank(z) == 0
-            p = new(x, [z], g, ancestor, tuned)
+            p = new(x, [z], g, ancestor, nothing, tuned)
         else
             error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
         end
@@ -605,6 +613,13 @@ function solve(f, p0;                # required arguments
         # criterion problems but is best in multi-objective case in
         # the ranking measure used by Fresa
         best = pop[index[end]]
+        # for a number of reasons, we would like to know when this
+        # best point was first identified as best so we note the
+        # number of function evaluations taken place so far and which
+        # generation this happens.
+        if best.since == nothing # first time this has been found as best in population
+            best.since = (nf+nh, gen)
+        end
         # if elitism is used
         if elite
             if nz > 1
@@ -654,6 +669,7 @@ function solve(f, p0;                # required arguments
                   archiveelite ? " na=$(length(archive))" : "",
                   " most fit ",
                   best.g ≤ 0 ? "z=$(best.z)" : "g=$(best.g)",
+                  " since $(best.since)",
                   " \r")
             # if output has been requested, check to see if output is
             # required now and then also check to see if the frequency
@@ -707,8 +723,8 @@ function solve(f, p0;                # required arguments
         # currently disabled as the creation of the Ancestor object
         # requires more information than I am currently storing away.
         if multithreading || parallel
-                    x = Any[] # typeof(newpop[1].x)[]
-                    # points = Point[]
+            x = Any[] # typeof(newpop[1].x)[]
+            # points = Point[]
         end
         # now loop through population, applying selection and then
         # generating neighbours.  np is the number of solutions to

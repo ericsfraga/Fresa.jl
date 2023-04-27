@@ -63,6 +63,7 @@ end
     best, pop = Fresa.solve(f, p0; domain=d, ngen=100)
     println("Population: $pop")
     println("Best: f($(best.x)) = $(best.z), $(best.g)")
+    println("identified after $(best.since[1]) function evaluates in generation $(best.since[2]).")
     println("#+plot: ind:3 deps:(2) with:\"linespoints pt 7\" set:nokey set:\"yrange [0:1]\"")
     ancestor = best.ancestor;
     while ancestor != Some(nothing) && ! (ancestor isa Nothing)
