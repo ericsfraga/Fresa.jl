@@ -840,6 +840,12 @@ function solve(f, p0;                # required arguments
         fit = fitness(pop, fitnesstype, steepness, ngen, ngen)
         index = sortperm(fit)
         best = pop[index[end]]
+        # it could be that the best solution found was identified in
+        # the last loop above, in which case the information on when
+        # it was found will not have been specified.  Do it now.
+        if best.since == nothing # first time this has been found as best in population
+            best.since = (nf+nh, gen)
+        end
         return best, pop
     else
         return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
