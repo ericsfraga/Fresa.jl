@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-27 15:38+0100]"
+lastchange = "[2023-04-28 13:24+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -471,6 +471,7 @@ function solve(f, p0;                # required arguments
                ϵ = 0.0001,           # ϵ for similarity detection
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                hybrid = nothing,     # if defined, use another solve to fine-tune best solution
+               hybridthresholds = (0,0), # duration of stable period (nf,ng) before applying hybrid method
                issimilar = nothing,  # function for diversity check: see prune function
                multithreading = false, # use multiple threads for objective function evaluation
                ngen = 0,             # stopping criterion: number of generations
@@ -513,6 +514,7 @@ function solve(f, p0;                # required arguments
         println("| ϵ | $ϵ |")
         println("| fitness | $fitnesstype |")
         println("| hybrid | $hybrid |")
+        println("| hybridthresholds | $hybridthresholds |")
         println("| issimilar | $issimilar |")
         println("| multithreading | $multithreading |")
         if nfmax ≤ 0
@@ -694,7 +696,12 @@ function solve(f, p0;                # required arguments
         # This is only done if the point has not already been "tuned"
         # although, for stochastic methods, re-tuning might be
         # beneficial.  Something to consider eventually.
-        if ! (hybrid isa Nothing || best.tuned)
+        #
+        # The tuning only happens if the current best solution has
+        # been the best for some time, defined by the two values in
+        # the hybridthresholds tuple corresponding to number of
+        # function evaluations and number of generations.
+        if ! (hybrid isa Nothing || best.tuned) && all(((nf+nh,gen).-best.since) .> hybridthresholds)
             # indicate that this best point has already been tuned so
             # it is not processed again
             best.tuned = true
