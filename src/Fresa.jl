@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.0"
-lastchange = "[2023-04-28 13:24+0100]"
+lastchange = "[2023-04-28 14:20+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -714,8 +714,10 @@ function solve(f, p0;                # required arguments
             # solver.  This nf value contributes to the total number
             # of function evaluations so will affect the Fresa
             # iterations if a maximum number of function evaluations
-            # was specified.
-            tunedbest, nnh = hybrid(best, f, parameters)
+            # was specified.  The hybrid method itself will be limited
+            # to the number of function evaluations left for Fresa as
+            # well.
+            tunedbest, nnh = hybrid(best, f, parameters, nfmax = nfmax - nf)
             nh += nnh           # update counter
             if tunedbest != nothing
                 tunedbest.tuned = true # not worth processing further

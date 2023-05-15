@@ -424,7 +424,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-04-28 13:24+0100]"
+  lastchange = "[2023-04-28 14:20+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1141,425 +1141,427 @@ The size of the population, =npop=, may be a single integer value or a =Tuple= o
 The *output* of the progress during the search is controlled by the ~output~ optional argument.  This should be an integer value that indicates how often a summary of the current population is generated and sent to standard output.  It will be the initial value used.  The value will go up in powers of 10 as the generations proceed to ensure that there is sufficient granularity without overwhelming the output file.  The default is 1 to output every generation until the 10th, then 10 until the 100th, and so on.  A value of 0 will eliminate all output from the solve method.
 #+name: solve
 #+begin_src julia
-    """ 
+  """ 
 
-    Solve an optimisation problem, defined as the minimization of the
-    values returned by the objective function, `f`.  `f` returns not only
-    the objective function values, an array of `Float64` values, but also
-    a measure of feasibility (≤0) or infeasibility (>0).  The problem is
-    solved using the Fresa algorithm.  `p0` is the initial population
-    which has to have at least one member, a `Point`, and `domain`
-    describes the search domain.  This latter argument is an instance of
-    the `Fresa.Domain` struct which has a `lower` and an `upper` members
-    which are functions to be evaluated with a current point in the
-    domain.
+  Solve an optimisation problem, defined as the minimization of the
+  values returned by the objective function, `f`.  `f` returns not only
+  the objective function values, an array of `Float64` values, but also
+  a measure of feasibility (≤0) or infeasibility (>0).  The problem is
+  solved using the Fresa algorithm.  `p0` is the initial population
+  which has to have at least one member, a `Point`, and `domain`
+  describes the search domain.  This latter argument is an instance of
+  the `Fresa.Domain` struct which has a `lower` and an `upper` members
+  which are functions to be evaluated with a current point in the
+  domain.
 
-    The return values for the solution of a single criterion problem are
-    the best point and the full population at the end of the search. 
+  The return values for the solution of a single criterion problem are
+  the best point and the full population at the end of the search. 
 
-    For a multi-objective problem, the returned values are the set of
-    indices for the points within the full population (the second returned
-    value) approximating the *Pareto* front.
+  For a multi-objective problem, the returned values are the set of
+  indices for the points within the full population (the second returned
+  value) approximating the *Pareto* front.
 
-    The population will consist of an array of `Fresa.Point` objects, each
-    of which will have the point in the search space, the objective
-    function value and the feasibility measure.
+  The population will consist of an array of `Fresa.Point` objects, each
+  of which will have the point in the search space, the objective
+  function value and the feasibility measure.
 
-    """
-    function solve(f, p0;                # required arguments
-                   archiveelite = false, # save thinned out elite members
-                   domain = nothing,     # search domain: will often be required but not always
-                   elite = true,         # elitism by default
-                   ϵ = 0.0001,           # ϵ for similarity detection
-                   fitnesstype = :hadamard, # how to rank solutions in multi-objective case
-                   hybrid = nothing,     # if defined, use another solve to fine-tune best solution
-                   hybridthresholds = (0,0), # duration of stable period (nf,ng) before applying hybrid method
-                   issimilar = nothing,  # function for diversity check: see prune function
-                   multithreading = false, # use multiple threads for objective function evaluation
-                   ngen = 0,             # stopping criterion: number of generations
-                   np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
-                   nfmax = 0,            # stopping criterion: maximum number of function evaluations
-                   nrmax = 5,            # number of runners maximum
-                   ns = 100,             # number of stable solutions for stopping
-                   orglevel = "",        # default org mode heading indentation for any output
-                   output = 1,           # how often to output information
-                   parameters = nothing, # allow parameters for objective function 
-                   plotvectors = false,  # generate output file for search plot
-                   populationoutput = false, # output population every generation?
-                   tournamentsize = 2,   # number to base selection on
-                   steepness = 1.0,      # show steep is the adjustment shape for fitness
-                   usemultiproc = false) # parallel processing by Fresa itself?
-        output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
-        tstart = time()
-        nf = 1                   # number of function evaluations
-        nh = 0                   # number of function evaluations by hybrid function
-        npruned = 0              # number solutions pruned from population
-        nz = length(p0[1].z)     # number of criteria
-        pop = copy(p0);          # create/initialise the population object
-        if archiveelite
-            archive = Point[]
-        end
-        # check to see if at least one stopping criterion has been
-        # defined.  If not, set the number of generations to an arbitrary
-        # value but notify the user
-        if ngen ≤ 0 && nfmax ≤ 0
-            @warn "No stopping criteria given so defaulting to ngen=100"
-            ngen = 100
-            nfmax = typemax(Int32)  # arbitrarily large?
-        end
-        if output > 0
-            println("#+name: $(f)settings")
-            println("| variable | value |")
-            println("|-")
-            println("| elite | $elite |")
-            println("| archive | $archiveelite |")
-            println("| ϵ | $ϵ |")
-            println("| fitness | $fitnesstype |")
-            println("| hybrid | $hybrid |")
-            println("| hybridthresholds | $hybridthresholds |")
-            println("| issimilar | $issimilar |")
-            println("| multithreading | $multithreading |")
-            if nfmax ≤ 0
-                println("| nfmax | ∞ |")
-            else
-                println("| nfmax | $nfmax |")
-            end
-            if ngen ≤ 0
-                println("| ngen | ∞ |")
-            else
-                println("| ngen | $ngen |")
-            end
-            println("| np | $np |")
-            println("| nrmax | $nrmax |")
-            println("| ns | $ns |")
-            println("| steepness | $steepness |")
-            println("| tournamentsize | $tournamentsize |")
-            println("|-")
-            # output != 0 && println(": solving with ngen=$ngen np=$np nrmax=$nrmax ns=$ns")
-            # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
-        end
-        if plotvectors
-            plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
-            output > 0 && println(": output of vectors for subsequent plotting")
-        end
-        # if np was given as a tuple, we are to have a dynamic
-        # population size.  This only makes sense for multi-objective
-        # optimization problems so a warning will be given otherwise.
-        npmin = np
-        npmax = np
-        if np isa Tuple
-            if nz > 1
-                npmin = np[1]
-                npmax = np[2]
-                if npmin > npmax
-                    error("Dynamic population sizing requires min <= max; you specified $np")
-                end
-                np = npmin      # start with minimum possible
-            else
-                println("*Warning*: you have specified a tuple for population size: $np")
-                println("This only makes sense for multi-objective optimization problems.")
-                println("np will be set to $(np[1]).")
-                np = np[1]      # be optimistic and use minimum given
-            end
-        end
-        # we use multithreading if asked for *and* if we have more than
-        # one thread available
-        multithreading = multithreading && Threads.nthreads() > 1 
-        # we use parallel computing if we have more than one processor
-        parallel = usemultiproc && nprocs() > 1
-        # parallel = false
-        if output > 0
-            println(": function evaluations performed ",
-                    parallel
-                    ? "in parallel with $(nprocs()) processors."
-                    : (multithreading
-                       ? "in parallel with $(Threads.nthreads()) threads."
-                       : "sequentially."))
-            println("$orglevel** initial population")
-            println("#+name: $(f)initial")
-            println(pop)
-        end
-        if output > 0
-            println("$orglevel** evolution")
-            println("#+name: $(f)evolution")
-            println("#+plot: ind:1 deps:(6) with:\"points pt 7\" set:\"logscale x\"")
-            @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "pop",
-                    (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
-            for i in 1:nz
-                @printf(" z%-8d |", i)
-            end
-            @printf(" %9s |", "g")
-            @printf("\n|-\n")
-        end
-        # now evolve the population.  There are two potential stopping
-        # criteria: a maximum number of generations to perform (ngen) and
-        # a maximum number of function evaluations (nfmax).  Either one or
-        # the other will determine how much work we do, whichever is
-        # reached first.
-        gen = 0
-        while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || (nf+nh) < nfmax)
-            gen += 1                # keep count of generations performed
+  """
+  function solve(f, p0;                # required arguments
+                 archiveelite = false, # save thinned out elite members
+                 domain = nothing,     # search domain: will often be required but not always
+                 elite = true,         # elitism by default
+                 ϵ = 0.0001,           # ϵ for similarity detection
+                 fitnesstype = :hadamard, # how to rank solutions in multi-objective case
+                 hybrid = nothing,     # if defined, use another solve to fine-tune best solution
+                 hybridthresholds = (0,0), # duration of stable period (nf,ng) before applying hybrid method
+                 issimilar = nothing,  # function for diversity check: see prune function
+                 multithreading = false, # use multiple threads for objective function evaluation
+                 ngen = 0,             # stopping criterion: number of generations
+                 np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
+                 nfmax = 0,            # stopping criterion: maximum number of function evaluations
+                 nrmax = 5,            # number of runners maximum
+                 ns = 100,             # number of stable solutions for stopping
+                 orglevel = "",        # default org mode heading indentation for any output
+                 output = 1,           # how often to output information
+                 parameters = nothing, # allow parameters for objective function 
+                 plotvectors = false,  # generate output file for search plot
+                 populationoutput = false, # output population every generation?
+                 tournamentsize = 2,   # number to base selection on
+                 steepness = 1.0,      # show steep is the adjustment shape for fitness
+                 usemultiproc = false) # parallel processing by Fresa itself?
+      output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
+      tstart = time()
+      nf = 1                   # number of function evaluations
+      nh = 0                   # number of function evaluations by hybrid function
+      npruned = 0              # number solutions pruned from population
+      nz = length(p0[1].z)     # number of criteria
+      pop = copy(p0);          # create/initialise the population object
+      if archiveelite
+          archive = Point[]
+      end
+      # check to see if at least one stopping criterion has been
+      # defined.  If not, set the number of generations to an arbitrary
+      # value but notify the user
+      if ngen ≤ 0 && nfmax ≤ 0
+          @warn "No stopping criteria given so defaulting to ngen=100"
+          ngen = 100
+          nfmax = typemax(Int32)  # arbitrarily large?
+      end
+      if output > 0
+          println("#+name: $(f)settings")
+          println("| variable | value |")
+          println("|-")
+          println("| elite | $elite |")
+          println("| archive | $archiveelite |")
+          println("| ϵ | $ϵ |")
+          println("| fitness | $fitnesstype |")
+          println("| hybrid | $hybrid |")
+          println("| hybridthresholds | $hybridthresholds |")
+          println("| issimilar | $issimilar |")
+          println("| multithreading | $multithreading |")
+          if nfmax ≤ 0
+              println("| nfmax | ∞ |")
+          else
+              println("| nfmax | $nfmax |")
+          end
+          if ngen ≤ 0
+              println("| ngen | ∞ |")
+          else
+              println("| ngen | $ngen |")
+          end
+          println("| np | $np |")
+          println("| nrmax | $nrmax |")
+          println("| ns | $ns |")
+          println("| steepness | $steepness |")
+          println("| tournamentsize | $tournamentsize |")
+          println("|-")
+          # output != 0 && println(": solving with ngen=$ngen np=$np nrmax=$nrmax ns=$ns")
+          # output != 0 && println(": elite=$elite archive elite=$archiveelite fitness type=$fitnesstype")
+      end
+      if plotvectors
+          plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
+          output > 0 && println(": output of vectors for subsequent plotting")
+      end
+      # if np was given as a tuple, we are to have a dynamic
+      # population size.  This only makes sense for multi-objective
+      # optimization problems so a warning will be given otherwise.
+      npmin = np
+      npmax = np
+      if np isa Tuple
+          if nz > 1
+              npmin = np[1]
+              npmax = np[2]
+              if npmin > npmax
+                  error("Dynamic population sizing requires min <= max; you specified $np")
+              end
+              np = npmin      # start with minimum possible
+          else
+              println("*Warning*: you have specified a tuple for population size: $np")
+              println("This only makes sense for multi-objective optimization problems.")
+              println("np will be set to $(np[1]).")
+              np = np[1]      # be optimistic and use minimum given
+          end
+      end
+      # we use multithreading if asked for *and* if we have more than
+      # one thread available
+      multithreading = multithreading && Threads.nthreads() > 1 
+      # we use parallel computing if we have more than one processor
+      parallel = usemultiproc && nprocs() > 1
+      # parallel = false
+      if output > 0
+          println(": function evaluations performed ",
+                  parallel
+                  ? "in parallel with $(nprocs()) processors."
+                  : (multithreading
+                     ? "in parallel with $(Threads.nthreads()) threads."
+                     : "sequentially."))
+          println("$orglevel** initial population")
+          println("#+name: $(f)initial")
+          println(pop)
+      end
+      if output > 0
+          println("$orglevel** evolution")
+          println("#+name: $(f)evolution")
+          println("#+plot: ind:1 deps:(6) with:\"points pt 7\" set:\"logscale x\"")
+          @printf("| %9s | %9s | %9s | %9s | %9s |", "gen", "pop",
+                  (elite && nz > 1) ? "pareto" : "nf", "pruned", "t (s)")
+          for i in 1:nz
+              @printf(" z%-8d |", i)
+          end
+          @printf(" %9s |", "g")
+          @printf("\n|-\n")
+      end
+      # now evolve the population.  There are two potential stopping
+      # criteria: a maximum number of generations to perform (ngen) and
+      # a maximum number of function evaluations (nfmax).  Either one or
+      # the other will determine how much work we do, whichever is
+      # reached first.
+      gen = 0
+      while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || (nf+nh) < nfmax)
+          gen += 1                # keep count of generations performed
 
-            # evaluate fitness which is adjusted depending on value of
-            # steepness, a value that may depend on the generation
-            fit = fitness(pop, fitnesstype, steepness, gen, ngen)
-            if gen == 1
-                @debug "Initial fitness" f=fit
-            end
-            # sort
-            index = sortperm(fit)
-            if populationoutput
-                println("\nGeneration $gen full population is:")
-                println(pop)
-                println("Fitness vector: $fit")
-            end
-            # and remember best which really only makes sense in single
-            # criterion problems but is best in multi-objective case in
-            # the ranking measure used by Fresa
-            best = pop[index[end]]
-            # for a number of reasons, we would like to know when this
-            # best point was first identified as best so we note the
-            # number of function evaluations taken place so far and which
-            # generation this happens.
-            if best.since == nothing # first time this has been found as best in population
-                best.since = (nf+nh, gen)
-            end
-            # if elitism is used
-            if elite
-                if nz > 1
-                    # elite set is whole pareto set unless it is too
-                    # big. Recall that the pareto function returns the set
-                    # of indices into the population
-                    wholepareto = pareto(pop)[1]
-                    # if using dynamic population sizing, adjust the population
-                    np = 2 * length(wholepareto)
-                    if np < npmin
-                        np = npmin
-                    end
-                    if np > npmax
-                        np = npmax
-                    end
-                    # now check that the pareto is not too big.  if it is, thin it out
-                    if length(wholepareto) > ceil(np/2)
-                        newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,np/2))
-                        if archiveelite
-                            # add removed solutions to the archive, pruning if desired
-                            if issimilar != nothing
-                                archive = prune(append!(archive, removed), issimilar, ϵ, domain)[1]
-                            else
-                                archive = append!(archive, removed)
-                            end
-                            # reduce archive to non-dominated solutions alone
-                            archive = archive[pareto(archive)[1]]
-                        end
-                    else
-                        newpop = pop[wholepareto]
-                    end
-                else
-                    # elite set is single element only
-                    newpop = [best]
-                end
-                # if plotting vectors for the search, include elitism
-                if plotvectors
-                    for p in newpop
-                        write(plotvectorio, "$(gen-1) $(p.x)\n$gen $(p.x)\n\n")
-                    end
-                end
-            else
-                newpop = Point[]
-            end
-            if output >= 0
-                print(stderr, ": $(nf+nh)@$gen npop $(length(newpop))/$(length(pop))",
-                      archiveelite ? " na=$(length(archive))" : "",
-                      " most fit ",
-                      best.g ≤ 0 ? "z=$(best.z)" : "g=$(best.g)",
-                      " since $(best.since)",
-                      " \r")
-                # if output has been requested, check to see if output is
-                # required now and then also check to see if the frequency
-                # needs to be reduced.
-                if output > 0
-                    if gen%output == 0 || gen == ngen
-                        @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                                (elite && nz > 1) ? length(newpop) : (nf+nh), npruned, time()-tstart)
-                        for i = 1:length(best.z)
-                            print(" $(best.z[i]) |")
-                        end
-                        print(" $(best.g) |")
-                        println()
-                    end
-                    if 10^(floor(log10(gen))) > output
-                        output = 10^(Int(floor(log10(gen))))
-                    end
-                end
-            end
-            # if a hybrid function has been specified, we use that
-            # function to generate a new solution based on another solver.
-            # This is only done if the point has not already been "tuned"
-            # although, for stochastic methods, re-tuning might be
-            # beneficial.  Something to consider eventually.
-            #
-            # The tuning only happens if the current best solution has
-            # been the best for some time, defined by the two values in
-            # the hybridthresholds tuple corresponding to number of
-            # function evaluations and number of generations.
-            if ! (hybrid isa Nothing || best.tuned) && all(((nf+nh,gen).-best.since) .> hybridthresholds)
-                # indicate that this best point has already been tuned so
-                # it is not processed again
-                best.tuned = true
-                # the signature of the hybrid function must be
-                #
-                # (newpoint, nf) = hybrid(somepoint, objectivefn, parameters)
-                #
-                # where newpoint is an improved point, if any, and nf is
-                # the number of function evaluations used by this hybrid
-                # solver.  This nf value contributes to the total number
-                # of function evaluations so will affect the Fresa
-                # iterations if a maximum number of function evaluations
-                # was specified.
-                tunedbest, nnh = hybrid(best, f, parameters)
-                nh += nnh           # update counter
-                if tunedbest != nothing
-                    tunedbest.tuned = true # not worth processing further
-                    push!(newpop, tunedbest)
-                end
-            end
-            # if we are using any form of multiprocessing, either threads
-            # or multiple cores, create an array to store all new points
-            # which we evaluate later in parallel.  Ideally, also keep
-            # track of the points from which new points are derived to
-            # provide the backward link through the evolution but this is
-            # currently disabled as the creation of the Ancestor object
-            # requires more information than I am currently storing away.
-            if multithreading || parallel
-                x = Any[] # typeof(newpop[1].x)[]
-                # points = Point[]
-            end
-            # now loop through population, applying selection and then
-            # generating neighbours.  np is the number of solutions to
-            # propagate but we propagate less than that should the
-            # population not be big enough.
-            l = length(pop)
-            for i in 1:min(l,np)
-                s = select(fit, tournamentsize)
-                # println(": selection $i is $s")
-                # println(": size of pop is $(size(pop))")
-                selected = pop[s]
-                if !elite
-                    # if no elitism, we ensure selected members remain in population
-                    push!(newpop, selected)
-                    if plotvectors
-                        write(plotvectorio, "$(gen-1) $(selected.x)\n$gen $(selected.x)\n\n")
-                    end
-                end
-                # number of runners to generate, function of fitness
-                nr = ceil(fit[s]*nrmax*rand())
-                if nr < 1
-                    nr = 1
-                end
-                # println(": generating $nr runners")
-                for r in 1:nr
-                    # create a neighbour, also function of fitness,
-                    # optionally passing a Domain object for the search
-                    # space.
-                    if domain isa Nothing
-                        newx = neighbour(pop[s].x, fit[s])
-                    else
-                        newx = neighbour(pop[s].x, fit[s], domain)
-                    end
-                    nf += 1
-                    # for parallel evaluation, we store the neighbours and
-                    # evaluate them later; otherwise, we evaluate
-                    # immediately and save the resulting point
-                    if multithreading || parallel
-                        push!(x, newx)
-                        # push!(points, pop[s])
-                    else
-                        push!(newpop, Point(newx, f, parameters, ancestor = Ancestor(pop[s],fit[s],gen)))
-                        if plotvectors
-                            write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
-                        end
-                    end
-                end
-                # remove selected member from the original population so
-                # it is not selected again
-                splice!(fit, s)
-                splice!(pop, s)
-            end
-            # if we are making use of parallel computing, we evaluate all
-            # points generated in previous loop.  Parallel processing is
-            # done either via multithreading or with multiple
-            # processors.  The former is easier as it's based on shared
-            # memory.
-            if multithreading       # using threads and shared memory
-                results = Array{Point}(undef,length(x))
-                Threads.@threads for i ∈ 1:length(x)
-                    results[i] = Point(x[i],f,parameters)
-                end
-                append!(newpop, results)
-                # elseif parallel        # using multiple processors with remote calls
-                #     # will be used to collect results from worker processors
-                #     results = Array{Future,1}(undef, nprocs())
-                #     i = 0;
-                #     while i < length(x)
-                #         # issue remote evaluation call
-                #         for j=1:nprocs()
-                #             if i+j <= length(x) 
-                #                 # TODO: the information about the ancestor is
-                #                 # not available; this needs to be stored above
-                #                 results[j] = @spawn createpoint(x[i+j],f,parameters)
-                #                 nf += 1
-                #             end
-                #         end
-                #         # now wait for results
-                #         for j=1:nprocs()
-                #             if i+j <= length(x)
-                #                 push!(newpop, fetch(results[j]))
-                #             end
-                #         end
-                #         i += nprocs()
-                #     end
-            end
-            # and finally, if diversity control has been enabled
-            # (issimilar function provided and tolerance specified),
-            # remove any duplicate points in the new population and make
-            # it the current population for the next generation;
-            # otherwise, simply copy over
-            if issimilar != nothing && ϵ > eps()
-                (pop, nn) = prune(newpop, issimilar, ϵ, domain)
-                npruned += nn
-            else
-                pop = newpop
-            end
-        end
-        # if output has been requested, check to see if output is
-        # required for the last generation
-        if output > 0
-            if gen%output != 0
-                @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
-                        (elite && nz > 1) ? length(pop) : (nf+nh), npruned, time()-tstart)
-                println()
-            end
-        end
-        output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf nh=$nh npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
-        if plotvectors
-            close(plotvectorio)
-        end
-        if nz == 1
-            fit = fitness(pop, fitnesstype, steepness, ngen, ngen)
-            index = sortperm(fit)
-            best = pop[index[end]]
-            # it could be that the best solution found was identified in
-            # the last loop above, in which case the information on when
-            # it was found will not have been specified.  Do it now.
-            if best.since == nothing # first time this has been found as best in population
-                best.since = (nf+nh, gen)
-            end
-            return best, pop
-        else
-            return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
-        end
-    end
+          # evaluate fitness which is adjusted depending on value of
+          # steepness, a value that may depend on the generation
+          fit = fitness(pop, fitnesstype, steepness, gen, ngen)
+          if gen == 1
+              @debug "Initial fitness" f=fit
+          end
+          # sort
+          index = sortperm(fit)
+          if populationoutput
+              println("\nGeneration $gen full population is:")
+              println(pop)
+              println("Fitness vector: $fit")
+          end
+          # and remember best which really only makes sense in single
+          # criterion problems but is best in multi-objective case in
+          # the ranking measure used by Fresa
+          best = pop[index[end]]
+          # for a number of reasons, we would like to know when this
+          # best point was first identified as best so we note the
+          # number of function evaluations taken place so far and which
+          # generation this happens.
+          if best.since == nothing # first time this has been found as best in population
+              best.since = (nf+nh, gen)
+          end
+          # if elitism is used
+          if elite
+              if nz > 1
+                  # elite set is whole pareto set unless it is too
+                  # big. Recall that the pareto function returns the set
+                  # of indices into the population
+                  wholepareto = pareto(pop)[1]
+                  # if using dynamic population sizing, adjust the population
+                  np = 2 * length(wholepareto)
+                  if np < npmin
+                      np = npmin
+                  end
+                  if np > npmax
+                      np = npmax
+                  end
+                  # now check that the pareto is not too big.  if it is, thin it out
+                  if length(wholepareto) > ceil(np/2)
+                      newpop, removed = thinout(pop, fit, wholepareto, ceil(Int,np/2))
+                      if archiveelite
+                          # add removed solutions to the archive, pruning if desired
+                          if issimilar != nothing
+                              archive = prune(append!(archive, removed), issimilar, ϵ, domain)[1]
+                          else
+                              archive = append!(archive, removed)
+                          end
+                          # reduce archive to non-dominated solutions alone
+                          archive = archive[pareto(archive)[1]]
+                      end
+                  else
+                      newpop = pop[wholepareto]
+                  end
+              else
+                  # elite set is single element only
+                  newpop = [best]
+              end
+              # if plotting vectors for the search, include elitism
+              if plotvectors
+                  for p in newpop
+                      write(plotvectorio, "$(gen-1) $(p.x)\n$gen $(p.x)\n\n")
+                  end
+              end
+          else
+              newpop = Point[]
+          end
+          if output >= 0
+              print(stderr, ": $(nf+nh)@$gen npop $(length(newpop))/$(length(pop))",
+                    archiveelite ? " na=$(length(archive))" : "",
+                    " most fit ",
+                    best.g ≤ 0 ? "z=$(best.z)" : "g=$(best.g)",
+                    " since $(best.since)",
+                    " \r")
+              # if output has been requested, check to see if output is
+              # required now and then also check to see if the frequency
+              # needs to be reduced.
+              if output > 0
+                  if gen%output == 0 || gen == ngen
+                      @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                              (elite && nz > 1) ? length(newpop) : (nf+nh), npruned, time()-tstart)
+                      for i = 1:length(best.z)
+                          print(" $(best.z[i]) |")
+                      end
+                      print(" $(best.g) |")
+                      println()
+                  end
+                  if 10^(floor(log10(gen))) > output
+                      output = 10^(Int(floor(log10(gen))))
+                  end
+              end
+          end
+          # if a hybrid function has been specified, we use that
+          # function to generate a new solution based on another solver.
+          # This is only done if the point has not already been "tuned"
+          # although, for stochastic methods, re-tuning might be
+          # beneficial.  Something to consider eventually.
+          #
+          # The tuning only happens if the current best solution has
+          # been the best for some time, defined by the two values in
+          # the hybridthresholds tuple corresponding to number of
+          # function evaluations and number of generations.
+          if ! (hybrid isa Nothing || best.tuned) && all(((nf+nh,gen).-best.since) .> hybridthresholds)
+              # indicate that this best point has already been tuned so
+              # it is not processed again
+              best.tuned = true
+              # the signature of the hybrid function must be
+              #
+              # (newpoint, nf) = hybrid(somepoint, objectivefn, parameters)
+              #
+              # where newpoint is an improved point, if any, and nf is
+              # the number of function evaluations used by this hybrid
+              # solver.  This nf value contributes to the total number
+              # of function evaluations so will affect the Fresa
+              # iterations if a maximum number of function evaluations
+              # was specified.  The hybrid method itself will be limited
+              # to the number of function evaluations left for Fresa as
+              # well.
+              tunedbest, nnh = hybrid(best, f, parameters, nfmax = nfmax - nf)
+              nh += nnh           # update counter
+              if tunedbest != nothing
+                  tunedbest.tuned = true # not worth processing further
+                  push!(newpop, tunedbest)
+              end
+          end
+          # if we are using any form of multiprocessing, either threads
+          # or multiple cores, create an array to store all new points
+          # which we evaluate later in parallel.  Ideally, also keep
+          # track of the points from which new points are derived to
+          # provide the backward link through the evolution but this is
+          # currently disabled as the creation of the Ancestor object
+          # requires more information than I am currently storing away.
+          if multithreading || parallel
+              x = Any[] # typeof(newpop[1].x)[]
+              # points = Point[]
+          end
+          # now loop through population, applying selection and then
+          # generating neighbours.  np is the number of solutions to
+          # propagate but we propagate less than that should the
+          # population not be big enough.
+          l = length(pop)
+          for i in 1:min(l,np)
+              s = select(fit, tournamentsize)
+              # println(": selection $i is $s")
+              # println(": size of pop is $(size(pop))")
+              selected = pop[s]
+              if !elite
+                  # if no elitism, we ensure selected members remain in population
+                  push!(newpop, selected)
+                  if plotvectors
+                      write(plotvectorio, "$(gen-1) $(selected.x)\n$gen $(selected.x)\n\n")
+                  end
+              end
+              # number of runners to generate, function of fitness
+              nr = ceil(fit[s]*nrmax*rand())
+              if nr < 1
+                  nr = 1
+              end
+              # println(": generating $nr runners")
+              for r in 1:nr
+                  # create a neighbour, also function of fitness,
+                  # optionally passing a Domain object for the search
+                  # space.
+                  if domain isa Nothing
+                      newx = neighbour(pop[s].x, fit[s])
+                  else
+                      newx = neighbour(pop[s].x, fit[s], domain)
+                  end
+                  nf += 1
+                  # for parallel evaluation, we store the neighbours and
+                  # evaluate them later; otherwise, we evaluate
+                  # immediately and save the resulting point
+                  if multithreading || parallel
+                      push!(x, newx)
+                      # push!(points, pop[s])
+                  else
+                      push!(newpop, Point(newx, f, parameters, ancestor = Ancestor(pop[s],fit[s],gen)))
+                      if plotvectors
+                          write(plotvectorio, "$(gen-1) $(pop[s].x)\n$gen $newx\n\n")
+                      end
+                  end
+              end
+              # remove selected member from the original population so
+              # it is not selected again
+              splice!(fit, s)
+              splice!(pop, s)
+          end
+          # if we are making use of parallel computing, we evaluate all
+          # points generated in previous loop.  Parallel processing is
+          # done either via multithreading or with multiple
+          # processors.  The former is easier as it's based on shared
+          # memory.
+          if multithreading       # using threads and shared memory
+              results = Array{Point}(undef,length(x))
+              Threads.@threads for i ∈ 1:length(x)
+                  results[i] = Point(x[i],f,parameters)
+              end
+              append!(newpop, results)
+              # elseif parallel        # using multiple processors with remote calls
+              #     # will be used to collect results from worker processors
+              #     results = Array{Future,1}(undef, nprocs())
+              #     i = 0;
+              #     while i < length(x)
+              #         # issue remote evaluation call
+              #         for j=1:nprocs()
+              #             if i+j <= length(x) 
+              #                 # TODO: the information about the ancestor is
+              #                 # not available; this needs to be stored above
+              #                 results[j] = @spawn createpoint(x[i+j],f,parameters)
+              #                 nf += 1
+              #             end
+              #         end
+              #         # now wait for results
+              #         for j=1:nprocs()
+              #             if i+j <= length(x)
+              #                 push!(newpop, fetch(results[j]))
+              #             end
+              #         end
+              #         i += nprocs()
+              #     end
+          end
+          # and finally, if diversity control has been enabled
+          # (issimilar function provided and tolerance specified),
+          # remove any duplicate points in the new population and make
+          # it the current population for the next generation;
+          # otherwise, simply copy over
+          if issimilar != nothing && ϵ > eps()
+              (pop, nn) = prune(newpop, issimilar, ϵ, domain)
+              npruned += nn
+          else
+              pop = newpop
+          end
+      end
+      # if output has been requested, check to see if output is
+      # required for the last generation
+      if output > 0
+          if gen%output != 0
+              @printf("| %9d | %9d | %9d | %9d | %9.2f |", gen, length(fit),
+                      (elite && nz > 1) ? length(pop) : (nf+nh), npruned, time()-tstart)
+              println()
+          end
+      end
+      output > 0 && println("$orglevel** Fresa run finished\n: nf=$nf nh=$nh npruned=$npruned", archiveelite ? " archived=$(length(archive))" : "")
+      if plotvectors
+          close(plotvectorio)
+      end
+      if nz == 1
+          fit = fitness(pop, fitnesstype, steepness, ngen, ngen)
+          index = sortperm(fit)
+          best = pop[index[end]]
+          # it could be that the best solution found was identified in
+          # the last loop above, in which case the information on when
+          # it was found will not have been specified.  Do it now.
+          if best.since == nothing # first time this has been found as best in population
+              best.since = (nf+nh, gen)
+          end
+          return best, pop
+      else
+          return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
+      end
+  end
 #+end_src 
 *** COMMENT previous solve
 To keep backwards compatibility, this is a version of the =solve= method where the initial population is a single point represented by the decision variables.  A population vector of =Point= members is created from this initial point and the real method (above) invoked.
