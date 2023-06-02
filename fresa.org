@@ -29,10 +29,6 @@
 #+begin_src shell :results output :exports results :eval yes
   grep ^version Project.toml | awk -e '{print $3}' | sed -e 's/"//g'
 #+end_src
-
-# +toc: headlines 1
-
-
 * TODO bugs and new features [14/23]                          :noexport:
 - [ ] from the manual: instead of writing
   : Complex{Float64}(x)
@@ -116,19 +112,13 @@ You may also wish to cite the original paper which led to the development of bot
 #+end_src
 
 ** Installation
-This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  To use this code, you should add the package using [[https://en.wikibooks.org/wiki/Introducing_Julia/Modules_and_packages][the appropriate Julia tools]] but, basically, all you need to do is start Julia and then type
-
-: ]add https://github.com/ericsfraga/Fresa.jl
-
-and then type Backspace to exit the package system in Julia.
-
-/Fresa/ has also been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to do to use it is
+This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  /Fresa/ has also been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to install /Fresa/ is to type
 
 : add Fresa
 
-in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] but (at the time of writing this updated document) the version in the registry is currently out of date.
+in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]], which you can activate by typing ~]~ in the Julia REPL.
 
-/Fresa/ makes use of the following extra Julia packages: =Dates=, =LinearAlgebra=, and =Printf=.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.
+/Fresa/ makes use of the following extra Julia packages: =Dates=, =LinearAlgebra=, and =Printf=.  These packages will be installed automatically by the Julia package manager if not already installed.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.  You may need to install these explicitly to try out the test problems.
 
 ** Quick example
 :PROPERTIES:
@@ -136,7 +126,7 @@ in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]] b
 :END:
 
 Once Fresa is available in your Julia installation, using it requires you to define *three* aspects to define a problem:
-1. the objective function;
+1. the objective function, which includes the evaluation of constraints;
 2. the search domain; and,
 3. an initial population.
 I will illustrate how to use Fresa for a simple nonlinear problem, adapted from chapter 13 of a textbook from MIT:[fn:3:Exercise 9, page 452: https://web.mit.edu/15.053/www/AMP-Chapter-13.pdf] 
@@ -226,10 +216,8 @@ The arguments given here for the ~solve~ function are those that are required.  
 If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 
 #+begin_example
-  # -*- mode: org; -*-
-  ,#+startup: show3levels
-  : Fresa PPA last change [2023-02-28 15:36]
-  ,** solve objective [2023-03-02 09:09]
+  # Fresa 🍓 PPA v8.0.0, last change [2023-04-27 15:10+0100]
+  ,* Fresa solve objective [2023-06-02 11:48]
   ,#+name: objectivesettings
   | variable | value |
   |-
@@ -238,6 +226,8 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
   | ϵ | 0.0001 |
   | fitness | hadamard |
   | issimilar | nothing |
+  | multithreading | false |
+  | nfmax | 2147483647 |
   | ngen | 100 |
   | np | 10 |
   | nrmax | 5 |
@@ -246,7 +236,7 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
   | tournamentsize | 2 |
   |-
   : function evaluations performed sequentially.
-  ,*** initial population
+  ,** initial population
   ,#+name: objectiveinitial
   |-
   | z1 | g | x |
@@ -254,74 +244,75 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
   | -503.75 | -4.75 | [4.0, 6.25] |
   |-
 
-  ,*** evolution
+  ,** evolution
   ,#+name: objectiveevolution
   ,#+plot: ind:1 deps:(6) with:"points pt 7" set:"logscale x"
   |       gen |       pop |        nf |    pruned |     t (s) | z1        |         g |
   |-
-  |         1 |         1 |         1 |         0 |      1.64 | -503.75 | -4.75 |
-  |         2 |         3 |         3 |         0 |      2.36 | -503.75 | -4.75 |
-  |         3 |         6 |         8 |         0 |      2.36 | -503.75 | -4.75 |
-  |         4 |         8 |        15 |         0 |      2.36 | -503.75 | -4.75 |
-  |         5 |        24 |        38 |         0 |      2.36 | -518.779682426614 | -0.27132382275979694 |
-  |         6 |        23 |        60 |         0 |      2.36 | -518.779682426614 | -0.27132382275979694 |
-  |         7 |        16 |        75 |         0 |      2.36 | -520.4582744449281 | -0.7296110395955111 |
-  |         8 |        32 |       106 |         0 |      2.36 | -521.1962114415253 | -0.6457843279428488 |
-  |         9 |        34 |       139 |         0 |      2.36 | -522.0544859240086 | -0.5493895729849569 |
-  |        10 |        29 |       167 |         0 |      2.36 | -523.5063912095502 | -0.2225010516955308 |
-  |        20 |        34 |       455 |         0 |      2.36 | -528.4636472600164 | -0.0014818689890745418 |
-  |        30 |        35 |       741 |         0 |      2.37 | -528.7736174973552 | -0.09911209687967215 |
-  |        40 |        28 |      1015 |         0 |      2.37 | -529.296898555838 | -0.009317629050713094 |
-  |        50 |        31 |      1299 |         0 |      2.37 | -529.5775862957253 | -0.0357071444927044 |
-  |        60 |        36 |      1593 |         0 |      2.37 | -529.7036038355564 | -0.0034870507385278415 |
-  |        70 |        37 |      1896 |         0 |      2.37 | -529.7036038355564 | -0.0034870507385278415 |
-  |        80 |        31 |      2186 |         0 |      2.37 | -529.7282178916113 | -0.0029712794666778564 |
-  |        90 |        25 |      2452 |         0 |      2.38 | -529.7306901973271 | -0.00024848459179338533 |
-  |       100 |        38 |      2773 |         0 |      2.38 | -529.7358910862779 | -0.000980071004583749 |
-  ,*** Fresa run finished
-  : nf=2804 npruned=0
+  |         1 |         1 |         1 |         0 |      1.56 | -503.75 | -4.75 |
+  |         2 |         3 |         3 |         0 |      2.23 | -503.75 | -4.75 |
+  |         3 |         8 |        10 |         0 |      2.23 | -508.7366928811864 | -4.637588131515372 |
+  |         4 |        17 |        26 |         0 |      2.23 | -521.4784455002691 | -0.7427819610618798 |
+  |         5 |        21 |        46 |         0 |      2.23 | -522.7007760534982 | -0.47083217926538623 |
+  |         6 |        29 |        74 |         0 |      2.23 | -523.7246640026837 | -0.21682904207308695 |
+  |         7 |        25 |        98 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
+  |         8 |        27 |       124 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
+  |         9 |        30 |       153 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
+  |        10 |        31 |       183 |         0 |      2.24 | -524.7091378168888 | -0.18829928002217144 |
+  |        20 |        29 |       471 |         0 |      2.24 | -529.4164722008476 | -0.02038843398626966 |
+  |        30 |        25 |       750 |         0 |      2.24 | -529.5633730695015 | -0.02977665276725361 |
+  |        40 |        30 |      1039 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
+  |        50 |        27 |      1314 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
+  |        60 |        23 |      1591 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
+  |        70 |        26 |      1902 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
+  |        80 |        24 |      2186 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
+  |        90 |        34 |      2488 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
+  |       100 |        26 |      2794 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
+  ,** Fresa run finished
+  : nf=2826 npruned=0
   Population at end:
   |-
   | z1 | g | x |
   |-
-  | -529.7358910862779 | -0.000980071004583749 | [3.6832073512693797, 7.579955164275827] |
-  | -529.1355539861587 | 0.023045956527795397 | [3.93618717627165, 7.28118457977958] |
-  | -526.9553078009899 | -0.5639782623208802 | [3.8622274810194113, 7.252531370312531] |
-  | -526.5124136792504 | -0.6772609898152666 | [3.851011250263814, 7.24333430172037] |
-  | -528.2501291742816 | -0.28659079578103785 | [3.8415453940697644, 7.332827367960076] |
-  | -529.1248566023082 | -0.03687148209303359 | [3.8865096842605826, 7.328814082468695] |
-  | -528.0778484174244 | -0.27666275777254157 | [3.8891043216352896, 7.2777422624831445] |
-  | -527.7474482803932 | -0.5076453203894147 | [3.6662810528461116, 7.498933672506783] |
-  | -528.0111049600428 | -0.4417302670732255 | [3.6651981571558534, 7.513416157998329] |
-  | -528.4066636499732 | -0.3425516142153242 | [3.6481836889498145, 7.553669250417157] |
-  | -427.00081945154454 | -17.83432363519625 | [1.1183401626502911, 7.0911270777804] |
-  | -519.4038264286992 | -1.5402813366476238 | [2.91776725700046, 8.190623024269922] |
-  | -519.8158699407486 | -1.5763992790210608 | [2.9576643533415576, 8.135522920185918] |
-  | -515.805320356341 | -2.4881751548547726 | [2.859789231184752, 8.070617891607343] |
-  | -517.7091835646829 | -2.0665731368466638 | [2.9076712812224073, 8.097479835163778] |
-  | -520.4226666442512 | -1.2716052764918828 | [2.936108367754332, 8.222348903396426] |
-  | -526.7393912630314 | -0.7506905778703725 | [3.5410577441188615, 7.6005925914832915] |
-  | -527.3879318583827 | -0.5781854558696153 | [3.5364328290786826, 7.640643513931658] |
-  | -529.2667746380536 | -0.10540248964041155 | [3.593366471877474, 7.666879735818948] |
-  | -527.7572545197613 | -0.504852993510184 | [3.602245095573395, 7.57633528660989] |
-  | -527.8446500221738 | -0.4751953446574788 | [3.5760582800189877, 7.613690995045719] |
-  | -528.163792761623 | -0.39971775559152434 | [3.6029154525651284, 7.596557905803541] |
-  | -528.6195806603862 | -0.12906556730375485 | [3.9088194706414807, 7.283603521769473] |
-  | -525.7667172367654 | -0.8084822209702551 | [3.880619776805382, 7.18155982363949] |
-  | -525.4066695529012 | -0.918716711284489 | [3.8567276493487626, 7.1881834785245875] |
-  | -526.450171749045 | -0.6450059268793993 | [3.889384765122009, 7.20373709647771] |
-  | -527.6674261963287 | -0.34676669337814303 | [3.9085312060597954, 7.240409214052616] |
-  | -528.6225055665595 | -0.2841751405832369 | [3.6891601127594384, 7.516172836572027] |
-  | -529.1616934198715 | -0.1486932510143646 | [3.6790956333347635, 7.555346589795411] |
-  | -528.5675831921719 | -0.2993001170605396 | [3.6256734478384014, 7.589331839181812] |
-  | -528.3451192050957 | -0.3575033428066732 | [3.665060322687163, 7.530426944214069] |
-  | -454.26812947798453 | -11.219777303439997 | [4.1328551203657975, 4.796618394873042] |
+  | -529.7290072170845 | -0.001386514289535512 | [3.702594745626452, 7.55660900239035] |
+  | -527.853878001001 | -0.48291577524779683 | [3.6491174454827386, 7.524475910371155] |
+  | -526.3705607067765 | -0.8467069134866705 | [3.667528690359779, 7.429624188870932] |
+  | -527.742025567878 | -0.5066301432003399 | [3.5920380970749233, 7.588228254870025] |
+  | -524.6409529473439 | -1.286458521008619 | [3.5795201153236214, 7.44728415740993] |
+  | -520.3279644470122 | -2.3254911554649453 | [3.514830096848747, 7.3171056526885145] |
+  | -527.068372582824 | -0.6359913637899766 | [3.7537817290261373, 7.36826365241064] |
+  | -530.217092255721 | 0.14055723592169045 | [3.7703419473254765, 7.503701110393766] |
+  | -530.1922481660704 | 0.14022127204323453 | [3.7833382647191978, 7.4880383367456105] |
+  | -527.0408631624633 | -0.6395013941553955 | [3.758236328486057, 7.362216126985651] |
+  | -528.5040324201457 | -0.3127940156253288 | [3.694582618016649, 7.5039420552549565] |
+  | -526.8207411691457 | 0.027474148220463235 | [4.212986646931653, 6.949910853326109] |
+  | -525.3750678895451 | 0.05001863772785242 | [4.33560332175508, 6.807279741439475] |
+  | -525.5568933293221 | -1.0511547215375145 | [3.6449867908470712, 7.415784906676011] |
+  | -528.7042806616057 | -0.25754638788131956 | [3.600411425197057, 7.627997012187268] |
+  | -524.2125504404314 | -1.3849937697329153 | [3.5039389291246454, 7.5182745311038435] |
+  | -526.8187955310441 | -0.7328852391695904 | [3.681412466435878, 7.435727992443029] |
+  | -521.0428332711219 | -2.142352322655981 | [3.571527569013465, 7.285696452652646] |
+  | -533.3897515175647 | 0.9674495903000491 | [3.81054032686648, 7.620841525820233] |
+  | -523.8714001763768 | -1.4149187367282963 | [3.401872090974504, 7.634769743484934] |
+  | -548.172644750669 | 71.68533717898717 | [7.1685337178987165, 12.5] |
+  | -528.7066821625476 | -0.26077494549345914 | [3.6999695775575603, 7.507881517832236] |
+  | -528.1252783833863 | -0.4121478714274076 | [3.6715244230968733, 7.511741117998271] |
+  | -528.0189144708239 | -0.4394243124528856 | [3.667697825440769, 7.5108777469804995] |
+  | -529.4595454260652 | -0.07213579880031062 | [3.683283983377394, 7.565632060187064] |
+  | -530.9282150525235 | 0.3106471940089506 | [3.7304199552719655, 7.585625492475431] |
+  | -526.8642638037436 | -0.6650820853761346 | [3.7797490122487525, 7.33128476822627] |
+  | -529.6121402823709 | 0.013760389538639117 | [3.8111594814605, 7.4293607001551285] |
+  | -528.9998000854063 | -0.13497695282293876 | [3.810193862470157, 7.400771974471224] |
+  | -529.2908718630608 | -0.08396812878470428 | [3.7800463543116205, 7.447150749069115] |
+  | -529.8893535422826 | 0.03879535868527739 | [3.6784696648573263, 7.593595473908263] |
+  | -527.1547932506232 | -0.6598249985636997 | [3.609165714535757, 7.537036142844352] |
+  | -521.8633759883776 | -1.9587164477291736 | [3.546918639927955, 7.35195434254062] |
   |-
 
   Best solution found is:
-    f([3.6832073512693797, 7.579955164275827])=[-529.7358910862779]
+    f([3.702594745626452, 7.55660900239035])=[-529.7290072170845]
   with constraint satisfaction (≤ 0) or violation (> 0):
-    g=-0.000980071004583749.
+    g=-0.001386514289535512.
 #+end_example
 
 The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
@@ -424,7 +415,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-04-27 15:10+0100]"
+  lastchange = "[2023-06-02 11:54+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
