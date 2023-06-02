@@ -17,7 +17,7 @@
 #+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
 
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                                  |
-| *Version*       | "8.0.0"                                                                     |
+| *Version*       | 8.0.1                                                                       |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                                |
 | *Latest news*   | Major version upgrade with breaking changes. See [[version][version information]] below. |
 #+TBLFM: @2$2='(org-sbe tomlversion);L
@@ -415,7 +415,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-06-02 12:30+0100]"
+  lastchange = "[2023-06-02 12:35+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
