@@ -7,8 +7,8 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.0.0"
-lastchange = "[2023-04-27 15:10+0100]"
+version = "8.0.1"
+lastchange = "[2023-06-02 12:30+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -289,8 +289,8 @@ function neighbour(x :: Float64,
                    ) :: Float64
     # allow movements both up and down
     # in the domain for this variable
-    a = domain.lower(x)
-    b = domain.upper(x)
+    a = d.lower(x)
+    b = d.upper(x)
     newx = x + (b-a)*(2*rand()-1)/2.0 * (1-f)
     if newx < a
         newx = a

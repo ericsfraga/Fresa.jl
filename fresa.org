@@ -415,7 +415,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-06-02 11:54+0100]"
+  lastchange = "[2023-06-02 12:30+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -810,8 +810,8 @@ There is also a version that expects single valued =Float64= arguments.
                      ) :: Float64
       # allow movements both up and down
       # in the domain for this variable
-      a = domain.lower(x)
-      b = domain.upper(x)
+      a = d.lower(x)
+      b = d.upper(x)
       newx = x + (b-a)*(2*rand()-1)/2.0 * (1-f)
       if newx < a
           newx = a
