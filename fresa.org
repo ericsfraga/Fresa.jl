@@ -415,7 +415,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-06-02 12:35+0100]"
+  lastchange = "[2023-06-13 16:43+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1283,14 +1283,24 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           end
           # sort
           index = sortperm(fit)
+          # if populationoutput has been set, the full population is
+          # printed out including also printing out separately those
+          # solutions that are non-dominated (single solution for single
+          # objective problems) and those that are dominated.
           if populationoutput
-              println("\nGeneration $gen full population is:")
+              println("#+name: population-$gen")
               println(pop)
+              (nondominated, dominated) = Fresa.pareto(pop)
+              println("#+name: nondominated-$gen")
+              println(pop[nondominated])
+              println("#+name: dominated-$gen")
+              println(pop[dominated])
               println("Fitness vector: $fit")
           end
           # and remember best which really only makes sense in single
-          # criterion problems but is best in multi-objective case in
-          # the ranking measure used by Fresa
+          # criterion problems but is the "most fit" when considering
+          # multi-objective problems, which will depend on the actual
+          # fitness ranking method used.
           best = pop[index[end]]
           # if elitism is used
           if elite
@@ -1785,7 +1795,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   # create the initial population consisting of a single MI point
   p0 = [Fresa.Point(MI([1.0], [1]),f)]
   # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(f, p0; domain=d, ngen=100)
+  best, pop = Fresa.solve(f, p0; domain=d, ngen=100, populationoutput=true)
   println("Population: $pop")
   println("Best: f($(best.x)) = $(best.z), $(best.g)")
 #+end_src 

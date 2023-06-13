@@ -7,8 +7,8 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.0.1"
-lastchange = "[2023-06-02 12:30+0100]"
+version = "8.0.2"
+lastchange = "[2023-06-13 16:43+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -590,14 +590,24 @@ function solve(f, p0;                # required arguments
         end
         # sort
         index = sortperm(fit)
+        # if populationoutput has been set, the full population is
+        # printed out including also printing out separately those
+        # solutions that are non-dominated (single solution for single
+        # objective problems) and those that are dominated.
         if populationoutput
-            println("\nGeneration $gen full population is:")
+            println("#+name: population-$gen")
             println(pop)
+            (nondominated, dominated) = Fresa.pareto(pop)
+            println("#+name: nondominated-$gen")
+            println(pop[nondominated])
+            println("#+name: dominated-$gen")
+            println(pop[dominated])
             println("Fitness vector: $fit")
         end
         # and remember best which really only makes sense in single
-        # criterion problems but is best in multi-objective case in
-        # the ranking measure used by Fresa
+        # criterion problems but is the "most fit" when considering
+        # multi-objective problems, which will depend on the actual
+        # fitness ranking method used.
         best = pop[index[end]]
         # if elitism is used
         if elite
