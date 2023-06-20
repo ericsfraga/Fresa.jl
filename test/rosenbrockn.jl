@@ -14,6 +14,7 @@ best, pop = Fresa.solve(rosenbrock, p0;
                         ngen=1000,
                         ϵ=1e-8,
                         issimilar = Fresa.similarx,
-                        multithreading=true)
+                        multithreading=true,
+                        ticker = false) # test this option
 println("Best solution is f($( best.x ))=$( best.z ) with g=$( best.g )")
 # testrosenbrockn ends here

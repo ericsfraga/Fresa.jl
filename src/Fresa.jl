@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.2"
-lastchange = "[2023-06-13 16:43+0100]"
+lastchange = "[2023-06-20 19:44+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -473,6 +473,7 @@ function solve(f, p0;                # required arguments
                populationoutput = false, # output population every generation?
                tournamentsize = 2,   # number to base selection on
                steepness = 1.0,      # show steep is the adjustment shape for fitness
+               ticker = true,        # output single line summary every generation
                usemultiproc = false) # parallel processing by Fresa itself?
     output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
     tstart = time()
@@ -654,11 +655,13 @@ function solve(f, p0;                # required arguments
             newpop = Point[]
         end
         if output >= 0
-            print(stderr, ": $nf@$gen npop $(length(newpop))/$(length(pop))",
-                  archiveelite ? " na=$(length(archive))" : "",
-                  " most fit ",
-                  best.g ≤ 0 ? "z=$(best.z)" : "g=$(best.g)",
-                  " \r")
+            if ticker
+                print(stderr, ": $nf@$gen npop $(length(newpop))/$(length(pop))",
+                      archiveelite ? " na=$(length(archive))" : "",
+                      " most fit ",
+                      best.g ≤ 0 ? "z=$(best.z)" : "g=$(best.g)",
+                      " \r")
+            end
             # if output has been requested, check to see if output is
             # required now and then also check to see if the frequency
             # needs to be reduced.
