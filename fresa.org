@@ -1779,6 +1779,24 @@ Using any data structure to represent points in the search space, other than a v
       return MI(x,y)
   end
 #+end_src
+
+**** COMMENT random points for mixed integer problems
+For testing, I have also defined functions to generate random points for mixed-integer problems:
+
+#+name: mirandompoints
+#+begin_src julia
+  function Fresa.randompoint(a :: Int, b :: Int)
+      rand(a:b)
+  end
+  function Fresa.randompoint(a :: Vector{Int}, b :: Vector{Int})
+      @assert length(a) == length(b)
+      [rand(a[i]:b[i]) for i in 1:length(a)]
+  end
+  function Fresa.randompoint(a :: MI, b :: MI)
+      MI(Fresa.randompoint(a.x, b.x),
+         Fresa.randompoint(a.y, b.y))
+  end
+#+end_src
 *** Example 1: Westerlund & Westerlund
 The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- An algorithm for solving non-convex MINLP problems by cutting plane and transformation techniques/, Proceedings of ICHEAP-6, Pisa, June 2003.  It has one real variable and one integer variable.  The search region is non-convex, consisting of two disjoint domains.
 
