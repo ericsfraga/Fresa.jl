@@ -29,7 +29,18 @@
 #+begin_src shell :results output :exports results :eval yes
   grep ^version Project.toml | awk -e '{print $3}' | sed -e 's/"//g'
 #+end_src
-* TODO bugs and new features [14/23]                          :noexport:
+* TODO bugs and new features [14/25]                          :noexport:
+- [ ] make sure pruning takes into account feasibility
+- [ ] fix/update fresa randompoint for v8 API
+  [[file:~/s/research/julia/Fresa.jl/fresa.org::randompopulation][randompopulation]]
+  i.e. to generalise it for populations that do not consist of vectors of floats.
+- [ ] need to implement comparison operators for Fresa.Point so that we can say p1 < p2?  etc.  where the comparison includes both objective function value(s) and the feasibility indicator and then we can apply sort to the whole population at once and also functions like ~argmin~ and ~argmax~, say.
+
+  And related:
+  - [ ] consider using argmin in Fresa and/or book : Julia, argmin
+    - From :: 0xEF <b11101111@disroot.org>
+    - Subject :: Julia, argmin
+    - Email :: [[gnus:nnml+outlook:personal.dt2022#E1580379-CD99-4CFB-A7D0-E77EF3DDB265@disroot.org][Email from b11101111@disroot.org: Julia, argmin]]
 - [ ] from the manual: instead of writing
   : Complex{Float64}(x)
   write
@@ -415,7 +426,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-06-20 19:44+0100]"
+  lastchange = "[2023-07-18 15:05+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
