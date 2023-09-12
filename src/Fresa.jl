@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.2"
-lastchange = "[2023-06-20 19:44+0100]"
+lastchange = "[2023-09-12 14:21+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -460,6 +460,7 @@ function solve(f, p0;                # required arguments
                ϵ = 0.0001,           # ϵ for similarity detection
                fitnesstype = :hadamard, # how to rank solutions in multi-objective case
                issimilar = nothing,  # function for diversity check: see prune function
+               lower = nothing,      # for fixed lower bounds as domain
                multithreading = false, # use multiple threads for objective function evaluation
                ngen = 0,             # stopping criterion: number of generations
                np = 10,              # points to propagate: constant (single value) or dynamic (tuple)
@@ -471,9 +472,10 @@ function solve(f, p0;                # required arguments
                parameters = nothing, # allow parameters for objective function 
                plotvectors = false,  # generate output file for search plot
                populationoutput = false, # output population every generation?
-               tournamentsize = 2,   # number to base selection on
                steepness = 1.0,      # show steep is the adjustment shape for fitness
+               tournamentsize = 2,   # number to base selection on
                ticker = true,        # output single line summary every generation
+               upper = nothing,      # for fixed upper bounds as domain
                usemultiproc = false) # parallel processing by Fresa itself?
     output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
     tstart = time()
@@ -525,13 +527,22 @@ function solve(f, p0;                # required arguments
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
         output > 0 && println(": output of vectors for subsequent plotting")
     end
+    # check the domain for the search space.  If no domain given, look
+    # at the individual upper and lower bounds.  If theses are
+    # defined, define the actual domain to use.  This provides some
+    # compatibility with the black box optimization package I am
+    # developing in parallel for use with an agent based framework for
+    # cooperative optimization.
+    if domain isa Nothing && !(lower isa Nothing) && !(upper isa Nothing)
+        domain = Domain(x -> lower, x -> upper)
+    end
     # if np was given as a tuple, we are to have a dynamic
     # population size.  This only makes sense for multi-objective
     # optimization problems so a warning will be given otherwise.
     npmin = np
     npmax = np
     if np isa Tuple
-        if nz > 1
+                if nz > 1
             npmin = np[1]
             npmax = np[2]
             if npmin > npmax
