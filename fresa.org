@@ -32,6 +32,7 @@
 * TODO bugs and new features [14/29]                          :noexport:
 - [ ] add optional rng (random number generator) argument to Fresa.solve
 - [ ] think about thinout in the case of non-dominated fitness ranking
+  as the current implementation basically thins out by random selection from the pareto set as all members have the same fitness.
 - [ ] look at using data logger in Fresa : Interim values of Metaheuristics optimiziers :fresa:
   
   - From :: Jesús Mejía via Julia Programming Language <notifications@julialang.discoursemail.com>
@@ -445,7 +446,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-11-27 13:48+0000]"
+  lastchange = "[2023-11-27 13:57+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1541,7 +1542,13 @@ The *output* of the progress during the search is controlled by the ~output~ opt
           best = pop[index[end]]
           return best, pop
       else
-          return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
+          if archiveelite
+              # if we archived non-dominated solutions that were pruned
+              # out of the population (cf. thinout), bring these back
+              # into the population before identifying the pareto set
+              append!(pop, archive)
+          end
+          return pareto(pop)[1], pop
       end
   end
 #+end_src 

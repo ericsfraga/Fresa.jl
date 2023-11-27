@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.0.2"
-lastchange = "[2023-09-12 14:21+0100]"
+lastchange = "[2023-11-27 13:57+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -816,7 +816,13 @@ function solve(f, p0;                # required arguments
         best = pop[index[end]]
         return best, pop
     else
-        return pareto(archiveelite ? append!(pop,archive) : pop)[1], pop
+        if archiveelite
+            # if we archived non-dominated solutions that were pruned
+            # out of the population (cf. thinout), bring these back
+            # into the population before identifying the pareto set
+            append!(pop, archive)
+        end
+        return pareto(pop)[1], pop
     end
 end
 # solve ends here
