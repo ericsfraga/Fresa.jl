@@ -29,7 +29,26 @@
 #+begin_src shell :results output :exports results :eval yes
   grep ^version Project.toml | awk -e '{print $3}' | sed -e 's/"//g'
 #+end_src
-* TODO bugs and new features [14/25]                          :noexport:
+* TODO bugs and new features [14/29]                          :noexport:
+- [ ] add optional rng (random number generator) argument to Fresa.solve
+- [ ] think about thinout in the case of non-dominated fitness ranking
+- [ ] look at using data logger in Fresa : Interim values of Metaheuristics optimiziers :fresa:
+  
+  - From :: Jesús Mejía via Julia Programming Language <notifications@julialang.discoursemail.com>
+  - Subject :: Interim values of Metaheuristics optimiziers
+  - Email :: [[gnus:nnml:julia.lt2021#discourse/post/499085@discourse.julialang.org][Email from Jesús Mejía via Julia Programming Language: Interim values of Metaheuristics optimiziers]]
+  
+  #+begin_src julia
+  function logger(status)
+      display(status.population)
+      print(status.population[1])
+  end
+  optimize(f, bounds, DE; logger)
+  #+end_src
+  
+  See this https://github.com/jmejia8/Metaheuristics.jl/issues/78#issuecomment-1504465010
+  
+  [2023-10-10 Tue 08:44]
 - [ ] make sure pruning takes into account feasibility
 - [ ] fix/update fresa randompoint for v8 API
   [[file:~/s/research/julia/Fresa.jl/fresa.org::randompopulation][randompopulation]]
@@ -426,7 +445,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2023-09-12 14:21+0100]"
+  lastchange = "[2023-11-27 13:48+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
