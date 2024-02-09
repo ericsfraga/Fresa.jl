@@ -17,7 +17,7 @@
 #+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
 
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                                  |
-| *Version*       | 8.0.1                                                                       |
+| *Version*       | 8.1.0                                                                       |
 | *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}                                |
 | *Latest news*   | Major version upgrade with breaking changes. See [[version][version information]] below. |
 #+TBLFM: @2$2='(org-sbe tomlversion);L
@@ -365,6 +365,8 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 #+end_src
 ** Version information <<version>>
 
+- February 2024 :: *v8.1*, minor release with improved control over output during the evolution of populations and added ~lower~ and ~upper~ bounds arguments as an alternative to the ~domain~ argument.  No breaking changes.
+
 - March 2023 :: *v8.0*, major upgrade with possible *breaking* changes where I have refactored the calling sequences for some functions, specifically:
 
   1. Optional arguments to the main interface to Fresa, the ~solve~ function, have changed:
@@ -447,7 +449,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-02-08 22:11+0000]"
+  lastchange = "[2024-02-09 11:51+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
