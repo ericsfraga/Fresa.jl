@@ -7,8 +7,8 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.0.2"
-lastchange = "[2023-11-27 13:57+0000]"
+version = "8.1.0"
+lastchange = "[2024-02-08 22:11+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -528,11 +528,14 @@ function solve(f, p0;                # required arguments
         output > 0 && println(": output of vectors for subsequent plotting")
     end
     # check the domain for the search space.  If no domain given, look
-    # at the individual upper and lower bounds.  If theses are
-    # defined, define the actual domain to use.  This provides some
+    # at the individual upper and lower bounds.  If these are defined,
+    # define the actual domain to use.  This provides some
     # compatibility with the black box optimization package I am
     # developing in parallel for use with an agent based framework for
-    # cooperative optimization.
+    # cooperative optimization.  Note that the solve method does not
+    # use the domain directly; the domain is passed to the neighbour
+    # function which may be the default one defined in this package or
+    # may be one provided by the application domain owner.
     if domain isa Nothing && !(lower isa Nothing) && !(upper isa Nothing)
         domain = Domain(x -> lower, x -> upper)
     end
