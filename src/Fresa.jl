@@ -7,8 +7,8 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.1.0"
-lastchange = "[2024-02-08 22:11+0000]"
+version = "8.2.0"
+lastchange = "[2024-02-09 13:19+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -301,6 +301,22 @@ function neighbour(x :: Float64,
 end
 # neighbourfloat ends here
 
+# [[file:../fresa.org::neighbourunbounded][neighbourunbounded]]
+function neighbour(x :: Vector{Float64},
+                   f :: Float64
+                   ) :: Vector{Float64}
+    # map given point to the domain (-π/2,+π/2)
+    x̂ = atan.(x)
+    # and define the bounds on the mapped space
+    a = (-π/2+eps())*ones(length(x))
+    b = (+π/2+eps())*ones(length(x))
+    xnew = x̂ .+ (1.0 .- f) .* 2(rand(length(x)).-0.5) .* (b.-a)
+    xnew[xnew.<a] = a[xnew.<a];
+    xnew[xnew.>b] = b[xnew.>b];
+    return tan.(xnew)
+end
+# neighbourunbounded ends here
+
 # [[file:../fresa.org::dominates][dominates]]
 function dominates(a, b)
     all(a .<= b) && any(a .< b)
@@ -536,8 +552,13 @@ function solve(f, p0;                # required arguments
     # use the domain directly; the domain is passed to the neighbour
     # function which may be the default one defined in this package or
     # may be one provided by the application domain owner.
+
+    # if no domain information is provided, the search is assumed to
+    # be over an unbounded domain, i.e. (-∞,+∞).
     if domain isa Nothing && !(lower isa Nothing) && !(upper isa Nothing)
         domain = Domain(x -> lower, x -> upper)
+    else
+        @warn "No domain defined; assuming unbounded search on (-∞,+∞)."
     end
     # if np was given as a tuple, we are to have a dynamic
     # population size.  This only makes sense for multi-objective
