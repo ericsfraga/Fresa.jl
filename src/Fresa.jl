@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
-lastchange = "[2024-02-09 13:19+0000]"
+lastchange = "[2024-02-10 14:33+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -194,8 +194,27 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         m = length(v[1])
         # println("VF: v=$v")
         # println("  : of size $(size(v))")
-        if m == 1                   # single objective 
-            fitness = [v[i][1] for i=1:l]
+
+        # treat single objective and multi-objective fitness
+        # calculations differently.  The latter is more complex due to
+        # the concept of non-domination and solutions having
+        # equivalent "goodness" despite different objective function
+        # values.
+        if m == 1 
+            # if there is only one objective function value, the
+            # fitness is simply based on the value of this objective
+            # function, noting that the assumption is that the
+            # optimization problem is one of minimization.  There are
+            # two types of fitness assignment for this case: a fitness
+            # based on the relative values of the objective function
+            # and a fitness assignment that is uniform in the [0,1]
+            # interval.
+            if fitnesstype == :scaled
+                fitness = [v[i][1] for i=1:l]
+            elseif fitnesstype == :uniform
+                fitness = ones(l)
+                fitness[sortperm([v[i][1] for i=1:l])] = 1:l
+            end
         else                  # multi-objective
             rank = ones(m,l); #rank of each solution for each objective function 
             if fitnesstype == :hadamard
@@ -497,10 +516,20 @@ function solve(f, p0;                # required arguments
     tstart = time()
     nf = 1                   # number of function evaluations
     npruned = 0              # number solutions pruned from population
-    nz = length(p0[1].z)     # number of criteria
+    nz = length(p0[1].z)     # number of criteria the default setting
+
+    # of fitnesstype is based on the expectation that the problem is
+    # multi-objective; if it is single objective and the type chosen
+    # is not appropriate, we set it to what used to be the default
+    # fitness type for single objective optimization problems: scaled.
+    if nz == 1 && fitnesstype == :hadamard # (the default)
+        @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
+        fitnesstype = :scaled
+    end
+    
     pop = copy(p0);          # create/initialise the population object
     if archiveelite
-        archive = Point[]
+            archive = Point[]
     end
     # check to see if at least one stopping criterion has been
     # defined.  If not, set the number of generations to an arbitrary
@@ -566,7 +595,7 @@ function solve(f, p0;                # required arguments
     npmin = np
     npmax = np
     if np isa Tuple
-                if nz > 1
+        if nz > 1
             npmin = np[1]
             npmax = np[2]
             if npmin > npmax

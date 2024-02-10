@@ -13,7 +13,7 @@ x0 = [0.0, 0.0]
 f(x0)
 using Fresa
 p0 = [Fresa.Point(x0,f)]
-best, pop = Fresa.solve(f, p0)
+best, pop = Fresa.solve(f, p0, fitnesstype = :uniform)
 println("Best obtained: $best")
 println(pop)
 # unboundedtest ends here
