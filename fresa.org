@@ -468,7 +468,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-02-10 14:47+0000]"
+  lastchange = "[2024-02-16 14:57+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Printf                    # for formatted output
@@ -1345,7 +1345,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       if domain isa Nothing && !(lower isa Nothing) && !(upper isa Nothing)
           domain = Domain(x -> lower, x -> upper)
       else
-          @warn "No domain defined; assuming unbounded search on (-∞,+∞)."
+          # @warn "No domain defined; assuming unbounded search on (-∞,+∞)."
       end
       # if np was given as a tuple, we are to have a dynamic
       # population size.  This only makes sense for multi-objective

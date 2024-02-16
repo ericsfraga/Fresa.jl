@@ -8,7 +8,8 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
-lastchange = "[2024-02-10 14:33+0000]"
+version = "8.2.0"
+lastchange = "[2024-02-16 14:57+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Printf                    # for formatted output
@@ -526,10 +527,10 @@ function solve(f, p0;                # required arguments
         @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
         fitnesstype = :scaled
     end
-    
+
     pop = copy(p0);          # create/initialise the population object
     if archiveelite
-            archive = Point[]
+        archive = Point[]
     end
     # check to see if at least one stopping criterion has been
     # defined.  If not, set the number of generations to an arbitrary
@@ -587,7 +588,7 @@ function solve(f, p0;                # required arguments
     if domain isa Nothing && !(lower isa Nothing) && !(upper isa Nothing)
         domain = Domain(x -> lower, x -> upper)
     else
-        @warn "No domain defined; assuming unbounded search on (-∞,+∞)."
+        # @warn "No domain defined; assuming unbounded search on (-∞,+∞)."
     end
     # if np was given as a tuple, we are to have a dynamic
     # population size.  This only makes sense for multi-objective
