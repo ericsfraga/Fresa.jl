@@ -6,6 +6,7 @@ version = "8.2.0"
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Permutations = "2ae35dd2-176d-5d53-8349-f30d82d94d4f"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]

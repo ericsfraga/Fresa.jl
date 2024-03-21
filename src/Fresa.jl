@@ -9,9 +9,10 @@ module Fresa
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
 version = "8.2.0"
-lastchange = "[2024-02-16 14:57+0000]"
+lastchange = "[2024-03-21 13:22+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
+using Permutations              # for random permutations of vectors
 using Printf                    # for formatted output
 function __init__()
     println("# Fresa 🍓 PPA v$version, last change $lastchange")
@@ -287,10 +288,10 @@ end
 # assigndominancefitness ends here
 
 # [[file:../fresa.org::neighbourarray][neighbourarray]]
-function neighbour(x :: Vector{Float64},
+function neighbour(x :: Vector{T},
                    f :: Float64,
                    d :: Domain
-                   ) :: Vector{Float64}
+                   ) :: Vector{T} where T <: AbstractFloat
     # allow movements both up and down in the domain for this variable
     # so determine the actual domain lower and upper bounds
     a = d.lower(x)
@@ -336,6 +337,47 @@ function neighbour(x :: Vector{Float64},
     return tan.(xnew)
 end
 # neighbourunbounded ends here
+
+# [[file:../fresa.org::neighbourintvector][neighbourintvector]]
+function Fresa.neighbour(y :: Vector{Int},
+                         ϕ :: Float64,
+                         d :: Fresa.Domain)
+    # do not overwrite the argument
+    ret = copy(y)
+    n = length(y)
+    # get lower and upper bounds
+    a = d.lower(y)
+    b = d.upper(y)
+    # determine the order in which variables are chosen
+    ind = RandomPermutation(n).data
+    # choose how many to adjust
+    na = Int(ceil((1.0-ϕ)*rand()*n))
+    @assert na ≤ n
+    for i ∈ 1:na
+        # consider the case of binary variables as special cases:
+        # toggle the boolean value (which is essentially what a binary
+        # variable can be considered to be); otherwise, change value
+        # up or down randomly.
+        if a[i] == 0 && b[i] == 1
+            # binary variable
+            ret[i] = 1 - ret[i]
+        else
+            # determine direction to adjust the integer value
+            dir = rand([-1, 1])
+            # check to make sure we can move in that direction
+            if (ret[ind[i]]+dir) < a[ind[i]] || (ret[ind[i]]+dir) > b[ind[i]]
+                dir = -dir
+            end
+            # and then move a random distance based on how far from
+            # the bounds the current value is
+            delta = rand() * (1.0-ϕ) *
+                ((dir < 0) ? (ret[ind[i]]-a[ind[i]]) : (b[ind[i]]-ret[ind[i]]))
+            ret[ind[i]] = ret[ind[i]] + dir*ceil(delta)
+        end
+    end
+    return ret
+end
+# neighbourintvector ends here
 
 # [[file:../fresa.org::dominates][dominates]]
 function dominates(a, b)

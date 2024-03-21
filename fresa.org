@@ -468,9 +468,10 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-02-16 14:57+0000]"
+  lastchange = "[2024-03-21 13:22+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
+  using Permutations              # for random permutations of vectors
   using Printf                    # for formatted output
   function __init__()
       println("# Fresa 🍓 PPA v$version, last change $lastchange")
@@ -857,15 +858,15 @@ The following function is used by the vector fitness evaluation to recurse throu
 A random solution is generated with a distance from the original point being inversely proportional, in a stochastic sense, to the fitness of the solution.  The new point is possibly adjusted to ensure it lies within the domain defined by the lower and upper bounds.  The final argument is the fitness vector with values between 0 and 1, 1 being the most fit and 0 the least fit.
 
 Fresa comes with two default methods for generating neighbouring solutions.
-
-*** vector of floating point numbers
+*** Floating point decision variables
+**** vector of floating point numbers
 The first is for a search space defined by vectors of =Float64= values:
 #+name: neighbourarray
 #+begin_src julia
-  function neighbour(x :: Vector{Float64},
+  function neighbour(x :: Vector{T},
                      f :: Float64,
                      d :: Domain
-                     ) :: Vector{Float64}
+                     ) :: Vector{T} where T <: AbstractFloat
       # allow movements both up and down in the domain for this variable
       # so determine the actual domain lower and upper bounds
       a = d.lower(x)
@@ -876,7 +877,7 @@ The first is for a search space defined by vectors of =Float64= values:
       return xnew
   end
 #+end_src
-*** single floating point number
+**** single floating point number
 There is also a version that expects single valued =Float64= arguments.
 #+name: neighbourfloat
 #+begin_src julia
@@ -898,7 +899,7 @@ There is also a version that expects single valued =Float64= arguments.
   end
 #+end_src
 Should other decision point types be required, e.g. mixed-integer or domain specific data structures, the =Fresa.neighbour= function with parameters of the specific type will need to be defined.  See the [[*mixed integer problems][mixed integer nonlinear examples]] below for an example of a simple mixed-integer case.
-*** unbounded search domain for vectors of floating point numbers
+**** unbounded search domain for vectors of floating point numbers
 
 In *v8.2*, we have introduced the capability of searching within an unbounded domain.  The approach taken is to map the unbounded domain, (-∞,+∞), to a bounded domain, (-π/2,+π/2), using the ~atan~ and ~tan~ functions to go from the unbounded domain to a bounded domain and vice versa, respectively.  This is the approach used by [cite/text:@938731] and [cite/text:@10254006] propose another method and give a short summary of alternatives.
 
@@ -920,7 +921,49 @@ An unbounded domain is identified by having an undefined ~domain~ argument to th
       return tan.(xnew)
   end
 #+end_src
-
+*** Integer decision variables
+**** vector of integer values including binary variables
+#+name: neighbourintvector
+#+begin_src julia
+  function Fresa.neighbour(y :: Vector{Int},
+                           ϕ :: Float64,
+                           d :: Fresa.Domain)
+      # do not overwrite the argument
+      ret = copy(y)
+      n = length(y)
+      # get lower and upper bounds
+      a = d.lower(y)
+      b = d.upper(y)
+      # determine the order in which variables are chosen
+      ind = RandomPermutation(n).data
+      # choose how many to adjust
+      na = Int(ceil((1.0-ϕ)*rand()*n))
+      @assert na ≤ n
+      for i ∈ 1:na
+          # consider the case of binary variables as special cases:
+          # toggle the boolean value (which is essentially what a binary
+          # variable can be considered to be); otherwise, change value
+          # up or down randomly.
+          if a[i] == 0 && b[i] == 1
+              # binary variable
+              ret[i] = 1 - ret[i]
+          else
+              # determine direction to adjust the integer value
+              dir = rand([-1, 1])
+              # check to make sure we can move in that direction
+              if (ret[ind[i]]+dir) < a[ind[i]] || (ret[ind[i]]+dir) > b[ind[i]]
+                  dir = -dir
+              end
+              # and then move a random distance based on how far from
+              # the bounds the current value is
+              delta = rand() * (1.0-ϕ) *
+                  ((dir < 0) ? (ret[ind[i]]-a[ind[i]]) : (b[ind[i]]-ret[ind[i]]))
+              ret[ind[i]] = ret[ind[i]] + dir*ceil(delta)
+          end
+      end
+      return ret
+  end
+#+end_src
 ** pareto -- set of non-dominated points
 Select a set consisting of those solutions in a population that are not dominated.  This only applies to multi-objective optimisation; for a single criterion problem, the solution with minimum objective function value would be selected.  This function is used only for returning the set of non-dominated solutions at the end of the solution procedure for multi-objective problems.  It could be used for an alternative fitness function, /a la/ Srinivas /et al./ (N Srinivas & K Deb (1995), Evolutionary Computation *2*:221-248).
 *** <<<dominates>>>: determine dominance
@@ -1901,31 +1944,9 @@ Using any data structure to represent points in the search space, other than a v
       # the fitness value, which means that the most fit solutions will
       # likely not have the integer values changed.  If one is to be
       # changed, we limit to just one variable at a time.
-      y = copy(s.y)
-      if rand() > f
-          i = rand(1:length(y))
-          # consider the case of binary variables as special cases:
-          # toggle the boolean value (which is essentially what a binary
-          # variable can be considered to be); otherwise, change value
-          # up or down randomly.
-          if a.y[i] == 0 && b.y[i] == 1
-              # binary variable
-              y[i] = 1 - y[i]
-          else
-              # for the integer variable we select to change, we move in one
-              # direction or the other a random number of places depending
-              # on fitness
-              positive = rand(Bool)
-              # random number to decide how much change to make to this
-              # integer
-              r = rand()
-              inc = ceil(f*r*(y[i]-y[i])/2)
-              # @printf(": neighbour: positive=%s inc=%d\n", positive, inc)
-              y[i] = y[i] + (positive ? inc : -inc)
-              # keep within bounds
-              y[i] = y[i] < a.y[i] ? a.y[i] : (y[i] > b.y[i] ? b.y[i] : y[i])
-          end
-      end
+      y = rand() > f ?
+          y = Fresa.neighbour(s.y, f, Fresa.Domain(s -> d.lower(s).y, s -> d.upper(s).y)) :
+          copy(s.y)
       # return the new search point consisting of both the floating
       # point numbers and the integer numbers
       return MI(x,y)
@@ -1965,7 +1986,7 @@ The MINLP example comes from: Tapio Westerlund & Joakim Westerlund, /GGPECP -- A
   # create the initial population consisting of a single MI point
   p0 = [Fresa.Point(MI([1.0], [1]),f)]
   # now invoke Fresa to solve the problem
-  best, pop = Fresa.solve(f, p0; domain=d, ngen=100, populationoutput=true)
+  best, pop = Fresa.solve(f, p0; domain=d, ngen=100) # , populationoutput=true)
   println("Population: $pop")
   println("Best: f($(best.x)) = $(best.z), $(best.g)")
 #+end_src 
