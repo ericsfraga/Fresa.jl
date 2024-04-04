@@ -9,7 +9,7 @@ module Fresa
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
 version = "8.2.0"
-lastchange = "[2024-04-04 14:40+0100]"
+lastchange = "[2024-04-04 15:53+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -585,7 +585,7 @@ function solve(f, p0;                # required arguments
     # is not appropriate, we set it to what used to be the default
     # fitness type for single objective optimization problems: scaled.
     if nz == 1 && fitnesstype == :hadamard # (the default)
-        @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
+        # @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
         fitnesstype = :scaled
     end
 

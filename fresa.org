@@ -214,8 +214,8 @@ With this transformation, the objective function can be written:
       # non-positive value, i.e. 0 or less, but infeasible points give a
       # positive value.  We choose the maximum of both constraints as
       # the value to return as an indication of feasibility
-      g = maximum( [ 6*x[1] + 5*x[2] - 60
-                     10*x[1] + 12*x[2] - 150 ] )
+      g = max( 6*x[1] + 5*x[2] - 60,
+               10*x[1] + 12*x[2] - 150 )
       # return the objective function value along with indication of
       # feasibility
       (z, g)
@@ -227,10 +227,10 @@ The second requirement is the definition of the search domain.  For flexibility,
 In the problem definition above, the second optimization variable is unbounded in terms of the upper bound.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\) must hold for feasible points.  The search domain, for Fresa, is therefore defined as follows:
 #+name: exampledomain
 #+begin_src julia :tangle no :noweb yes
-  lower = [ 0.0, 0.0 ]
-  upper = [ 8.0, 12.5 ]
+  a = [ 0.0, 0.0 ]
+  b = [ 8.0, 12.5 ]
 #+end_src
-This code says that for any point in the search space, ~x~, the lower bounds are given by the vector ~[0.0, 0.0]~ and the upper bounds by ~[8.0, 12.5]~
+This code says that for any point in the search space, ~x~, the lower bounds, ~a~, are given by the vector ~[0.0, 0.0]~ and the upper bounds, ~b~, by ~[8.0, 12.5]~
 
 Finally, an initial population must be provided to Fresa.  This population can be of any size so long as there is at least one member.  Fresa usually works well even if only one initial point in the search domain is provided.  We consider starting at the midpoint of the search domain defined above and create a ~Point~ in the search domain:
 #+name: exampleinitialpopulation
@@ -239,17 +239,14 @@ Finally, an initial population must be provided to Fresa.  This population can b
 #+end_src
 Defining the ~Point~ object (see [[*Point][below]]) requires two arguments: the values of an actual instance of the decision or optimization variables in the search domain and the Julia function that evaluates the objective function for the optimization problem.
 
-Given the above code, Fresa can now be used to solve the problem.  The ~solve~ function has many options (see [[solve]] section below).  Besides the lower and upper bounds, there is one option that should be specified: a stopping criterion for the search.  This may be either the number of generations to perform, ~ngen~, or the number of objective function evaluations to allow, ~nfmax~.  If no stopping criterion is specified, a warning message will be generated and a default value will be used.  Here, we specify 100 generations to perform.
-
-The other option that is often specified is the number of solutions to propagate from one generation to the next, ~np~.  This has a default value which is reasonable for many problems so we will simply accept that default.
+Given the above code, Fresa can now be used to solve the problem.  The ~solve~ function has many options (see section [[solvesection]] below) but these generally have reasonable defaults.  The stopping criteria for the search include =ngen= for the number of generations and =nfmax= for the maximum number of objective function evaluations allowed.  If neither is specified, the stopping criterion used is 100 generations.
 
 #+name: examplesolve
 #+begin_src julia :results output
-  best, population = Fresa.solve( objective, # function 
+  best, population = Fresa.solve( objective,         # the function 
                                   initialpopulation, # initial points
-                                  lower = lower,     # lower bounds
-                                  upper = upper,     # upper bounds
-                                  ngen = 100         # number of generations
+                                  lower = a,         # lower bounds
+                                  upper = b          # upper bounds
                                   )
   println("Population at end:")
   println("$population")
@@ -386,7 +383,10 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 #+end_src
 ** Version information <<version>>
 
-- (TBD) :: *v8.2*, minor release providing support for unbounded search domains.  See [[neighbour]] section below for a description of the use of /mapping/ from an unbounded domain to a bounded domain.
+- (TBD) :: *v8.2*, minor release providing a number of upwards compatible enhancements including the following:
+  1. support for fully unbounded search domains.  See [[neighbour]] section below for a description of the use of /mapping/ from an unbounded domain to a bounded domain.
+  2. addition of =:uniform= fitness allocation method for single objective problems which is simply rank based fitness; the default is =:scaled= where the fitness is based on the objective function values.  The default for multi-objective problems is =:hadamard= which is based on the product of the rankings for each objective.
+  3. the removal for the need to specify the measure of infeasibility for those problems where all points in the search domain are feasible.  Objective functions can now simply return the value(s) of the objective(s).
 
 - February 2024 :: *v8.1*, minor release with improved control over output during the evolution of populations and added ~lower~ and ~upper~ bounds arguments as an alternative to the ~domain~ argument.  No breaking changes.
 
@@ -394,7 +394,7 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 
   1. Optional arguments to the main interface to Fresa, the ~solve~ function, have changed:
      - ~nfmax~ has been added as a second stopping criterion.  Either this or ~ngen~ is used to determine how much work to undertake in solving the problem.  One of these must be set explicitly.
-     - ~ngen~ no longer defaults to 100; instead, it is turned off and must be given a value explicitly if ~nfmax~ is not specified.
+     - ~ngen~ defaults to 100 unless either ~nfmax~ or ~ngen~ is specified.  This was the previous default but now a warning message is output if neither stopping criterion is specified.
      - ~npop~ has been renamed to ~np~ and stands for /the number of solutions to propagate/ in each generation.  It is *not* the size of the population.
      - ~tolerance~ has been renamed to ~ϵ~ and is used by the next change: 
      - The /pruning/ of the population is now controlled by a new optional argument, ~issimilar~, which expects to be set to the name of a function which compares two points and return ~true~ if the two points should be considered /similar/.  If this function is defined, and if the optional argument ~ϵ~ is set to a value greater than 0 (default value is 0.0001), then pruning will take place.  The default value for ~issimilar~ is ~nothing~ so pruning is turned off by default.  Example functions suitable for assignment to ~issimilar~ are given [[prune][below]].
@@ -473,7 +473,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-04 15:12+0100]"
+  lastchange = "[2024-04-04 15:53+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
@@ -1213,7 +1213,7 @@ Used to set some of the module global variables used by many of the functions in
       # println("Size of problem: $n")
   end
 #+end_src
-** solve -- use the PPA to solve the optimisation problem <<solve>>
+** solve -- use the PPA to solve the optimisation problem <<solvesection>>
 
 The ~solve~ function is the main (only) entry point for the Fresa optimization package.  The following details all the arguments, both required and optional, for this function:
 
@@ -1348,7 +1348,7 @@ The *output* of the progress during the search is controlled by the ~output~ opt
       # is not appropriate, we set it to what used to be the default
       # fitness type for single objective optimization problems: scaled.
       if nz == 1 && fitnesstype == :hadamard # (the default)
-          @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
+          # @warn "As of v8.2, a fitness type should be specified for single objective problems: default is :scaled"
           fitnesstype = :scaled
       end
 

@@ -7,20 +7,19 @@ function objective(x)
     # non-positive value, i.e. 0 or less, but infeasible points give a
     # positive value.  We choose the maximum of both constraints as
     # the value to return as an indication of feasibility
-    g = maximum( [ 6*x[1] + 5*x[2] - 60
-                   10*x[1] + 12*x[2] - 150 ] )
+    g = max( 6*x[1] + 5*x[2] - 60,
+             10*x[1] + 12*x[2] - 150 )
     # return the objective function value along with indication of
     # feasibility
     (z, g)
 end
-lower = [ 0.0, 0.0 ]
-upper =[ 8.0, 12.5 ]
+a = [ 0.0, 0.0 ]
+b = [ 8.0, 12.5 ]
 initialpopulation = [ Fresa.Point( [4.0, 6.25 ], objective ) ]
-best, population = Fresa.solve( objective, # function 
+best, population = Fresa.solve( objective,         # the function 
                                 initialpopulation, # initial points
-                                lower = lower,     # lower bounds
-                                upper = upper,     # upper bounds
-                                ngen = 100         # number of generations
+                                lower = a,         # lower bounds
+                                upper = b          # upper bounds
                                 )
 println("Population at end:")
 println("$population")
