@@ -9,7 +9,7 @@ module Fresa
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
 version = "8.2.0"
-lastchange = "[2024-03-21 13:22+0000]"
+lastchange = "[2024-04-04 14:40+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -27,6 +27,13 @@ Point (`x`) in the search space along with objective function values
 specific.  `z[]` and `g` hold `Float64` values.  `g` should be of
 length 1.
 
+When evaluating the objective function, `f` in the constructor, the
+value returned will be a `Tuple` if both the objective function value
+and the measure of infeasibility are specified.  If a tuple is not
+returned, the return value will be taken to be the objective function
+value and the feasibility measure will be assumed to be 0.0, i.e. a
+feasible point in the search domain.
+
 """
 struct Point
     x :: Any                    # decision point
@@ -37,16 +44,25 @@ struct Point
                    f,           # objective function 
                    parameters = nothing, # arguments to objective function 
                    ancestor = nothing)   # for analysis of search process
-        z = 0
-        g = 0
-        if ! ( parameters isa Nothing )
-            (z, g) = f(x, parameters)
-        else
-            (z, g) = f(x)
-        end
+
+        # evaluate the objective function.  The parameters are passed
+        # to the function if defined, i.e. not Nothing.  The returned
+        # value will either be a tuple consisting of the objective
+        # function value and the measure of infeasibility or it will
+        # be just the objective function value alone with an implied
+        # zero value for the infeasibility measure.
+        ret = parameters isa Nothing ? f(x) : f(x, parameters)
+        # pick out the objective function value and measure of
+        # infeasibility from the returned value
+        z, g = ret isa Tuple ? ret : (ret, 0.0)
+
         if g isa Int
             g = float(g)
         end
+
+        # now create the actual Point object, ensuring that the
+        # objective function value is always a vector, even for single
+        # objective function problems.
         p = Nothing
         if rank(z) == 1
             p = new(x, z, g, ancestor)
@@ -489,9 +505,12 @@ end
 # randompopulation ends here
 
 # [[file:../fresa.org::randompoint][randompoint]]
+# for single values
 function randompoint(a :: Float64, b :: Float64)
     x = a + rand()*(b-a)
 end
+# and for vectors of values (which could in principle be integer
+# values)
 function randompoint(a, b)
     x = a + rand(length(a)).*(b-a)
 end

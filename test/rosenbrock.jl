@@ -4,7 +4,9 @@ nx = 2
 x0 = 0.5*ones(nx)
 # specify the domain for the search, x ∈ [0,10]ⁿ
 d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
+# the objective function is always feasible so needs only to return
+# the actual objective function value
+rosenbrock(x) = [(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2]
 # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
 # create the initial population consisting of this single point
 p0 = [Fresa.Point(x0,rosenbrock)]

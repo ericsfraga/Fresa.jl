@@ -166,7 +166,7 @@ This document has been written using [[http://orgmode.org/][org mode]] in the [[
 
 in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]], which you can activate by typing ~]~ in the Julia REPL.
 
-/Fresa/ makes use of the following extra Julia packages: =Dates=, =LinearAlgebra=, and =Printf=.  These packages will be installed automatically by the Julia package manager if not already installed.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.  You may need to install these explicitly to try out the test problems.
+/Fresa/ makes use of the following extra Julia packages: =Dates=, =LinearAlgebra=, =Permutations=, and =Printf=.  These packages should be installed automatically by the Julia package manager if not already installed.  The [[tests][test problems below]] (and found in the [[https://github.com/ericsfraga/Fresa.jl/tree/master/test][test folder on github]]) may require one or more of the following extra packages: ~BenchmarkTools~, ~PyPlot~, ~Profile~.  You may need to install these explicitly to try out the test problems.
 
 ** Quick example
 :PROPERTIES:
@@ -174,9 +174,11 @@ in [[https://docs.julialang.org/en/v1/stdlib/Pkg/][the Julia package manager]], 
 :END:
 
 Once Fresa is available in your Julia installation, using it requires you to define *three* aspects to define a problem:
-1. the objective function, which includes the evaluation of constraints;
-2. the search domain; and,
-3. an initial population.
+
+1. the objective function, including the evaluation of constraints if there are any;
+2. the search domain if the domain is bounded; and,
+3. an initial population, which can consist of a single point in the domain.
+
 I will illustrate how to use Fresa for a simple nonlinear problem, adapted from chapter 13 of a textbook from MIT:[fn:3:Exercise 9, page 452: https://web.mit.edu/15.053/www/AMP-Chapter-13.pdf] 
 
 \[ \min_x z = 5 x_1^2 + 4 x_2^2 - 60 x_1 - 80 x_2 \]
@@ -220,13 +222,13 @@ With this transformation, the objective function can be written:
   end
 #+end_src
 
-The second requirement is the definition of the search domain.  For flexibility, for instance to allow the use of problem specific data structures, Fresa expects the search domain to be a function of the search points.  The domain therefore is defined by providing two functions, one which returns the lower bounds for the given point in the search space and the other returning the upper bounds.  For problems involving a search in the real number domain, such as the example above, it is usually straightforward to define a box search domain.
+The second requirement is the definition of the search domain.  For flexibility, for instance to allow the use of problem specific data structures, Fresa allows for the search domain to be a function of the search points.  In that case, the domain would be defined by providing two functions, one which returns the lower bounds for the given point in the search space and the other returning the upper bounds.  However, for problems with simple domains, involving a search in the real number domain, such as the example above, fixed lower and upper bounds can be defined.  This is what we will do for this simple example.
 
-In the example above, the second optimization variable is unbounded above.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\) must hold for feasible points.  The search domain, for Fresa, is therefore defined as follows:
+In the problem definition above, the second optimization variable is unbounded in terms of the upper bound.  However, looking at the constraints and taking into account the domain for the first optimization variable, we can determine that \(x_2 \le \frac{150}{12} = 12.5\) must hold for feasible points.  The search domain, for Fresa, is therefore defined as follows:
 #+name: exampledomain
 #+begin_src julia :tangle no :noweb yes
-  dom = Fresa.Domain( x -> [ 0.0,  0.0 ],  # lower bounds
-                      x -> [ 8.0, 12.5 ] ) # upper bounds
+  lower = [ 0.0, 0.0 ]
+  upper = [ 8.0, 12.5 ]
 #+end_src
 This code says that for any point in the search space, ~x~, the lower bounds are given by the vector ~[0.0, 0.0]~ and the upper bounds by ~[8.0, 12.5]~
 
@@ -237,12 +239,18 @@ Finally, an initial population must be provided to Fresa.  This population can b
 #+end_src
 Defining the ~Point~ object (see [[*Point][below]]) requires two arguments: the values of an actual instance of the decision or optimization variables in the search domain and the Julia function that evaluates the objective function for the optimization problem.
 
-Given the above code, Fresa can now be used to solve the problem:
+Given the above code, Fresa can now be used to solve the problem.  The ~solve~ function has many options (see [[solve]] section below).  Besides the lower and upper bounds, there is one option that should be specified: a stopping criterion for the search.  This may be either the number of generations to perform, ~ngen~, or the number of objective function evaluations to allow, ~nfmax~.  If no stopping criterion is specified, a warning message will be generated and a default value will be used.  Here, we specify 100 generations to perform.
+
+The other option that is often specified is the number of solutions to propagate from one generation to the next, ~np~.  This has a default value which is reasonable for many problems so we will simply accept that default.
+
 #+name: examplesolve
 #+begin_src julia :results output
   best, population = Fresa.solve( objective, # function 
                                   initialpopulation, # initial points
-                                  domain = dom )     # the search domain
+                                  lower = lower,     # lower bounds
+                                  upper = upper,     # upper bounds
+                                  ngen = 100         # number of generations
+                                  )
   println("Population at end:")
   println("$population")
   println("Best solution found is:")
@@ -255,27 +263,27 @@ The arguments given here for the ~solve~ function are those that are required.  
 #+name: examplesolution
 #+begin_src julia :eval no :tangle example.jl :exports none
   <<exampleusingfresa>>
-      <<exampleobjective>>
-      <<exampledomain>>
-      <<exampleinitialpopulation>>
-      <<examplesolve>>
+  <<exampleobjective>>
+  <<exampledomain>>
+  <<exampleinitialpopulation>>
+  <<examplesolve>>
 #+end_src
 
 If we execute all the above lines of code in Julia (see [[file:example.jl][a Julia file with this code]]), the output will be similar to this:
 
 #+begin_example
-  # Fresa 🍓 PPA v8.0.0, last change [2023-04-27 15:10+0100]
-  ,* Fresa solve objective [2023-06-02 11:48]
+  # Fresa 🍓 PPA v8.2.0, last change [2024-04-04 14:40+0100]
+  ,* Fresa solve objective [2024-04-04 14:56]
   ,#+name: objectivesettings
   | variable | value |
   |-
   | elite | true |
   | archive | false |
   | ϵ | 0.0001 |
-  | fitness | hadamard |
+  | fitness | scaled |
   | issimilar | nothing |
   | multithreading | false |
-  | nfmax | 2147483647 |
+  | nfmax | ∞ |
   | ngen | 100 |
   | np | 10 |
   | nrmax | 5 |
@@ -297,70 +305,67 @@ If we execute all the above lines of code in Julia (see [[file:example.jl][a Jul
   ,#+plot: ind:1 deps:(6) with:"points pt 7" set:"logscale x"
   |       gen |       pop |        nf |    pruned |     t (s) | z1        |         g |
   |-
-  |         1 |         1 |         1 |         0 |      1.56 | -503.75 | -4.75 |
-  |         2 |         3 |         3 |         0 |      2.23 | -503.75 | -4.75 |
-  |         3 |         8 |        10 |         0 |      2.23 | -508.7366928811864 | -4.637588131515372 |
-  |         4 |        17 |        26 |         0 |      2.23 | -521.4784455002691 | -0.7427819610618798 |
-  |         5 |        21 |        46 |         0 |      2.23 | -522.7007760534982 | -0.47083217926538623 |
-  |         6 |        29 |        74 |         0 |      2.23 | -523.7246640026837 | -0.21682904207308695 |
-  |         7 |        25 |        98 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
-  |         8 |        27 |       124 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
-  |         9 |        30 |       153 |         0 |      2.23 | -524.7091378168888 | -0.18829928002217144 |
-  |        10 |        31 |       183 |         0 |      2.24 | -524.7091378168888 | -0.18829928002217144 |
-  |        20 |        29 |       471 |         0 |      2.24 | -529.4164722008476 | -0.02038843398626966 |
-  |        30 |        25 |       750 |         0 |      2.24 | -529.5633730695015 | -0.02977665276725361 |
-  |        40 |        30 |      1039 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
-  |        50 |        27 |      1314 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
-  |        60 |        23 |      1591 |         0 |      2.24 | -529.7252527733632 | -0.003660375690358819 |
-  |        70 |        26 |      1902 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
-  |        80 |        24 |      2186 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
-  |        90 |        34 |      2488 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
-  |       100 |        26 |      2794 |         0 |      2.25 | -529.7290072170845 | -0.001386514289535512 |
+  |         1 |         1 |         1 |         0 |      2.09 | -503.75 | -4.75 |
+  |         2 |         3 |         3 |         0 |      3.13 | -503.75 | -4.75 |
+  |         3 |         6 |         8 |         0 |      3.13 | -505.54408373302675 | -4.358037407025066 |
+  |         4 |        17 |        24 |         0 |      3.13 | -505.54408373302675 | -4.358037407025066 |
+  |         5 |        31 |        54 |         0 |      3.13 | -505.54408373302675 | -4.358037407025066 |
+  |         6 |        30 |        83 |         0 |      3.13 | -511.5343571625019 | -3.218282063484118 |
+  |         7 |        28 |       110 |         0 |      3.13 | -511.5343571625019 | -3.218282063484118 |
+  |         8 |        31 |       140 |         0 |      3.13 | -513.9675221324901 | -2.4176768626883103 |
+  |         9 |        17 |       156 |         0 |      3.13 | -518.5612713991886 | -1.6236774582768803 |
+  |        10 |        29 |       184 |         0 |      3.13 | -519.8644456196524 | -1.3802989646061548 |
+  |        20 |        32 |       465 |         0 |      3.13 | -527.2735222717813 | -0.16509218562191563 |
+  |        30 |        30 |       746 |         0 |      3.13 | -528.8005114221052 | -0.01798427744348885 |
+  |        40 |        31 |      1022 |         0 |      3.13 | -529.2870222887932 | -0.07443020289168345 |
+  |        50 |        28 |      1291 |         0 |      3.13 | -529.6342609626806 | -0.020899244360016667 |
+  |        60 |        22 |      1545 |         0 |      3.13 | -529.7265340364295 | -0.0031986779201105264 |
+  |        70 |        33 |      1817 |         0 |      3.13 | -529.7265340364295 | -0.0031986779201105264 |
+  |        80 |        25 |      2085 |         0 |      3.13 | -529.7265340364295 | -0.0031986779201105264 |
+  |        90 |        33 |      2358 |         0 |      3.13 | -529.7265340364295 | -0.0031986779201105264 |
+  |       100 |        19 |      2646 |         0 |      3.13 | -529.7265340364295 | -0.0031986779201105264 |
   ,** Fresa run finished
-  : nf=2826 npruned=0
+  : nf=2675 npruned=0
   Population at end:
   |-
   | z1 | g | x |
   |-
-  | -529.7290072170845 | -0.001386514289535512 | [3.702594745626452, 7.55660900239035] |
-  | -527.853878001001 | -0.48291577524779683 | [3.6491174454827386, 7.524475910371155] |
-  | -526.3705607067765 | -0.8467069134866705 | [3.667528690359779, 7.429624188870932] |
-  | -527.742025567878 | -0.5066301432003399 | [3.5920380970749233, 7.588228254870025] |
-  | -524.6409529473439 | -1.286458521008619 | [3.5795201153236214, 7.44728415740993] |
-  | -520.3279644470122 | -2.3254911554649453 | [3.514830096848747, 7.3171056526885145] |
-  | -527.068372582824 | -0.6359913637899766 | [3.7537817290261373, 7.36826365241064] |
-  | -530.217092255721 | 0.14055723592169045 | [3.7703419473254765, 7.503701110393766] |
-  | -530.1922481660704 | 0.14022127204323453 | [3.7833382647191978, 7.4880383367456105] |
-  | -527.0408631624633 | -0.6395013941553955 | [3.758236328486057, 7.362216126985651] |
-  | -528.5040324201457 | -0.3127940156253288 | [3.694582618016649, 7.5039420552549565] |
-  | -526.8207411691457 | 0.027474148220463235 | [4.212986646931653, 6.949910853326109] |
-  | -525.3750678895451 | 0.05001863772785242 | [4.33560332175508, 6.807279741439475] |
-  | -525.5568933293221 | -1.0511547215375145 | [3.6449867908470712, 7.415784906676011] |
-  | -528.7042806616057 | -0.25754638788131956 | [3.600411425197057, 7.627997012187268] |
-  | -524.2125504404314 | -1.3849937697329153 | [3.5039389291246454, 7.5182745311038435] |
-  | -526.8187955310441 | -0.7328852391695904 | [3.681412466435878, 7.435727992443029] |
-  | -521.0428332711219 | -2.142352322655981 | [3.571527569013465, 7.285696452652646] |
-  | -533.3897515175647 | 0.9674495903000491 | [3.81054032686648, 7.620841525820233] |
-  | -523.8714001763768 | -1.4149187367282963 | [3.401872090974504, 7.634769743484934] |
-  | -548.172644750669 | 71.68533717898717 | [7.1685337178987165, 12.5] |
-  | -528.7066821625476 | -0.26077494549345914 | [3.6999695775575603, 7.507881517832236] |
-  | -528.1252783833863 | -0.4121478714274076 | [3.6715244230968733, 7.511741117998271] |
-  | -528.0189144708239 | -0.4394243124528856 | [3.667697825440769, 7.5108777469804995] |
-  | -529.4595454260652 | -0.07213579880031062 | [3.683283983377394, 7.565632060187064] |
-  | -530.9282150525235 | 0.3106471940089506 | [3.7304199552719655, 7.585625492475431] |
-  | -526.8642638037436 | -0.6650820853761346 | [3.7797490122487525, 7.33128476822627] |
-  | -529.6121402823709 | 0.013760389538639117 | [3.8111594814605, 7.4293607001551285] |
-  | -528.9998000854063 | -0.13497695282293876 | [3.810193862470157, 7.400771974471224] |
-  | -529.2908718630608 | -0.08396812878470428 | [3.7800463543116205, 7.447150749069115] |
-  | -529.8893535422826 | 0.03879535868527739 | [3.6784696648573263, 7.593595473908263] |
-  | -527.1547932506232 | -0.6598249985636997 | [3.609165714535757, 7.537036142844352] |
-  | -521.8633759883776 | -1.9587164477291736 | [3.546918639927955, 7.35195434254062] |
+  | -529.7265340364295 | -0.0031986779201105264 | [3.6890324301409763, 7.572521348246806] |
+  | -490.2145940234657 | -1.2390932693507395 | [1.7760024502584146, 9.620978405819754] |
+  | -382.88238569370344 | 0.3433596773173164 | [0.0, 12.068671935463463] |
+  | -529.3515345351453 | -0.0958865900008945 | [3.6321759475721747, 7.6222115449132115] |
+  | -527.499895133928 | -0.5730366314000719 | [3.6301359737866523, 7.529229505176001] |
+  | -529.418653560424 | -0.0765247949718102 | [3.6254321522551587, 7.6341764582994465] |
+  | -529.2731002500146 | -0.11605337363324963 | [3.630202927642817, 7.62054581210197] |
+  | -530.6161764424138 | 0.22842496180827254 | [3.6843994395527813, 7.624405664898317] |
+  | -528.564871816406 | -0.3009321309140418 | [3.674385941400023, 7.530550444137164] |
+  | -527.9337546684199 | -0.4620345353414592 | [3.657980800461741, 7.518016132377619] |
+  | -527.2933472695051 | -0.5912770202773743 | [3.515757944734674, 7.662835062262916] |
+  | -527.0219720941407 | -0.6631082120947838 | [3.5149061362520113, 7.64949099407863] |
+  | -528.4621688329165 | -0.31095224816458256 | [3.5729267057945298, 7.650297503413649] |
+  | -530.3092023784462 | 0.1907812997138052 | [3.573312853808895, 7.750180835372086] |
+  | -527.809901442761 | -0.49295690026699646 | [3.6127958993500138, 7.5660535407265845] |
+  | -527.5470915135005 | -0.5481011542262308 | [3.5623499891604693, 7.615559782162191] |
+  | -526.0676154801108 | -0.9322132788217132 | [3.5792087212504895, 7.518506878735071] |
+  | -526.8382734769193 | -0.7398747868836182 | [3.619748619547411, 7.508326699166384] |
+  | -526.3991414268392 | -0.8499955992868848 | [3.612470819695875, 7.495035896507574] |
+  | -528.6884880504701 | -0.26917384925451415 | [3.6783282517648708, 7.532171328031252] |
+  | -527.5277495424356 | -0.5644041948620355 | [3.6540620444794927, 7.502244707652201] |
+  | -526.2072163725386 | -0.8978513187282573 | [3.6115084073935497, 7.486619647382089] |
+  | -528.7549881249026 | -0.2534750447939089 | [3.655903969983661, 7.562220227060826] |
+  | -529.1781613546334 | -0.13714804700559569 | [3.7208454323073643, 7.507555871830044] |
+  | -528.3891385783165 | -0.34216123656906916 | [3.6918799124114585, 7.5013118577924365] |
+  | -519.4967245902453 | 10.52859642940561 | [6.611892041465508, 6.171448836122515] |
+  | -529.831638289142 | 0.025243047617038883 | [3.659563338586391, 7.6135726032197395] |
+  | -530.050972250923 | 0.08292994187003444 | [3.7164801056479226, 7.5568098615965] |
+  | -529.620063048235 | -0.030761850076814312 | [3.66941272555407, 7.590552359319753] |
+  | -528.5002016045366 | -0.3149860430471989 | [3.6887883392372767, 7.510456784305827] |
   |-
 
   Best solution found is:
-    f([3.702594745626452, 7.55660900239035])=[-529.7290072170845]
+    f([3.6890324301409763, 7.572521348246806])=[-529.7265340364295]
   with constraint satisfaction (≤ 0) or violation (> 0):
-    g=-0.001386514289535512.
+    g=-0.0031986779201105264.
 #+end_example
 
 The output includes details on the settings of all tunable parameters for the method (all of which can be adjusted, as noted above), the best solution in the population as it evolves, and the best in the final population along with that full population at the end.  Note that the output is formatted to be best viewed using ~org~ mode[fn:6: http://orgmode.org/] in the Emacs[fn:7: http://www.gnu.org/software/emacs/] text editor but the output should be readable as it is all just text.
@@ -468,7 +473,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-03-21 13:22+0000]"
+  lastchange = "[2024-04-04 15:12+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
@@ -500,6 +505,13 @@ An issue in Julia (as of 2021, at least) is that you cannot define two data stru
   specific.  `z[]` and `g` hold `Float64` values.  `g` should be of
   length 1.
 
+  When evaluating the objective function, `f` in the constructor, the
+  value returned will be a `Tuple` if both the objective function value
+  and the measure of infeasibility are specified.  If a tuple is not
+  returned, the return value will be taken to be the objective function
+  value and the feasibility measure will be assumed to be 0.0, i.e. a
+  feasible point in the search domain.
+
   """
   struct Point
       x :: Any                    # decision point
@@ -510,16 +522,25 @@ An issue in Julia (as of 2021, at least) is that you cannot define two data stru
                      f,           # objective function 
                      parameters = nothing, # arguments to objective function 
                      ancestor = nothing)   # for analysis of search process
-          z = 0
-          g = 0
-          if ! ( parameters isa Nothing )
-              (z, g) = f(x, parameters)
-          else
-              (z, g) = f(x)
-          end
+
+          # evaluate the objective function.  The parameters are passed
+          # to the function if defined, i.e. not Nothing.  The returned
+          # value will either be a tuple consisting of the objective
+          # function value and the measure of infeasibility or it will
+          # be just the objective function value alone with an implied
+          # zero value for the infeasibility measure.
+          ret = parameters isa Nothing ? f(x) : f(x, parameters)
+          # pick out the objective function value and measure of
+          # infeasibility from the returned value
+          z, g = ret isa Tuple ? ret : (ret, 0.0)
+
           if g isa Int
               g = float(g)
           end
+
+          # now create the actual Point object, ensuring that the
+          # objective function value is always a vector, even for single
+          # objective function problems.
           p = Nothing
           if rank(z) == 1
               p = new(x, z, g, ancestor)
@@ -1161,9 +1182,12 @@ Create a random population of size ~n~ evaluated using ~f~.  A single point, =x=
 By default, the following method generates a random point within the search domain.  This does not attempt to find a feasible point, simply one within the box defined by lower, =a=, and upper, =b=, bounds.  
 #+name: randompoint
 #+begin_src julia
+  # for single values
   function randompoint(a :: Float64, b :: Float64)
       x = a + rand()*(b-a)
   end
+  # and for vectors of values (which could in principle be integer
+  # values)
   function randompoint(a, b)
       x = a + rand(length(a)).*(b-a)
   end
@@ -1776,8 +1800,10 @@ This test uses a simple quadratic objective function, defined within.  All point
   # The alternatie would be to define the Domain directly:
   # d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
 
-  # the actual objective function
-  f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
+  # the actual objective function.  This objective function is always
+  # feasible so we do not need to specify a measure of infeasility, just
+  # the objective function value.
+  f = x -> (x[1]-3)^2+(x[2]-5)^2+8
 
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x0,f)]
@@ -1803,7 +1829,9 @@ One of the features that /Fresa/ provides is a trace of how each solution has be
   x0 = 0.5*ones(nx)
   # specify the domain for the search, x ∈ [0,10]ⁿ
   d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-  rosenbrock(x) = ([(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2], 0)
+  # the objective function is always feasible so needs only to return
+  # the actual objective function value
+  rosenbrock(x) = [(1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2]
   # f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x0,rosenbrock)]
@@ -1827,7 +1855,9 @@ for \(n>1\).
   x0 = 0.5*ones(nx)
   # specify the domain for the search, x ∈ [0,10]ⁿ
   d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-  rosenbrock(x) = (sum([100 * (x[i+1]-x[i]^2)^2 + (1-x[i])^2 for i ∈ 1:length(x)-1]), 0)
+  # the objective function is always feasible so needs only to return
+  # the actual objective function value
+  rosenbrock(x) = sum([100 * (x[i+1]-x[i]^2)^2 + (1-x[i])^2 for i ∈ 1:length(x)-1])
   # create the initial population consisting of this single point
   p0 = [Fresa.Point(x0,rosenbrock)]
   # now invoke Fresa to solve the problem

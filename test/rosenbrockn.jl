@@ -4,7 +4,9 @@ nx = 20
 x0 = 0.5*ones(nx)
 # specify the domain for the search, x ∈ [0,10]ⁿ
 d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
-rosenbrock(x) = (sum([100 * (x[i+1]-x[i]^2)^2 + (1-x[i])^2 for i ∈ 1:length(x)-1]), 0)
+# the objective function is always feasible so needs only to return
+# the actual objective function value
+rosenbrock(x) = sum([100 * (x[i+1]-x[i]^2)^2 + (1-x[i])^2 for i ∈ 1:length(x)-1])
 # create the initial population consisting of this single point
 p0 = [Fresa.Point(x0,rosenbrock)]
 # now invoke Fresa to solve the problem

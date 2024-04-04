@@ -17,8 +17,10 @@ b = 10.0 * ones(length(x0))
 # The alternatie would be to define the Domain directly:
 # d = Fresa.Domain(x -> zeros(length(x)), x -> 10*ones(length(x)))
 
-# the actual objective function
-f = x -> ((x[1]-3)^2+(x[2]-5)^2+8, 0)
+# the actual objective function.  This objective function is always
+# feasible so we do not need to specify a measure of infeasility, just
+# the objective function value.
+f = x -> (x[1]-3)^2+(x[2]-5)^2+8
 
 # create the initial population consisting of this single point
 p0 = [Fresa.Point(x0,f)]
