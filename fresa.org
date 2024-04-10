@@ -474,7 +474,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-10 09:26+0100]"
+  lastchange = "[2024-04-10 12:04+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
@@ -1275,7 +1275,7 @@ Optional arguments:
 
 The function expects the objective function, ~f~, an initial population, ~p0~, with at least one point, and the =Domain= for the search.  It returns the optimum, the objective function value(s) at this point, the constraint at that point and the whole population at the end.  The actual return values and data structures depends on the number of criteria:
 - 1 :: returns best point as a ~Fresa.Point~ object (which includes the decision variable values, the objective function value, and the constraint value) and also the full population;
-- >1 :: returns the set of non-dominated points (as an array including objective function values and constraint value) and the full population.
+- >1 :: returns a vector of indices into the full population, which represent the set of non-dominated points, and the full population.  The population is a vector of ~Fresa.Point~ objects.
      
 
 =domain= is a valid =Domain= object with appropriate functions for determining the lower and upper bounds of the search space in terms of the optimization variables.  These should be consistent with the representations use for the individual points in the search space.
