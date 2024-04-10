@@ -117,7 +117,7 @@ A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the d
 ** Licence and citing
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
-Please let [[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][the author know]] if you download the code.  Further, if either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include a short review article [cite:@fresa-review-2021],
+If either /Fresa/ or /[[http:strawberry.html][Strawberry]]/ codes are used and this use leads to publications of any type, please do cite relevant sources.  These include a short review article [cite:@fresa-review-2021],
 
 #+begin_src bibtex
   @article{fresa-review-2021,
@@ -158,7 +158,8 @@ and you may also wish to cite the original paper which led to the development of
     month={6}
   }
 #+end_src
-
+** Support
+For commercial and industrial users of this package, support is provided by Ananassa Consulting Ltd.  Please [[mailto:ananassa@mail.co.uk][email]] with your requirements.
 ** Installation
 This document has been written using [[http://orgmode.org/][org mode]] in the [[https://www.gnu.org/software/emacs/][Emacs]] text editor.  Org allows for /literate programming/ and uses /tangling/ to generate the actual source files for the code.  The code, tangled from this file, can be found [[https://github.com/ericsfraga/Fresa.jl][at github]] as a Julia package.  /Fresa/ has also been registered as a Julia package in the [[https://github.com/JuliaRegistries/General][General registry]].  Therefore, all you should need to install /Fresa/ is to type
 
@@ -473,7 +474,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-10 09:21+0100]"
+  lastchange = "[2024-04-10 09:26+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
