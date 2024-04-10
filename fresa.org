@@ -18,10 +18,10 @@
 # citations
 #+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
 
-| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                   |
-| *Version*       | {{{tomlversion}}}                            |
-| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}} |
-| *Latest news*   | Minor release with improved output control.  |
+| *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                 |
+| *Version*       | {{{tomlversion}}}                                          |
+| *Last revision* | {{{modification-time(%Y-%m-%d %H:%M:%S,t)}}}               |
+| *Latest news*   | Support unbounded search domains and new fitness function. |
 
 # Version call_tomlversion[:results output]()
 
@@ -474,7 +474,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-10 12:04+0100]"
+  lastchange = "[2024-04-10 15:42+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
