@@ -384,7 +384,7 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 #+end_src
 ** Version information <<version>>
 
-- (TBD) :: *v8.2*, minor release providing a number of upwards compatible enhancements including the following:
+- April 2024 :: *v8.2*, minor release providing a number of upwards compatible enhancements including the following:
   1. support for fully unbounded search domains.  See [[neighbour]] section below for a description of the use of /mapping/ from an unbounded domain to a bounded domain.
   2. addition of =:uniform= fitness allocation method for single objective problems which is simply rank based fitness; the default is =:scaled= where the fitness is based on the objective function values.  The default for multi-objective problems is =:hadamard= which is based on the product of the rankings for each objective.
   3. the removal for the need to specify the measure of infeasibility for those problems where all points in the search domain are feasible.  Objective functions can now simply return the value(s) of the objective(s).
@@ -474,7 +474,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-10 15:42+0100]"
+  lastchange = "[2024-04-24 13:05+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
