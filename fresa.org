@@ -113,7 +113,7 @@ There's [[https://www.youtube.com/watch?v=QVmU29rCjaA][a video on developing Jul
 
 The move to using Julia for the implementation of this algorithm was motivated by the desire to use /open source/ and /free/ (as in beer) software only while also ensuring that the tools are computationally efficient.  Octave has not kept up with developments in /just in time/ compilation and, although has some features not available in MATLAB, it is not a modern language.  Julia provides many of the capabilities of Octave while also being computationally efficient and providing many more modern features such as *built-in parallelism* and *multi-dispatch*, both of which are used by Fresa for efficiency and to make the search procedure generic with respect to data types used to represent points in the search space.
 
-A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  
+A [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  A small example is presented below.
 ** Licence and citing
 All code (either version) is copyright © {{{time(%Y)}}}, Eric S Fraga.  See the [[https://github.com/ericsfraga/Fresa.jl/blob/master/LICENSE][LICENSE file]] for licensing information.  Please note that the code is made available with no warranty or guarantee of any kind.  Use at own risk. Feedback, including bug reports, is most welcome.
 
@@ -370,6 +370,15 @@ The output includes details on the settings of all tunable parameters for the me
 
 A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] example, the design of the operating temperature profile for a simple reactor, modelled as a dynamic optimization problem, is available.  This example was the basis for a paper [cite:@fraga-2019a].  It illustrates the generic nature of Fresa, allowing its application to problems with domain specific data structures.  Note, however, that the code in that paper is based on version 7 of Fresa so some small changes would be required to have it work in version 8.  See [[version]] section below for more details on the changes required in moving from version 7 to version 8.
 
+** Publications using Fresa
+The following is a selection of publications which have been based on the use of Fresa and [[http:strawberry.html][Strawberry]]:
+- /Optimization of a PID controller within a dynamic mdoel of a steam Rankine cycle with coupled energy storage/ [cite:@ward-etal-2023b].
+- /Lumped-parameter heat exchanger models for the robust dynamic modelling of power generation cycles/ [cite:@ward-etal-2023a].
+- /Multiple simultaneous solution representations in a population based evolutionary algorithm/ [cite:@fraga2021multiple].
+- /An example of multi-objective optimization for dynamic processes/ [cite:@fraga-2019a].
+- /Modelling of Microfluidic Devices for Analysis of Radionuclides/ [cite:@PINEDA20191807].
+- /Optimal design of hybrid energy systems incorporating stochastic renewable resources fluctuations/ [cite:@amusat-etal-2018a].
+- /On the application of a nature-inspired stochastic evolutionary algorithm to constrained multiobjective beer fermentation optimisation/ [cite:@rodman-etal-2018a].
 ** Upload to web site                                        :noexport:
 #+name: upload
 #+begin_src shell :results none :exports none :eval never-export
@@ -474,7 +483,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
   version = "8.2.0"
-  lastchange = "[2024-04-24 13:05+0100]"
+  lastchange = "[2024-05-16 14:27+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
