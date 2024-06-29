@@ -7,9 +7,9 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
+version = "8.2.1"
 version = "8.2.0"
-version = "8.2.0"
-lastchange = "[2024-06-29 18:46+0100]"
+lastchange = "[2024-06-29 19:09+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -210,7 +210,7 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         fit = [0.5]
     else
         # initialise variable to ensure it's in scope
-        fitness = []
+        rawfitness = []
         # determine number of criteria
         m = length(v[1])
         # println("VF: v=$v")
@@ -231,10 +231,10 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
             # and a fitness assignment that is uniform in the [0,1]
             # interval.
             if fitnesstype == :scaled
-                fitness = [v[i][1] for i=1:l]
+                rawfitness = [v[i][1] for i=1:l]
             elseif fitnesstype == :uniform
-                fitness = ones(l)
-                fitness[sortperm([v[i][1] for i=1:l])] = 1:l
+                rawfitness = ones(l)
+                rawfitness[sortperm([v[i][1] for i=1:l])] = 1:l
             end
         else                  # multi-objective
             rank = ones(m,l); #rank of each solution for each objective function 
@@ -243,17 +243,17 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
                     rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                 end
                 # hadamard product of ranks
-                fitness = map(x->prod(x), rank[:,i] for i=1:l)
+                rawfitness = map(x->prod(x), rank[:,i] for i=1:l)
             elseif fitnesstype == :borda
                 for i=1:m
                     rank[i,sortperm([v[j][i] for j=1:l])] = 1:l
                 end
                 # borda sum of ranks
-                fitness = map(x->sum(x), rank[:,i] for i=1:l)
+                rawfitness = map(x->sum(x), rank[:,i] for i=1:l)
             elseif fitnesstype == :nondominated
                 # similar to that used by NSGA-II (Deb 2000)
-                fitness = zeros(l)
-                maxl = assigndominancefitness!(fitness,v,1)
+                rawfitness = zeros(l)
+                maxl = assigndominancefitness!(rawfitness,v,1)
                 # println("Resulting fitness: $fitness")
             else
                 throw(ArgumentError("Type of fitness evaluation must be either :borda, :nondominated, or :hadamard, not $(repr(fitnesstype))."))
@@ -261,9 +261,9 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         end
         # normalise (1=best, 0=worst) while avoiding
         # extreme 0,1 values using the hyperbolic tangent
-        fit = adjustfitness(fitness, steepness, generation, ngen)
+        fit = adjustfitness(rawfitness, steepness, generation, ngen)
         # println(":  scaled fitness: $fit")
-        @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] fitness[1] fitness[2] fitness[l] fit[1] fit[2] fit[l] maxlog=3
+        @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] rawfitness[1] rawfitness[2] rawfitness[l] fit[1] fit[2] fit[l] maxlog=3
     end
     fit
 end
