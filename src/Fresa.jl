@@ -9,7 +9,7 @@ module Fresa
 # [[file:../fresa.org::init][init]]
 version = "8.2.0"
 version = "8.2.0"
-lastchange = "[2024-04-04 15:53+0100]"
+lastchange = "[2024-06-29 18:46+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -209,6 +209,9 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         # no point in doing much as there is only one solution
         fit = [0.5]
     else
+        # initialise variable to ensure it's in scope
+        fitness = []
+        # determine number of criteria
         m = length(v[1])
         # println("VF: v=$v")
         # println("  : of size $(size(v))")
