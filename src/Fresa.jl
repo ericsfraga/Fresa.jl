@@ -8,8 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.1"
-version = "8.2.0"
-lastchange = "[2024-06-29 19:09+0100]"
+lastchange = "[2024-07-02 15:22+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -271,7 +270,7 @@ end
 
 # [[file:../fresa.org::adjustfitness][adjustfitness]]
 function adjustfitness(fitness, steepness, generation, ngen)
-    if (maximum(fitness)-minimum(fitness)) > eps()
+    if length(fitness) > 0 && (maximum(fitness)-minimum(fitness)) > eps()
         s = steepness
         if steepness isa Tuple
             a = (2*steepness[1]-2*steepness[2])/3

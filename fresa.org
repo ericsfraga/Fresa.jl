@@ -473,8 +473,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  version = "8.2.0"
-  lastchange = "[2024-06-29 19:09+0100]"
+  lastchange = "[2024-07-02 15:22+0100]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
@@ -797,7 +796,7 @@ See below for a discussion about the second function argument, =steepness=, and 
 #+name: adjustfitness
 #+begin_src julia
   function adjustfitness(fitness, steepness, generation, ngen)
-      if (maximum(fitness)-minimum(fitness)) > eps()
+      if length(fitness) > 0 && (maximum(fitness)-minimum(fitness)) > eps()
           s = steepness
           if steepness isa Tuple
               a = (2*steepness[1]-2*steepness[2])/3
