@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.1"
-lastchange = "[2024-07-02 15:22+0100]"
+lastchange = "[2024-07-15 13:16+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -173,10 +173,15 @@ function fitness(pop, fitnesstype, steepness, generation, ngen)
         # squeeze infeasible fitness values into (0,0.5) or (0,1) depending
         # on factor, i.e. whether there are any feasible solutions as well or not
         infeasible = view(pop,indexinfeasible)
-        # use constraint violation for ranking as objective function values
-        # may not make any sense given that points are infeasible
+        # use constraint violation for ranking as objective function
+        # values may not make any sense given that points are
+        # infeasible.  Note that if the problem being solved is
+        # multi-objective, the ranking of infeasible solutions deals
+        # with single objective function values (the infeasibility
+        # violation) so a suitable fitness type must be provided, not
+        # one of the multi-objective types.
         fit[indexinfeasible] = vectorfitness(map(p->p.g, infeasible),
-                                             fitnesstype,
+                                             :uniform, # fitness type
                                              steepness,
                                              generation,
                                              ngen
