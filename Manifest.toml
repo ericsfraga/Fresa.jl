@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "65c1edfc0fa453f595c59326a5ec80b7db7fa14e"
+project_hash = "46b2e61773fe9e9cd2bfde6b23d35fcb98ec0cbe"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -35,9 +35,9 @@ version = "0.3.23+4"
 
 [[deps.Permutations]]
 deps = ["Combinatorics", "LinearAlgebra", "Random"]
-git-tree-sha1 = "eb3f9df2457819bf0a9019bd93cc451697a0751e"
+git-tree-sha1 = "4ca430561cf37c75964c8478eddae2d79e96ca9b"
 uuid = "2ae35dd2-176d-5d53-8349-f30d82d94d4f"
-version = "0.4.20"
+version = "0.4.21"
 
 [[deps.Printf]]
 deps = ["Unicode"]
