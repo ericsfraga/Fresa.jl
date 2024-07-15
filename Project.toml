@@ -1,7 +1,7 @@
 name = "Fresa"
 uuid = "35d66a44-7359-11ea-387b-f94ed747d8e0"
 authors = ["Eric S Fraga <e.fraga@ucl.ac.uk>"]
-version = "8.2.0"
+version = "8.2.1"
 
 [deps]
 Cocoa = "227e2c60-64a5-4667-a753-a0cc01a7388d"
