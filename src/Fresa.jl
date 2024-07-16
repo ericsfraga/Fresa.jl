@@ -8,7 +8,8 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.1"
-lastchange = "[2024-07-15 13:16+0100]"
+lastchange = "[2024-07-16 12:30+0100]"
+using Cocoa                     # for hybrid optimization
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -39,6 +40,12 @@ struct Point
     z :: Vector                 # objective function values
     g :: Float64                # constraint violation
     ancestor                    # the parent of this point
+
+    # the usual constructor which expects a point in the search space,
+    # x, and the objective function to use to evaluate the point.
+    # There may be parameters to pass to the objective function and we
+    # may wish to keep track of the history of points generated in the
+    # search.
     function Point(x,           # point in search space
                    f,           # objective function 
                    parameters = nothing, # arguments to objective function 
@@ -71,6 +78,16 @@ struct Point
             error("Fresa can only handle scalar and vector criteria, not $(typeof(z)).")
         end
         return p
+    end
+
+    # an alternative constructor, introduced to enable sharing of
+    # points between different solvers when using the Cocoa
+    # multi-agent system.  In this case, the objective function has
+    # already been used to evaluate the point.
+    function Point(x,                           # point in search space
+                   z :: Vector{Float64},        # objective function 
+                   g :: Union{Float64, Int})    # feasibility
+        new(x, z, g, nothing)
     end
 end
 # pointtype ends here
@@ -559,6 +576,7 @@ function value and the feasibility measure.
 """
 function solve(f, p0;                # required arguments
                archiveelite = false, # save thinned out elite members
+               cocoa = false,        # use multi-agent system
                domain = nothing,     # search domain: will often be required but not always
                elite = true,         # elitism by default
                ϵ = 0.0001,           # ϵ for similarity detection
@@ -581,7 +599,13 @@ function solve(f, p0;                # required arguments
                ticker = true,        # output single line summary every generation
                upper = nothing,      # for fixed upper bounds as domain
                usemultiproc = false) # parallel processing by Fresa itself?
-    output > 0 && println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
+    if output > 0
+        if cocoa
+            Cocoa.debug("starting solver ppa $(parameters)")
+        else
+            println("$orglevel* Fresa solve $f $(orgtimestamp(now()))")
+        end
+    end
     tstart = time()
     nf = 1                   # number of function evaluations
     npruned = 0              # number solutions pruned from population
@@ -612,8 +636,9 @@ function solve(f, p0;                # required arguments
         println("#+name: $(f)settings")
         println("| variable | value |")
         println("|-")
-        println("| elite | $elite |")
         println("| archive | $archiveelite |")
+        println("| cocoa | $cocoa |")
+        println("| elite | $elite |")
         println("| ϵ | $ϵ |")
         println("| fitness | $fitnesstype |")
         println("| issimilar | $issimilar |")
@@ -640,6 +665,12 @@ function solve(f, p0;                # required arguments
     if plotvectors
         plotvectorio = open("fresa-vectors-$(orgtimestamp(now())).data", create=true, write=true)
         output > 0 && println(": output of vectors for subsequent plotting")
+    end
+    # if we are using the Cocoa multi-agent system, make note of the
+    # channels for communicating to and from the scheduling agent
+    if cocoa
+        scheduler = parameters[1]       # to send messages
+        channel = parameters[2].channel # to receive messages
     end
     # check the domain for the search space.  If no domain given, look
     # at the individual upper and lower bounds.  If these are defined,
@@ -715,6 +746,34 @@ function solve(f, p0;                # required arguments
     gen = 0
     while (ngen ≤ 0 || gen < ngen) && (nfmax ≤ 0 || nf < nfmax)
         gen += 1                # keep count of generations performed
+
+        # if we are using Cocoa, the multi-agent hybrid optimization
+        # framework, we check to see if any messages have been
+        # received from the scheduling agent.  If there are, these
+        # will typically be solutions that other solvers (including
+        # Fresa with different settings) have identified as good and
+        # worth sharing with this instance.
+        if cocoa
+            point = nothing
+            # if there are messages in the channel use by the
+            # scheduler to send us information, read and process the
+            # messages
+            while isready(channel)
+                msg = take!(channel)
+                if msg.type == Cocoa.SHAREBEST
+                    point = Point(msg.content.d,
+                                  msg.content.z,
+                                  msg.content.g)
+                else
+                    error("Do not understand message from Cocoa: $msg")
+                end
+            end
+            if point != nothing
+                # add only the last one to the population
+                @debug "Adding $point to ppa population"
+                push!(pop, point)
+            end
+        end
 
         # evaluate fitness which is adjusted depending on value of
         # steepness, a value that may depend on the generation

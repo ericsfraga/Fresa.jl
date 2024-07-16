@@ -483,7 +483,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-07-15 14:54+0100]"
+  lastchange = "[2024-07-16 12:30+0100]"
   using Cocoa                     # for hybrid optimization
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
@@ -573,9 +573,9 @@ An issue in Julia (as of 2021, at least) is that you cannot define two data stru
       # points between different solvers when using the Cocoa
       # multi-agent system.  In this case, the objective function has
       # already been used to evaluate the point.
-      function Point(x,           # point in search space
-                     z,           # objective function 
-                     g)           # feasibility
+      function Point(x,                           # point in search space
+                     z :: Vector{Float64},        # objective function 
+                     g :: Union{Float64, Int})    # feasibility
           new(x, z, g, nothing)
       end
   end
@@ -1984,6 +1984,59 @@ for \(n>1\).
   println(population[pareto])
   #using BenchmarkTools
   #@benchmark
+#+end_src 
+** multi-objective test: Cocoa version
+#+name: testmultiobjectivecocoa
+#+begin_src julia :tangle test/multiobjectivecocoa.jl
+  using Cocoa
+  using Fresa
+  nx = 2
+  # specify the domain for the search, x ∈ [0,1]ⁿ
+  lower = zeros(nx)
+  upper = ones(nx)
+  # initial point in domain
+  x = rand(nx)
+  # objective function 
+  f = x -> ( [sin(x[1]-x[2]); cos(x[1]+x[2])], 0)
+  # create the initial population consisting of this single point
+  p0 = [Fresa.Point(x,f)]
+  # define the solvers that Cocoa will use.  In this case, we are going
+  # to consider two instances of Fresa, each with a different fitness
+  # calculation method.
+  hadamard(p0, lower, upper, parameters) = Fresa.solve(Cocoa.objectivefunction,
+                                                       p0,
+                                                       cocoa = true,
+                                                       fitnesstype = :hadamard,
+                                                       lower = lower,
+                                                       nfmax = 1e6,
+                                                       output = 0,
+                                                       parameters = parameters,
+                                                       upper = upper)
+  nondominated(p0, lower, upper, parameters) = Fresa.solve(Cocoa.objectivefunction,
+                                                           p0,
+                                                           cocoa = true,
+                                                           fitnesstype = :nondominated,
+                                                           lower = lower,
+                                                           nfmax = 1e6,
+                                                           output = 0,
+                                                           parameters = parameters,
+                                                           upper = upper)
+  solvers = [Cocoa.Solver("hadamard", hadamard)
+             Cocoa.Solver("nondominated", nondominated)]
+  model = Cocoa.Model("mo", f, p0, lower, upper, nothing)
+  # define a sequence of tests for features in Cocoa
+  tests = [Set()
+           Set([:sharebest])]
+  for test ∈ tests
+      println("* test features $test")
+      best = Cocoa.solve(model, solvers,
+                         features = test,
+                         nm = 2,
+                         nt=1_000,
+                         orglevel = "**",
+                         output = true)
+      println(best)
+  end
 #+end_src 
 ** multi-objective test with 3 objectives
 #+name: testmultiobjective3
