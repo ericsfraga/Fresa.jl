@@ -99,8 +99,11 @@ for test ∈ tests
                        nt=1_000,
                        orglevel = "**",
                        output = true)
-    # best will be a vector of solutions, each of which is
-    # non-dominated.
-    println(best)
+    # best will be a vector of Cocoa solution types, each of which is
+    # non-dominated.  A Cocoa solution includes the design point, d,
+    # the objective function values, z, and the infeasibility measure,
+    # g.  We can create Fresa.Point types for each of these:
+    population = [Fresa.Point(s.d, s.z, s.g) for s in best]
+    println(population)
 end
 # testmultiobjectivecocoa ends here

@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.2.1"
-lastchange = "[2024-07-16 17:20+0100]"
+lastchange = "[2024-07-17 13:37+0100]"
 using Cocoa                     # for hybrid optimization
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function

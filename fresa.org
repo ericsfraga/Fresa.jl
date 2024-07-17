@@ -483,7 +483,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-07-16 17:20+0100]"
+  lastchange = "[2024-07-17 13:37+0100]"
   using Cocoa                     # for hybrid optimization
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
@@ -2092,9 +2092,12 @@ Instructions on how to set up Cocoa and Fresa to work together are implicit in t
                          nt=1_000,
                          orglevel = "**",
                          output = true)
-      # best will be a vector of solutions, each of which is
-      # non-dominated.
-      println(best)
+      # best will be a vector of Cocoa solution types, each of which is
+      # non-dominated.  A Cocoa solution includes the design point, d,
+      # the objective function values, z, and the infeasibility measure,
+      # g.  We can create Fresa.Point types for each of these:
+      population = [Fresa.Point(s.d, s.z, s.g) for s in best]
+      println(population)
   end
 #+end_src 
 ** multi-objective test with 3 objectives
