@@ -7,14 +7,19 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.2.1"
-lastchange = "[2024-07-15 13:16+0100]"
+version = "8.3.0"
+lastchange = "[2024-07-18 13:34+0100]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
 using Printf                    # for formatted output
+initmsg = true
 function __init__()
-    println("# Fresa 🍓 PPA v$version, last change $lastchange")
+    global initmsg
+    if initmsg
+        println("# Fresa 🍓 PPA v$version, last change $lastchange")
+    end
+    initmsg = false
 end
 # init ends here
 
