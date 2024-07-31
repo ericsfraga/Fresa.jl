@@ -483,14 +483,19 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-07-17 13:37+0100]"
+  lastchange = "[2024-07-31 11:27+0100]"
   using Cocoa                     # for hybrid optimization
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
   using Printf                    # for formatted output
+  initmsg = true
   function __init__()
-      println("# Fresa 🍓 PPA v$version, last change $lastchange")
+      global initmsg
+      if initmsg
+          println("# Fresa 🍓 PPA v$version, last change $lastchange")
+      end
+      initmsg = false
   end
 #+end_src
 ** types
