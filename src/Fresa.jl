@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.3.0"
-lastchange = "[2024-07-18 13:34+0100]"
+lastchange = "[2024-07-31 16:35+0100]"
 using Cocoa                     # for hybrid optimization
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
@@ -759,24 +759,29 @@ function solve(f, p0;                # required arguments
         # Fresa with different settings) have identified as good and
         # worth sharing with this instance.
         if cocoa
-            point = nothing
+            points = Point[]    # empty set to start
             # if there are messages in the channel use by the
             # scheduler to send us information, read and process the
             # messages
             while isready(channel)
                 msg = take!(channel)
                 if msg.type == Cocoa.SHAREBEST
-                    point = Point(msg.content.d,
-                                  msg.content.z,
-                                  msg.content.g)
+                    # it's a new point.  Add it to the set received.
+                    push!(points, Point(msg.content.d,
+                                        msg.content.z,
+                                        msg.content.g))
                 else
                     error("Do not understand message from Cocoa: $msg")
                 end
             end
-            if point != nothing
-                # add only the last one to the population
+            if length(points) > 0
+                # add only the "best" one(s) to the population.  For
+                # single objective, this will be the absolute best;
+                # for multi-objective, we want the non-dominated
+                # solutions
                 @debug "Adding $point to ppa population"
-                push!(pop, point)
+                pareto, dominated = paretoindices([p.z for p in points])
+                append!(pop, points[pareto])
             end
         end
 
