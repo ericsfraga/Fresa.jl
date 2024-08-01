@@ -7,8 +7,8 @@ module Fresa
 # modulestart ends here
 
 # [[file:../fresa.org::init][init]]
-version = "8.3.0"
-lastchange = "[2024-07-31 16:35+0100]"
+version = "8.3.0-cocoa"
+lastchange = "[2024-08-01 15:13+0100]"
 using Cocoa                     # for hybrid optimization
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
@@ -780,8 +780,8 @@ function solve(f, p0;                # required arguments
                 # for multi-objective, we want the non-dominated
                 # solutions
                 @debug "Adding $point to ppa population"
-                pareto, dominated = paretoindices([p.z for p in points])
-                append!(pop, points[pareto])
+                nondominated, dominated = pareto(points)
+                append!(pop, nondominated)
             end
         end
 

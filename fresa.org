@@ -483,7 +483,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-07-31 16:35+0100]"
+  lastchange = "[2024-08-01 15:13+0100]"
   using Cocoa                     # for hybrid optimization
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
@@ -1558,8 +1558,8 @@ The *output* of the progress during the search is controlled by the ~output~ opt
                   # for multi-objective, we want the non-dominated
                   # solutions
                   @debug "Adding $point to ppa population"
-                  pareto, dominated = paretoindices([p.z for p in points])
-                  append!(pop, points[pareto])
+                  nondominated, dominated = pareto(points)
+                  append!(pop, nondominated)
               end
           end
 
