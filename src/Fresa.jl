@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.3.0-cocoa"
-lastchange = "[2024-08-01 16:25+0100]"
+lastchange = "[2024-08-01 16:48+0100]"
 using Cocoa                     # for hybrid optimization
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
@@ -178,7 +178,7 @@ function fitness(pop, fitnesstype, steepness, generation, ngen)
     l = length(pop)
     indexfeasible = (1:l)[map(p->p.g,pop) .<= 0]
     indexinfeasible = (1:l)[map(p->p.g,pop) .> 0]
-    @debug "Feasible/infeasible breakdown" indexfeasible indexinfeasible maxlog=3
+    Cocoa.debug("Fresa Feasible/infeasible breakdown indexfeasible=$indexfeasible indexinfeasible=$indexinfeasible")
     fit = zeros(l)
     factor = 1              # for placement in fitness interval (0,1)
     if length(indexfeasible) > 0
@@ -289,7 +289,7 @@ function vectorfitness(v, fitnesstype, steepness, generation, ngen)
         # extreme 0,1 values using the hyperbolic tangent
         fit = adjustfitness(rawfitness, steepness, generation, ngen)
         # println(":  scaled fitness: $fit")
-        @debug "Fitness calculations" v[1][1] v[2][1] v[l][1] rawfitness[1] rawfitness[2] rawfitness[l] fit[1] fit[2] fit[l] maxlog=3
+        # Cocoa.debug("Fresa Fitness calculations" v[1][1] v[2][1] v[l][1] rawfitness[1] rawfitness[2] rawfitness[l] fit[1] fit[2] fit[l] maxlog=3)
     end
     fit
 end
@@ -304,7 +304,7 @@ function adjustfitness(fitness, steepness, generation, ngen)
             b = - (3*steepness[1] - 3*steepness[2])/ngen^2
             d = steepness[1]
             s = a*generation^3 + b*generation^2 + c*generation + d
-            @debug "Steepness " s "at generation" g
+            # Cocoa.debug("Fresa Steepness " s "at generation" g)
         end  
         fit = 0.5*(tanh.(4*s*(maximum(fitness) .- fitness)
                          / (maximum(fitness)-minimum(fitness))
@@ -779,7 +779,7 @@ function solve(f, p0;                # required arguments
                 # single objective, this will be the absolute best;
                 # for multi-objective, we want the non-dominated
                 # solutions
-                @debug "Adding $point to ppa population"
+                Cocoa.debug("Fresa Adding $points to ppa population")
                 nondominated, dominated = pareto(points)
                 append!(pop, points[nondominated])
             end
@@ -789,7 +789,7 @@ function solve(f, p0;                # required arguments
         # steepness, a value that may depend on the generation
         fit = fitness(pop, fitnesstype, steepness, gen, ngen)
         if gen == 1
-            @debug "Initial fitness" f=fit
+            Cocoa.debug("Fresa Initial fitness fit=$fit")
         end
         # sort
         index = sortperm(fit)
