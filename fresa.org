@@ -372,7 +372,7 @@ A more complex [[http://www.ucl.ac.uk/~ucecesf/Fresa/tutorial.html][tutorial]] e
 
 ** Publications using Fresa
 The following is a selection of publications which have been based on the use of Fresa and [[http:strawberry.html][Strawberry]]:
-- /Optimization of a PID controller within a dynamic mdoel of a steam Rankine cycle with coupled energy storage/ [cite:@ward-etal-2023b].
+- /Optimization of a PID controller within a dynamic model of a steam Rankine cycle with coupled energy storage/ [cite:@ward-etal-2023b].
 - /Discrete Formulation for Multi-objective Optimal Design of Produced Water Treatment/ [cite:@falahi-etal-2023a]
 - /Multiple simultaneous solution representations in a population based evolutionary algorithm/ [cite:@fraga2021multiple].
 - /An example of multi-objective optimization for dynamic processes/ [cite:@fraga-2019a].
@@ -482,7 +482,7 @@ Fresa depends on a number of packages that should be available in any Julia inst
 
 #+name: init
 #+begin_src julia :var version=(org-sbe tomlversion)
-  lastchange = "[2024-07-18 13:34+0100]"
+  lastchange = "[2024-10-31 09:46+0000]"
   using Dates                     # for org mode dates
   using LinearAlgebra             # for norm function
   using Permutations              # for random permutations of vectors
