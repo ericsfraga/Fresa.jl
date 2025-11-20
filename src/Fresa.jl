@@ -8,7 +8,7 @@ module Fresa
 
 # [[file:../fresa.org::init][init]]
 version = "8.3.0"
-lastchange = "[2024-07-18 13:34+0100]"
+lastchange = "[2025-11-20 16:31+0000]"
 using Dates                     # for org mode dates
 using LinearAlgebra             # for norm function
 using Permutations              # for random permutations of vectors
@@ -563,6 +563,7 @@ function value and the feasibility measure.
 
 """
 function solve(f, p0;                # required arguments
+               analysePopulation = nothing, # function to analyse population at each generation
                archiveelite = false, # save thinned out elite members
                domain = nothing,     # search domain: will often be required but not always
                elite = true,         # elitism by default
@@ -729,19 +730,41 @@ function solve(f, p0;                # required arguments
         end
         # sort
         index = sortperm(fit)
-        # if populationoutput has been set, the full population is
-        # printed out including also printing out separately those
-        # solutions that are non-dominated (single solution for single
-        # objective problems) and those that are dominated.
-        if populationoutput
-            println("#+name: population-$gen")
-            println(pop)
+        # at the start of a generation, once the fitness of each
+        # member has been calculated, we provide a hook for the caller
+        # to analyse the population.  This passes the current
+        # generation and the population in two vectors, the
+        # non-dominating solution(s) (which means only the best
+        # solution for single objective problems) and the remaining
+        # members, those that are dominated.  It also passes the
+        # fitness vectors associated with these two sets.  As the
+        # decomposition into dominated and non-dominated is also
+        # required for the output of these populations (if requested),
+        # the preparation of these vectors is done for both potential
+        # cases.
+        if populationoutput || analysePopulation != nothing
+            # the pareto function returns a tuple with the indices
+            # into the population vector that correspond to
+            # nondominated and dominated members respectively
             (nondominated, dominated) = Fresa.pareto(pop)
-            println("#+name: nondominated-$gen")
-            println(pop[nondominated])
-            println("#+name: dominated-$gen")
-            println(pop[dominated])
-            println("Fitness vector: $fit")
+            nondom = pop[nondominated]
+            dom = pop[dominated]
+            # if populationoutput has been set, the full population is
+            # printed out including also printing out separately those
+            # solutions that are non-dominated (single solution for
+            # single objective problems) and those that are dominated.
+            if populationoutput
+                println("#+name: population-$gen")
+                println(pop)
+                println("#+name: nondominated-$gen")
+                println(nondom)
+                println("#+name: dominated-$gen")
+                println(dom)
+                println("Fitness vector: $fit")
+            end
+            if analysePopulation != nothing
+                analysePopulation(gen, nondom, fit[nondominated], dom, fit[dominated])
+            end
         end
         # and remember best which really only makes sense in single
         # criterion problems but is the "most fit" when considering
