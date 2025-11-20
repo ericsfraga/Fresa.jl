@@ -1,4 +1,3 @@
-* [[file:../fresa.org::gamsmodel][gamsmodel]]
 $TITLE Test Problem 
 $OFFDIGIT
 $OFFSYMXREF 
@@ -28,4 +27,3 @@ MODEL TEST / ALL / ;
 
 OPTION LIMROW = 0; 
 OPTION LIMCOL = 0;
-* gamsmodel ends here
