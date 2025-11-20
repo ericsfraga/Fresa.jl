@@ -2115,7 +2115,7 @@ The files for this example can be downloaded: [[file:test/gams.jl][Julia code]] 
 We use, as an example, problem 8.26 in "Engineering Optimization" by Reklaitis, Ravindran and Ragsdell (1983).  This problem seeks to minimise the square of the decision variables while minimising a residual value =res=.  We treat this as a multi-objective problem which cannot be done directly in GAMS.  By looking at it as a multi-objective problem, we can gain insight into the trade-offs between the residual and the primary objective function.
 
 #+name: gamsmodel
-#+begin_src gams :tangle "test/gamsdeclarations.gms"
+#+begin_src gams :tangle "test/gamsdeclarations.gms" :comments no
   $TITLE Test Problem 
   $OFFDIGIT
   $OFFSYMXREF 
