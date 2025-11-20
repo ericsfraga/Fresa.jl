@@ -16,7 +16,7 @@
 # +html: <style>pre.src:before { display: inline; }</style>
 
 # citations
-#+cite_export: csl /usr/share/pandoc-citeproc/chicago-author-date.csl
+#+cite_export: csl /usr/share/texlive/texmf-dist/tex/latex/citation-style-language/styles/chicago-author-date.csl
 
 | *Author*        | [[https://www.ucl.ac.uk/~ucecesf/][{{{author}}}]] ([[mailto:e.fraga@ucl.ac.uk?subject=The Fresa plant propagation algorithm][{{{email}}}]])                                 |
 | *Version*       | {{{tomlversion}}}                                          |
